@@ -1,16 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
 import Link from "next/link";
 import CodeEditor from "./CodeEditor";
 import SplitPane from "./SplitPane";
 
 export default function ProblemWorkspace({ problem }) {
-  const starterCode = useMemo(
-    () =>
-      `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
-    [problem.title]
-  );
 
   const leftPanel = (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
@@ -98,7 +92,7 @@ export default function ProblemWorkspace({ problem }) {
       minSecondary={220}
       storageKey={`algoryth.split.editor.${problem.slug}`}
       className="h-215 lg:h-full"
-      primary={<CodeEditor initialLanguage="javascript" initialCode={starterCode} />}
+      primary={<CodeEditor initialLanguage="javascript" problemTitle={problem.title} />}
       secondary={
         <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
           <div className="border-b border-black/10 bg-zinc-50 dark:border-white/10 dark:bg-zinc-950">

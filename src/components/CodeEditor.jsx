@@ -5,17 +5,42 @@ import { useEffect, useMemo, useState } from "react";
 
 const Monaco = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
+// Starter code templates for different languages
+const getStarterCode = (language, problemTitle = "Problem") => {
+  const templates = {
+    javascript: `// ${problemTitle}\n\nfunction solve(input) {\n  // TODO\n}\n`,
+    typescript: `// ${problemTitle}\n\nfunction solve(input: any): any {\n  // TODO\n}\n`,
+    python: `# ${problemTitle}\n\ndef solve(input):\n    # TODO\n    pass\n`,
+    cpp: `// ${problemTitle}\n\n#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    // TODO\n};\n`,
+    java: `// ${problemTitle}\n\npublic class Solution {\n    // TODO\n}\n`,
+  };
+  
+  return templates[language] || templates.javascript;
+};
+
 export default function CodeEditor({
   initialCode,
   initialLanguage = "javascript",
+  problemTitle,
 }) {
-  const [code, setCode] = useState(initialCode || "");
+  const [code, setCode] = useState(initialCode || getStarterCode(initialLanguage, problemTitle));
   const [language, setLanguage] = useState(initialLanguage);
   const [theme, setTheme] = useState("vs-dark");
 
   useEffect(() => {
-    setCode(initialCode || "");
-  }, [initialCode]);
+    if (initialCode) {
+      setCode(initialCode);
+    } else {
+      setCode(getStarterCode(initialLanguage, problemTitle));
+    }
+  }, [initialCode, initialLanguage, problemTitle]);
+
+  // Update code when language changes (only if no custom initialCode was provided)
+  useEffect(() => {
+    if (!initialCode) {
+      setCode(getStarterCode(language, problemTitle));
+    }
+  }, [language, problemTitle, initialCode]);
 
   useEffect(() => {
     const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
@@ -53,14 +78,17 @@ export default function CodeEditor({
               onChange={(e) => setLanguage(e.target.value)}
             >
               <option value="javascript">JavaScript</option>
-              <option value="typescript" disabled>
-                TypeScript (soon)
+              <option value="typescript">
+                TypeScript
               </option>
-              <option value="cpp" disabled>
-                C++ (soon)
+              <option value="python">
+                Python
               </option>
-              <option value="python" disabled>
-                Python (soon)
+              <option value="java">
+                Java
+              </option>
+              <option value="cpp">
+                C++
               </option>
             </select>
             <button
