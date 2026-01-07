@@ -1,0 +1,35 @@
+name: Feature request
+description: Suggest an improvement for Algoryth
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / use case
+      description: What problem are you trying to solve?
+      placeholder: Describe the user story.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should we build?
+      placeholder: Describe the desired behavior and UI.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      placeholder: Any other approaches?
+    validations:
+      required: false
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      placeholder: Links, screenshots, references.
+    validations:
+      required: false
