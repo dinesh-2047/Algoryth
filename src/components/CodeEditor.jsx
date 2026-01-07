@@ -9,6 +9,8 @@ const Monaco = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 export default function CodeEditor({
   initialCode,
   initialLanguage = "javascript",
+  onChange,
+  onLanguageChange,
 }) {
   const [code, setCode] = useState(initialCode || "");
   const [language, setLanguage] = useState(initialLanguage);
@@ -70,18 +72,13 @@ export default function CodeEditor({
             <select
               className="h-9 rounded-full border border-black/10 bg-white px-3 text-xs font-semibold text-zinc-700 outline-none dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200"
               value={language}
-              onChange={(e) => setLanguage(e.target.value)}
+              onChange={(e) => { setLanguage(e.target.value); onLanguageChange?.(e.target.value); }}
             >
               <option value="javascript">JavaScript</option>
-              <option value="typescript" disabled>
-                TypeScript (soon)
-              </option>
-              <option value="cpp" disabled>
-                C++ (soon)
-              </option>
-              <option value="python" disabled>
-                Python (soon)
-              </option>
+              <option value="python">Python</option>
+              <option value="java">Java</option>
+              <option value="cpp">C++</option>
+              <option value="go">Go</option>
             </select>
             <button
               type="button"
