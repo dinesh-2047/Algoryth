@@ -12,6 +12,15 @@ export default function ProblemWorkspace({ problem }) {
     [problem.title]
   );
 
+  const [code, setCode] = useState("");
+  const [language, setLanguage] = useState("javascript");
+  const [isRunning, setIsRunning] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastSubmissionStatus, setLastSubmissionStatus] = useState(null);
+  const [activeTab, setActiveTab] = useState("description");
+  const [hints, setHints] = useState([]);
+  const [showHints, setShowHints] = useState(false);
+
   const leftPanel = (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
       <div className="border-b border-black/10 bg-zinc-50 px-5 py-4 dark:border-white/10 dark:bg-zinc-950">
@@ -30,18 +39,59 @@ export default function ProblemWorkspace({ problem }) {
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-          <span className="inline-flex items-center rounded-full bg-black px-4 py-2 text-xs font-semibold text-white dark:bg-white dark:text-black">
+          <button
+            onClick={() => setActiveTab("description")}
+            className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-semibold ${
+              activeTab === "description"
+                ? "bg-black text-white dark:bg-white dark:text-black"
+                : "border border-black/10 text-zinc-500 dark:border-white/10 dark:text-zinc-400"
+            }`}
+          >
             Description
-          </span>
-          <span className="inline-flex items-center rounded-full border border-black/10 px-4 py-2 text-xs font-semibold text-zinc-500 dark:border-white/10 dark:text-zinc-400">
+          </button>
+          <button
+            onClick={() => setActiveTab("editorial")}
+            className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-semibold ${
+              activeTab === "editorial"
+                ? "bg-black text-white dark:bg-white dark:text-black"
+                : "border border-black/10 text-zinc-500 dark:border-white/10 dark:text-zinc-400"
+            }`}
+          >
             Editorial
-          </span>
-          <span className="inline-flex items-center rounded-full border border-black/10 px-4 py-2 text-xs font-semibold text-zinc-500 dark:border-white/10 dark:text-zinc-400">
+          </button>
+          <button
+            onClick={() => setActiveTab("solutions")}
+            className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-semibold ${
+              activeTab === "solutions"
+                ? "bg-black text-white dark:bg-white dark:text-black"
+                : "border border-black/10 text-zinc-500 dark:border-white/10 dark:text-zinc-400"
+            }`}
+          >
             Solutions
-          </span>
-          <span className="inline-flex items-center rounded-full border border-black/10 px-4 py-2 text-xs font-semibold text-zinc-500 dark:border-white/10 dark:text-zinc-400">
+          </button>
+          <button
+            onClick={() => setActiveTab("submissions")}
+            className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-semibold ${
+              activeTab === "submissions"
+                ? "bg-black text-white dark:bg-white dark:text-black"
+                : "border border-black/10 text-zinc-500 dark:border-white/10 dark:text-zinc-400"
+            }`}
+          >
             Submissions
-          </span>
+          </button>
+          <button
+            onClick={() => {
+              if (!showHints) {
+                fetch(`/api/problems/${problem.slug}/hints`)
+                  .then(res => res.json())
+                  .then(data => setHints(data));
+              }
+              setShowHints(!showHints);
+            }}
+            className="inline-flex items-center rounded-full border border-black/10 px-4 py-2 text-xs font-semibold text-zinc-500 dark:border-white/10 dark:text-zinc-400"
+          >
+            {showHints ? "Hide Hints" : "Show Hints"}
+          </button>
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2">
@@ -57,35 +107,94 @@ export default function ProblemWorkspace({ problem }) {
       </div>
 
       <article className="min-h-0 flex-1 overflow-auto px-5 py-5">
-        <p className="whitespace-pre-wrap text-sm leading-6 text-zinc-700 dark:text-zinc-300">
-          {problem.statement}
-        </p>
+        {activeTab === "description" && (
+          <>
+            <p className="whitespace-pre-wrap text-sm leading-6 text-zinc-700 dark:text-zinc-300">
+              {problem.statement}
+            </p>
 
-        <h3 className="mt-6 text-sm font-semibold">Constraints</h3>
-        <ul className="mt-2 list-disc pl-5 text-sm text-zinc-700 dark:text-zinc-300">
-          {problem.constraints.map((c) => (
-            <li key={c}>{c}</li>
-          ))}
-        </ul>
+            <h3 className="mt-6 text-sm font-semibold">Constraints</h3>
+            <ul className="mt-2 list-disc pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+              {problem.constraints.map((c) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ul>
 
-        <h3 className="mt-6 text-sm font-semibold">Examples</h3>
-        <div className="mt-2 grid gap-3">
-          {problem.examples.map((ex, i) => (
-            <div
-              key={`${problem.id}-ex-${i}`}
-              className="rounded-xl border border-black/10 bg-zinc-50 p-4 text-sm dark:border-white/10 dark:bg-zinc-950"
-            >
-              <div className="font-medium">Input</div>
-              <pre className="mt-1 overflow-auto whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
-                {ex.input}
-              </pre>
-              <div className="mt-3 font-medium">Output</div>
-              <pre className="mt-1 overflow-auto whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
-                {ex.output}
-              </pre>
+            <h3 className="mt-6 text-sm font-semibold">Examples</h3>
+            <div className="mt-2 grid gap-3">
+              {problem.examples.map((ex, i) => (
+                <div
+                  key={`${problem.id}-ex-${i}`}
+                  className="rounded-xl border border-black/10 bg-zinc-50 p-4 text-sm dark:border-white/10 dark:bg-zinc-950"
+                >
+                  <div className="font-medium">Input</div>
+                  <pre className="mt-1 overflow-auto whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
+                    {ex.input}
+                  </pre>
+                  <div className="mt-3 font-medium">Output</div>
+                  <pre className="mt-1 overflow-auto whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
+                    {ex.output}
+                  </pre>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+
+            {showHints && hints.length > 0 && (
+              <>
+                <h3 className="mt-6 text-sm font-semibold">Hints</h3>
+                <div className="mt-2 space-y-2">
+                  {hints.map((hint) => (
+                    <div
+                      key={hint.level}
+                      className="rounded-xl border border-black/10 bg-amber-50 p-4 text-sm dark:border-white/10 dark:bg-amber-950"
+                    >
+                      <div className="font-medium">Hint {hint.level}</div>
+                      <p className="mt-1 text-zinc-700 dark:text-zinc-300">
+                        {hint.text}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        )}
+
+        {activeTab === "editorial" && problem.editorial && (
+          <>
+            <h3 className="text-sm font-semibold">Approach</h3>
+            <ol className="mt-2 list-decimal pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+              {problem.editorial.steps.map((step, i) => (
+                <li key={i}>{step}</li>
+              ))}
+            </ol>
+
+            <h3 className="mt-6 text-sm font-semibold">Solution</h3>
+            <pre className="mt-2 rounded-xl border border-black/10 bg-zinc-50 p-4 text-sm dark:border-white/10 dark:bg-zinc-950">
+              {problem.editorial.solution}
+            </pre>
+
+            <h3 className="mt-6 text-sm font-semibold">Complexity</h3>
+            <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
+              {problem.editorial.complexity}
+            </p>
+          </>
+        )}
+
+        {activeTab === "solutions" && problem.editorial && (
+          <>
+            <h3 className="text-sm font-semibold">Solution Code</h3>
+            <pre className="mt-2 rounded-xl border border-black/10 bg-zinc-50 p-4 text-sm dark:border-white/10 dark:bg-zinc-950">
+              {problem.editorial.solution}
+            </pre>
+          </>
+        )}
+
+        {activeTab === "submissions" && (
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+            Submissions history will be shown here.
+          </p>
+        )}
       </article>
     </div>
   );
