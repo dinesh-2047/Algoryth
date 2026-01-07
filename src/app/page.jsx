@@ -1,6 +1,37 @@
+"use client";
+
 import Link from "next/link";
+import { useState, useEffect } from "react";
 
 export default function Home() {
+  const [recommendedProblems, setRecommendedProblems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProblems() {
+      try {
+        const response = await fetch('/api/problems');
+        const data = await response.json();
+        // Filter for easy problems and take first 3
+        const easyProblems = data.items
+          .filter(p => p.difficulty === 'Easy')
+          .slice(0, 3);
+        setRecommendedProblems(easyProblems);
+      } catch (error) {
+        console.error('Failed to fetch problems:', error);
+        // Fallback to hardcoded problems if API fails
+        setRecommendedProblems([
+          { title: "Two Sum", slug: "two-sum", difficulty: "Easy" },
+          { title: "Valid Parentheses", slug: "valid-parentheses", difficulty: "Easy" },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProblems();
+  }, []);
+
   return (
     <section className="grid gap-6 lg:grid-cols-[1fr_340px]">
       <div className="grid gap-4">
@@ -39,20 +70,22 @@ export default function Home() {
           </div>
 
           <div className="divide-y divide-black/10 dark:divide-white/10">
-            {[
-              { title: "Two Sum", slug: "two-sum", diff: "Easy" },
-              { title: "Valid Parentheses", slug: "valid-parentheses", diff: "Easy" },
-              { title: "Maximum Subarray", slug: "max-subarray", diff: "Medium" },
-            ].map((p) => (
-              <Link
-                key={p.slug}
-                href={`/problems/${p.slug}`}
-                className="flex items-center justify-between px-6 py-4 text-sm hover:bg-black/2 dark:hover:bg-white/5"
-              >
-                <div className="font-medium">{p.title}</div>
-                <div className="text-xs text-zinc-500 dark:text-zinc-400">{p.diff}</div>
-              </Link>
-            ))}
+            {loading ? (
+              <div className="px-6 py-4 text-sm text-zinc-500 dark:text-zinc-400">
+                Loading problems...
+              </div>
+            ) : (
+              recommendedProblems.map((p) => (
+                <Link
+                  key={p.slug}
+                  href={`/problems/${p.slug}`}
+                  className="flex items-center justify-between px-6 py-4 text-sm hover:bg-black/2 dark:hover:bg-white/5"
+                >
+                  <div className="font-medium">{p.title}</div>
+                  <div className="text-xs text-zinc-500 dark:text-zinc-400">{p.difficulty}</div>
+                </Link>
+              ))
+            )}
           </div>
         </div>
       </div>
