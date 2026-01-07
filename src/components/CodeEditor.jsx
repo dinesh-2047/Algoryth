@@ -23,24 +23,21 @@ export default function CodeEditor({
   initialLanguage = "javascript",
   problemTitle,
 }) {
-  const [code, setCode] = useState(initialCode || getStarterCode(initialLanguage, problemTitle));
   const [language, setLanguage] = useState(initialLanguage);
   const [theme, setTheme] = useState("vs-dark");
 
-  useEffect(() => {
-    if (initialCode) {
-      setCode(initialCode);
-    } else {
-      setCode(getStarterCode(initialLanguage, problemTitle));
-    }
-  }, [initialCode, initialLanguage, problemTitle]);
+  // Generate code based on language and initial props
+  const code = useMemo(() => {
+    if (initialCode) return initialCode;
+    return getStarterCode(language, problemTitle);
+  }, [initialCode, language, problemTitle]);
 
-  // Update code when language changes (only if no custom initialCode was provided)
+  const [editorCode, setEditorCode] = useState(code);
+
+  // Update editor code when computed code changes (language change or initial props)
   useEffect(() => {
-    if (!initialCode) {
-      setCode(getStarterCode(language, problemTitle));
-    }
-  }, [language, problemTitle, initialCode]);
+    setEditorCode(code);
+  }, [code]);
 
   useEffect(() => {
     const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
@@ -106,8 +103,8 @@ export default function CodeEditor({
           height="100%"
           theme={theme}
           language={language}
-          value={code}
-          onChange={(v) => setCode(v ?? "")}
+          value={editorCode}
+          onChange={(v) => setEditorCode(v ?? "")}
           options={editorOptions}
         />
       </div>
