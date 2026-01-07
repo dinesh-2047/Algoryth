@@ -1,0 +1,51 @@
+name: Issue assignment guard
+
+on:
+  issues:
+    types: [assigned]
+
+permissions:
+  issues: write
+
+env:
+  # Comma-separated GitHub usernames allowed to be assigned.
+  # Update this list when you add maintainers.
+  ALLOWED_ASSIGNEES: dinesh-2047
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce allowed assignees
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+
+            // Don't interfere with PRs (PRs are also "issues" in the API)
+            if (issue.pull_request) return;
+
+            const assignee = issue.assignee;
+            if (!assignee) return;
+
+            const allowed = process.env.ALLOWED_ASSIGNEES
+              .split(",")
+              .map(s => s.trim().toLowerCase())
+              .filter(Boolean);
+
+            const login = (assignee.login || "").toLowerCase();
+            if (allowed.includes(login)) return;
+
+            await github.rest.issues.removeAssignees({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              assignees: [assignee.login],
+            });
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: `Assignment removed automatically. Only maintainers can be assigned right now.\n\nAllowed assignees: ${allowed.map(a => `@${a}`).join(", ")}`,
+            });
