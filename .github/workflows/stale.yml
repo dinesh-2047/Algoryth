@@ -1,0 +1,30 @@
+name: Stale
+
+on:
+  schedule:
+    - cron: "25 3 * * *" # daily
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-issue-stale: 30
+          days-before-issue-close: 7
+          days-before-pr-stale: 30
+          days-before-pr-close: 7
+          stale-issue-label: stale
+          stale-pr-label: stale
+          exempt-issue-labels: pinned,security,never-stale
+          exempt-pr-labels: pinned,security,never-stale
+          stale-issue-message: |
+            This issue has been marked as stale due to inactivity.
+            If this is still relevant, please add a comment.
+          stale-pr-message: |
+            This PR has been marked as stale due to inactivity.
+            If this is still relevant, please add a comment or push updates.
