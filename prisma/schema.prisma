@@ -29,10 +29,13 @@ model User {
   id        String @id @default(cuid())
   email     String @unique
   name      String?
+  rating    Int @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   submissions Submission[]
+  accounts   Account[]
+  sessions   Session[]
 }
 
 model Submission {

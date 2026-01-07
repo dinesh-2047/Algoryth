@@ -1,6 +1,21 @@
+'use client'
+
 import Link from "next/link";
+import { useSession, signIn, signOut } from 'next-auth/react'
+import { useEffect, useState } from 'react'
 
 export default function Home() {
+  const { data: session } = useSession()
+  const [userData, setUserData] = useState(null)
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetch(`/api/user/${session.user.id}`)
+        .then(res => res.json())
+        .then(setUserData)
+    }
+  }, [session])
+
   return (
     <section className="grid gap-6 lg:grid-cols-[1fr_340px]">
       <div className="grid gap-4">
@@ -78,12 +93,12 @@ export default function Home() {
 
         <div className="overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
           <div className="border-b border-black/10 bg-zinc-50 px-5 py-4 dark:border-white/10 dark:bg-zinc-950">
-            <div className="text-sm font-semibold">Guest</div>
+            <div className="text-sm font-semibold">{session ? session.user.name : 'Guest'}</div>
           </div>
           <div className="px-5 py-5 text-sm">
             <div className="flex items-center justify-between">
               <div className="text-zinc-700 dark:text-zinc-300">Rating</div>
-              <div className="font-semibold">910</div>
+              <div className="font-semibold">{userData?.rating || 0}</div>
             </div>
             <div className="mt-2 flex items-center justify-between">
               <div className="text-zinc-700 dark:text-zinc-300">Contribution</div>
@@ -91,9 +106,20 @@ export default function Home() {
             </div>
 
             <div className="mt-4 grid gap-2 text-sm">
-              <span className="text-zinc-500 dark:text-zinc-400">Settings</span>
-              <span className="text-zinc-500 dark:text-zinc-400">Submissions</span>
-              <span className="text-zinc-500 dark:text-zinc-400">Contests</span>
+              {session ? (
+                <>
+                  <Link href="/profile" className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200">Profile</Link>
+                  <Link href="/submissions" className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200">Submissions</Link>
+                  <button onClick={() => signOut()} className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200">Logout</button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => signIn('google')} className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200">Login</button>
+                  <span className="text-zinc-500 dark:text-zinc-400">Settings</span>
+                  <span className="text-zinc-500 dark:text-zinc-400">Submissions</span>
+                  <span className="text-zinc-500 dark:text-zinc-400">Contests</span>
+                </>
+              )}
             </div>
           </div>
         </div>
