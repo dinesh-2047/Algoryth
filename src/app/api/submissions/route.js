@@ -8,7 +8,7 @@ export async function GET() {
     const data = await fs.readFile(submissionsFile, 'utf8');
     const submissions = JSON.parse(data);
     return Response.json(submissions);
-  } catch (error) {
+  } catch {
     return Response.json({ error: 'Failed to read submissions' }, { status: 500 });
   }
 }
@@ -29,7 +29,7 @@ export async function POST(request) {
     submissions.push(newSubmission);
     await fs.writeFile(submissionsFile, JSON.stringify(submissions, null, 2));
     return Response.json(newSubmission, { status: 201 });
-  } catch (error) {
+  } catch {
     return Response.json({ error: 'Failed to save submission' }, { status: 500 });
   }
 }

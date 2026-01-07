@@ -1,23 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 export default function SubmissionsPage() {
   const [submissions, setSubmissions] = useState([]);
-  const [filtered, setFiltered] = useState([]);
   const [filter, setFilter] = useState("");
 
   useEffect(() => {
     fetch('/api/submissions')
       .then(res => res.json())
-      .then(data => {
-        setSubmissions(data);
-        setFiltered(data);
-      });
+      .then(data => setSubmissions(data));
   }, []);
 
-  useEffect(() => {
-    setFiltered(submissions.filter(s => s.problemId.includes(filter) || s.status.includes(filter)));
+  const filtered = useMemo(() => {
+    return submissions.filter(s => s.problemId.includes(filter) || s.status.includes(filter));
   }, [filter, submissions]);
 
   return (

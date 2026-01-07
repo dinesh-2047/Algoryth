@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import CodeEditor from "./CodeEditor";
 import SplitPane from "./SplitPane";
@@ -28,7 +28,7 @@ export default function ProblemWorkspace({ problem }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           problemId: problem.id,
-          code: code || starterCode,
+          code: code || `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
           status: 'Accepted' // Mock accepted
         })
       });
@@ -37,7 +37,7 @@ export default function ProblemWorkspace({ problem }) {
       } else {
         setLastSubmissionStatus("Wrong Answer");
       }
-    } catch (error) {
+    } catch {
       setLastSubmissionStatus("Error");
     }
     setIsSubmitting(false);

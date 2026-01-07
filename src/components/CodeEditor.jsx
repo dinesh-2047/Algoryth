@@ -13,10 +13,7 @@ export default function CodeEditor({
   const [code, setCode] = useState(initialCode || "");
   const [language, setLanguage] = useState(initialLanguage);
   const [theme, setTheme] = useState("vs-dark");
-
-  useEffect(() => {
-    setCode(initialCode || "");
-  }, [initialCode]);
+  const [isFormatting, setIsFormatting] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia?.("(prefers-color-scheme: dark)");

@@ -52,7 +52,7 @@ export async function GET(request, { params }) {
       difficultyBreakdown,
       problemStatuses
     });
-  } catch (error) {
+  } catch {
     return Response.json({ error: 'Failed to calculate progress' }, { status: 500 });
   }
 }
