@@ -1,0 +1,30 @@
+frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/app/**
+
+api:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/app/api/**
+
+ui:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/components/**
+          - src/app/globals.css
+
+docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+
+config:
+  - changed-files:
+      - any-glob-to-any-file:
+          - next.config.*
+          - jsconfig.json
+          - eslint.config.*
+          - postcss.config.*
+          - package.json
+          - package-lock.json
