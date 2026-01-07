@@ -8,6 +8,7 @@ const Monaco = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 export default function CodeEditor({
   initialCode,
   initialLanguage = "javascript",
+  onChange,
 }) {
   const [code, setCode] = useState(initialCode || "");
   const [language, setLanguage] = useState(initialLanguage);
@@ -79,7 +80,7 @@ export default function CodeEditor({
           theme={theme}
           language={language}
           value={code}
-          onChange={(v) => setCode(v ?? "")}
+          onChange={(v) => { setCode(v ?? ""); onChange?.(v ?? ""); }}
           options={editorOptions}
         />
       </div>
