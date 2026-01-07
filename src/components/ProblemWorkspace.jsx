@@ -4,9 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import CodeEditor from "./CodeEditor";
 import SplitPane from "./SplitPane";
+import { TabContentSkeleton, LoadingSpinner } from "./Skeleton";
 
 export default function ProblemWorkspace({ problem }) {
   const [activeTab, setActiveTab] = useState("description");
+  const [tabLoading, setTabLoading] = useState(false);
+  const [navigationLoading, setNavigationLoading] = useState(false);
+  const [runLoading, setRunLoading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
 
   const tabs = [
     { id: "description", label: "Description" },
@@ -14,6 +19,17 @@ export default function ProblemWorkspace({ problem }) {
     { id: "solutions", label: "Solutions" },
     { id: "submissions", label: "Submissions" },
   ];
+
+  const handleTabChange = (tabId) => {
+    if (tabId !== activeTab) {
+      setTabLoading(true);
+      // Small delay to show loading state for better UX
+      setTimeout(() => {
+        setActiveTab(tabId);
+        setTabLoading(false);
+      }, 150);
+    }
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -183,12 +199,13 @@ export default function ProblemWorkspace({ problem }) {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
+              disabled={tabLoading}
               className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-semibold ${
                 activeTab === tab.id
                   ? "bg-black text-white dark:bg-white dark:text-black"
                   : "border border-black/10 text-zinc-500 hover:text-zinc-700 dark:border-white/10 dark:text-zinc-400 dark:hover:text-zinc-200"
-              }`}
+              } ${tabLoading ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               {tab.label}
             </button>
@@ -208,7 +225,7 @@ export default function ProblemWorkspace({ problem }) {
       </div>
 
       <article className="min-h-0 flex-1 overflow-auto px-5 py-5">
-        {renderTabContent()}
+        {tabLoading ? <TabContentSkeleton /> : renderTabContent()}
       </article>
     </div>
   );
@@ -254,32 +271,48 @@ export default function ProblemWorkspace({ problem }) {
             type="button"
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white text-sm text-zinc-700 hover:bg-black/3 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
             aria-label="Previous"
+            disabled={navigationLoading}
           >
-            {"<"}
+            {navigationLoading ? <LoadingSpinner size="sm" /> : "<"}
           </button>
           <button
             type="button"
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white text-sm text-zinc-700 hover:bg-black/3 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
             aria-label="Next"
+            disabled={navigationLoading}
           >
-            {">"}
+            {navigationLoading ? <LoadingSpinner size="sm" /> : ">"}
           </button>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             type="button"
-            disabled
-            className="inline-flex h-9 items-center justify-center rounded-full bg-zinc-200 px-4 text-sm font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-400"
+            disabled={runLoading}
+            className="inline-flex h-9 items-center justify-center rounded-full bg-zinc-200 px-4 text-sm font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-400 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Run
+            {runLoading ? (
+              <>
+                <LoadingSpinner size="sm" className="mr-2" />
+                Running...
+              </>
+            ) : (
+              "Run"
+            )}
           </button>
           <button
             type="button"
-            disabled
-            className="inline-flex h-9 items-center justify-center rounded-full bg-zinc-200 px-4 text-sm font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-400"
+            disabled={submitLoading}
+            className="inline-flex h-9 items-center justify-center rounded-full bg-zinc-200 px-4 text-sm font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-400 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Submit
+            {submitLoading ? (
+              <>
+                <LoadingSpinner size="sm" className="mr-2" />
+                Submitting...
+              </>
+            ) : (
+              "Submit"
+            )}
           </button>
         </div>
       </div>

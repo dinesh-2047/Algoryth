@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { ProblemListSkeleton } from "../components/Skeleton";
 
 export default function Home() {
   const [recommendedProblems, setRecommendedProblems] = useState([]);
@@ -71,9 +72,7 @@ export default function Home() {
 
           <div className="divide-y divide-black/10 dark:divide-white/10">
             {loading ? (
-              <div className="px-6 py-4 text-sm text-zinc-500 dark:text-zinc-400">
-                Loading problems...
-              </div>
+              <ProblemListSkeleton count={3} />
             ) : (
               recommendedProblems.map((p) => (
                 <Link
