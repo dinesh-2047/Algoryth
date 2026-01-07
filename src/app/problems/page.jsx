@@ -97,11 +97,13 @@ function ProblemsPageContent() {
   const allTags = ["arrays", "hash-map", "stack", "dp"];
 
   return (
-    <section className="flex flex-col gap-6">
+    <section className="flex flex-col gap-6 dark:bg-black">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Problems</h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-white">
+            Problems
+          </h1>
+          <p className="mt-1 text-sm text-zinc-800 dark:text-zinc-300">
             Browse problems. This uses mock data + API routes.
           </p>
         </div>
@@ -191,16 +193,17 @@ function ProblemsPageContent() {
             <Link
               key={p.id}
               href={`/problems/${p.slug}`}
+
               className="grid grid-cols-[56px_1.2fr_.45fr_.45fr_.9fr] gap-4 px-5 py-3 hover:bg-black/2 dark:hover:bg-white/5"
             >
-              <div className="flex items-center text-xs text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center text-xs text-zinc-600 dark:text-zinc-300">
                 {String(i + 1).padStart(2, "0")}
               </div>
               <div className="min-w-0">
-                <div className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                <div className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
                   {p.title}
                 </div>
-                <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-300">
                   {p.id}
                 </div>
               </div>
@@ -225,7 +228,7 @@ function ProblemsPageContent() {
                 {p.tags.map((t) => (
                   <span
                     key={`${p.id}-${t}`}
-                    className="inline-flex items-center rounded-full border border-black/10 bg-black/3 px-2.5 py-1 text-xs text-zinc-700 dark:border-white/10 dark:bg-white/10 dark:text-zinc-200"
+                    className="inline-flex items-center rounded-full border border-black/10 bg-amber-100 px-2.5 py-1 text-xs text-zinc-700 dark:border-white/10 dark:bg-white/10 dark:text-zinc-200"
                   >
                     {t}
                   </span>

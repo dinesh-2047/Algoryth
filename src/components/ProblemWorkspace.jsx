@@ -60,24 +60,24 @@ export default function ProblemWorkspace({ problem }) {
   };
 
   const leftPanel = (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
-      <div className="border-b border-black/10 bg-zinc-50 px-5 py-4 dark:border-white/10 dark:bg-zinc-950">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-amber-50 dark:border-white/10 dark:bg-zinc-900">
+      <div className="border-b border-black/10 bg-amber-100 px-5 py-4 dark:border-white/10 dark:bg-zinc-950">
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-xs text-zinc-500 dark:text-zinc-400">
               {problem.id}
             </div>
-            <h1 className="mt-1 text-xl font-semibold tracking-tight">
+            <h1 className="mt-1 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
               {problem.title}
             </h1>
           </div>
-          <span className="inline-flex items-center rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-medium text-zinc-700 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200">
+          <span className="inline-flex items-center rounded-full border border-black/10 bg-amber-100 px-3 py-1 text-xs font-medium text-zinc-700 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200">
             {problem.difficulty}
           </span>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-          <span className="inline-flex items-center rounded-full bg-black px-4 py-2 text-xs font-semibold text-white dark:bg-white dark:text-black">
+          <span className="inline-flex items-center rounded-full bg-amber-200 px-4 py-2 text-xs font-semibold text-zinc-800 dark:bg-white dark:text-black">
             Description
           </span>
           <span className="inline-flex items-center rounded-full border border-black/10 px-4 py-2 text-xs font-semibold text-zinc-500 dark:border-white/10 dark:text-zinc-400">
@@ -95,7 +95,7 @@ export default function ProblemWorkspace({ problem }) {
           {problem.tags.map((t) => (
             <span
               key={`${problem.id}-${t}`}
-              className="inline-flex items-center rounded-full border border-black/10 bg-black/3 px-3 py-1 text-xs text-zinc-700 dark:border-white/10 dark:bg-white/10 dark:text-zinc-200"
+              className="inline-flex items-center rounded-full border border-black/10 bg-amber-100 px-3 py-1 text-xs text-zinc-700 dark:border-white/10 dark:bg-white/10 dark:text-zinc-200"
             >
               {t}
             </span>
@@ -108,25 +108,25 @@ export default function ProblemWorkspace({ problem }) {
           {problem.statement}
         </p>
 
-        <h3 className="mt-6 text-sm font-semibold">Constraints</h3>
+        <h3 className="mt-6 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Constraints</h3>
         <ul className="mt-2 list-disc pl-5 text-sm text-zinc-700 dark:text-zinc-300">
           {problem.constraints.map((c) => (
             <li key={c}>{c}</li>
           ))}
         </ul>
 
-        <h3 className="mt-6 text-sm font-semibold">Examples</h3>
+        <h3 className="mt-6 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Examples</h3>
         <div className="mt-2 grid gap-3">
           {problem.examples.map((ex, i) => (
             <div
               key={`${problem.id}-ex-${i}`}
-              className="rounded-xl border border-black/10 bg-zinc-50 p-4 text-sm dark:border-white/10 dark:bg-zinc-950"
+              className="rounded-xl border border-black/10 bg-amber-50 p-4 text-sm dark:border-white/10 dark:bg-zinc-950"
             >
-              <div className="font-medium">Input</div>
+              <div className="font-medium text-zinc-900 dark:text-zinc-50">Input</div>
               <pre className="mt-1 overflow-auto whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
                 {ex.input}
               </pre>
-              <div className="mt-3 font-medium">Output</div>
+              <div className="mt-3 font-medium text-zinc-900 dark:text-zinc-50">Output</div>
               <pre className="mt-1 overflow-auto whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
                 {ex.output}
               </pre>
@@ -147,10 +147,10 @@ export default function ProblemWorkspace({ problem }) {
       className="h-215 lg:h-full"
       primary={<CodeEditor initialLanguage={language} initialCode={code || starterCode} onChange={setCode} onLanguageChange={setLanguage} />}
       secondary={
-        <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
-          <div className="border-b border-black/10 bg-zinc-50 dark:border-white/10 dark:bg-zinc-950">
+        <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-amber-50 dark:border-white/10 dark:bg-zinc-900">
+          <div className="border-b border-black/10 bg-amber-100 dark:border-white/10 dark:bg-zinc-950">
             <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold">
-              <span className="rounded-full bg-black px-3 py-1 text-white dark:bg-white dark:text-black">
+              <span className="rounded-full bg-amber-200 px-3 py-1 text-zinc-800 dark:bg-white dark:text-black">
                 Test Result
               </span>
               <span className="text-zinc-500 dark:text-zinc-400">Testcase</span>
@@ -166,24 +166,24 @@ export default function ProblemWorkspace({ problem }) {
 
   return (
     <section className="grid gap-4">
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white px-4 py-3 dark:border-white/10 dark:bg-zinc-900">
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-black/10 bg-amber-50 px-4 py-3 dark:border-white/10 dark:bg-zinc-900">
         <div className="flex items-center gap-2">
           <Link
             href="/problems"
-            className="inline-flex h-9 items-center rounded-full px-3 text-sm font-medium text-zinc-700 hover:bg-black/3 dark:text-zinc-200 dark:hover:bg-white/10"
+            className="inline-flex h-9 items-center rounded-full px-3 text-sm font-medium text-zinc-700 hover:bg-amber-100 dark:text-zinc-200 dark:hover:bg-white/10"
           >
             Problems
           </Link>
           <button
             type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white text-sm text-zinc-700 hover:bg-black/3 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-amber-50 text-sm text-zinc-700 hover:bg-amber-100 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
             aria-label="Previous"
           >
             {"<"}
           </button>
           <button
             type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white text-sm text-zinc-700 hover:bg-black/3 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-amber-50 text-sm text-zinc-700 hover:bg-amber-100 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
             aria-label="Next"
           >
             {">"}

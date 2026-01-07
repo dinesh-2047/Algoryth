@@ -22,11 +22,35 @@ export default function CodeEditor({
   }, [initialCode]);
 
   useEffect(() => {
+    const updateTheme = () => {
+      const isDark = document.documentElement.classList.contains("dark");
+      setTheme(isDark ? "vs-dark" : "vs");
+    };
+
+    // Initial theme check
+    updateTheme();
+
+    // Watch for changes to the dark class on document element
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    // Also listen to system preference changes as fallback
     const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
-    const update = () => setTheme(mq?.matches ? "vs-dark" : "vs");
-    update();
-    mq?.addEventListener?.("change", update);
-    return () => mq?.removeEventListener?.("change", update);
+    const handleSystemChange = () => {
+      // Only update if there's no stored theme preference
+      if (!localStorage.getItem("theme")) {
+        updateTheme();
+      }
+    };
+    mq?.addEventListener?.("change", handleSystemChange);
+
+    return () => {
+      observer.disconnect();
+      mq?.removeEventListener?.("change", handleSystemChange);
+    };
   }, []);
 
   const handleAutoFormat = async () => {
@@ -64,13 +88,13 @@ export default function CodeEditor({
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
-      <div className="border-b border-black/10 bg-zinc-50 px-5 py-3 dark:border-white/10 dark:bg-zinc-950">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-amber-50 dark:border-white/10 dark:bg-zinc-900">
+      <div className="border-b border-black/10 bg-amber-100 px-5 py-3 dark:border-white/10 dark:bg-zinc-950">
         <div className="flex items-center justify-between gap-3">
           <div className="text-sm font-semibold">Code</div>
           <div className="flex items-center gap-2">
             <select
-              className="h-9 rounded-full border border-black/10 bg-white px-3 text-xs font-semibold text-zinc-700 outline-none dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200"
+              className="h-9 rounded-full border border-black/10 bg-amber-50 px-3 text-xs font-semibold text-zinc-700 outline-none dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200"
               value={language}
               onChange={(e) => { setLanguage(e.target.value); onLanguageChange?.(e.target.value); }}
             >

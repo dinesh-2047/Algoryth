@@ -1,7 +1,10 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #fafafa;
+  /* Warm cream background for light mode */
+  --background: #f6f1e8;
   --foreground: #0a0a0a;
 }
 
@@ -13,14 +16,24 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0b0b0b;
+  :root:not(.light) {
+    --background: #000000;
     --foreground: #f4f4f5;
   }
 }
 
+.dark {
+  --background: #000000;
+  --foreground: #f4f4f5;
+  color-scheme: dark;
+}
+
 html {
   color-scheme: light dark;
+}
+
+html.dark {
+  background: #000000;
 }
 
 body {
@@ -28,6 +41,10 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system,
     Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+body.dark {
+  background: #000000 !important;
 }
 
 ::selection {
