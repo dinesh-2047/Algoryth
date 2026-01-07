@@ -66,13 +66,13 @@ export default function CodeEditor({
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
-      <div className="border-b border-black/10 bg-zinc-50 px-5 py-3 dark:border-white/10 dark:bg-zinc-950">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-amber-50 dark:border-white/10 dark:bg-black">
+      <div className="border-b border-black/10 bg-amber-100 px-5 py-3 dark:border-white/10 dark:bg-zinc-950">
         <div className="flex items-center justify-between gap-3">
           <div className="text-sm font-semibold">Code</div>
           <div className="flex items-center gap-2">
             <select
-              className="h-9 rounded-full border border-black/10 bg-white px-3 text-xs font-semibold text-zinc-700 outline-none dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200"
+              className="h-9 rounded-full border border-black/10 bg-amber-50 px-3 text-xs font-semibold text-zinc-700 outline-none dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200"
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
             >
@@ -89,7 +89,7 @@ export default function CodeEditor({
             </select>
             <button
               type="button"
-              className="inline-flex h-9 items-center justify-center rounded-full border border-black/10 bg-white px-4 text-xs font-semibold text-zinc-700 hover:bg-black/3 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
+              className="inline-flex h-9 items-center justify-center rounded-full border border-black/10 bg-amber-50 px-4 text-xs font-semibold text-zinc-700 hover:bg-amber-200 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
             >
               Auto
             </button>

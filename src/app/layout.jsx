@@ -22,7 +22,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-zinc-100 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-50`}
+        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-amber-50 text-zinc-900 antialiased dark:bg-black dark:text-zinc-50`}
       >
         <script
           dangerouslySetInnerHTML={{
@@ -40,7 +40,7 @@ export default function RootLayout({ children }) {
             `,
           }}
         />
-        <header className="sticky top-0 z-20 border-b border-black/10 bg-white/90 backdrop-blur dark:border-white/10 dark:bg-zinc-950/80">
+        <header className="sticky top-0 z-20 border-b border-black/10 bg-amber-50/90 backdrop-blur dark:border-white/10 dark:bg-black/80">
           <div className="mx-auto w-full max-w-7xl px-6">
             <div className="flex items-center gap-4 py-3">
               <Link href="/" className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
@@ -51,7 +51,7 @@ export default function RootLayout({ children }) {
                 <input
                   aria-label="Search"
                   placeholder="Search"
-                  className="h-9 w-full rounded-full border border-black/10 bg-white px-4 text-sm text-zinc-900 outline-none placeholder:text-zinc-500 focus:ring-2 focus:ring-black/10 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder:text-zinc-400 dark:focus:ring-white/10"
+                  className="h-9 w-full rounded-full border border-black/10 bg-amber-50 px-4 text-sm text-zinc-900 outline-none placeholder:text-zinc-500 focus:ring-2 focus:ring-black/10 dark:border-white/10 dark:bg-black dark:text-zinc-50 dark:placeholder:text-zinc-400 dark:focus:ring-white/10"
                 />
               </div>
 
@@ -59,7 +59,7 @@ export default function RootLayout({ children }) {
                 <ThemeToggle />
                 <button
                   type="button"
-                  className="inline-flex h-9 items-center justify-center rounded-full bg-black px-4 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+                  className="inline-flex h-9 items-center justify-center rounded-full bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
                 >
                   Sign in
                 </button>
@@ -69,13 +69,13 @@ export default function RootLayout({ children }) {
             <div className="flex items-center gap-2 pb-3 text-xs font-semibold uppercase tracking-wide">
               <Link
                 href="/"
-                className="rounded-full px-3 py-2 text-zinc-700 hover:bg-black/3 dark:text-zinc-300 dark:hover:bg-white/10"
+                className="rounded-full px-3 py-2 text-zinc-700 hover:bg-amber-100 dark:text-zinc-300 dark:hover:bg-white/10"
               >
                 Home
               </Link>
               <Link
                 href="/problems"
-                className="rounded-full px-3 py-2 text-zinc-700 hover:bg-black/3 dark:text-zinc-300 dark:hover:bg-white/10"
+                className="rounded-full px-3 py-2 text-zinc-700 hover:bg-amber-100 dark:text-zinc-300 dark:hover:bg-white/10"
               >
                 Problems
               </Link>
