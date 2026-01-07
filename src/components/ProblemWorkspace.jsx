@@ -9,8 +9,7 @@ export default function ProblemWorkspace({ problem }) {
   const [executionResults, setExecutionResults] = useState(null);
 
   const starterCode = useMemo(
-    () =>
-      `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
+    () => `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
     [problem.title]
   );
 
@@ -201,17 +200,19 @@ export default function ProblemWorkspace({ problem }) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            disabled
-            className="inline-flex h-9 items-center justify-center rounded-full bg-zinc-200 px-4 text-sm font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-400"
+            onClick={handleRun}
+            disabled={isRunning || isSubmitting}
+            className="inline-flex h-9 items-center justify-center rounded-full bg-black px-4 text-sm font-medium text-white hover:bg-black/90 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-white/90"
           >
-            Run
+            {isRunning ? "Running..." : "Run"}
           </button>
           <button
             type="button"
-            disabled
-            className="inline-flex h-9 items-center justify-center rounded-full bg-zinc-200 px-4 text-sm font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-400"
+            onClick={handleSubmit}
+            disabled={isRunning || isSubmitting}
+            className="inline-flex h-9 items-center justify-center rounded-full bg-black px-4 text-sm font-medium text-white hover:bg-black/90 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-white/90"
           >
-            Submit
+            {isSubmitting ? "Submitting..." : "Submit"}
           </button>
         </div>
       </div>
