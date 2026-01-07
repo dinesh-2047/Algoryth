@@ -8,10 +8,12 @@ const Monaco = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 export default function CodeEditor({
   initialCode,
   initialLanguage = "javascript",
+  onRun,
 }) {
   const [code, setCode] = useState(initialCode || "");
   const [language, setLanguage] = useState(initialLanguage);
   const [theme, setTheme] = useState("vs-dark");
+  const [isRunning, setIsRunning] = useState(false);
 
   useEffect(() => {
     setCode(initialCode || "");
@@ -68,6 +70,19 @@ export default function CodeEditor({
               className="inline-flex h-9 items-center justify-center rounded-full border border-black/10 bg-white px-4 text-xs font-semibold text-zinc-700 hover:bg-black/3 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
             >
               Auto
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (onRun) {
+                  setIsRunning(true);
+                  onRun({ code, language }).finally(() => setIsRunning(false));
+                }
+              }}
+              disabled={isRunning || !onRun}
+              className="inline-flex h-9 items-center justify-center rounded-full border border-black/10 bg-white px-4 text-xs font-semibold text-zinc-700 hover:bg-black/3 disabled:opacity-50 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
+            >
+              {isRunning ? "Running..." : "Run"}
             </button>
           </div>
         </div>

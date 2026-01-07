@@ -1,16 +1,39 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import CodeEditor from "./CodeEditor";
 import SplitPane from "./SplitPane";
 
 export default function ProblemWorkspace({ problem }) {
+  const [executionResults, setExecutionResults] = useState(null);
+
   const starterCode = useMemo(
     () =>
       `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
     [problem.title]
   );
+
+  const handleRun = async ({ code, language }) => {
+    try {
+      const response = await fetch('/api/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code,
+          language,
+          problemId: problem.id,
+        }),
+      });
+
+      const data = await response.json();
+      setExecutionResults(data);
+    } catch (error) {
+      setExecutionResults({ error: 'Failed to execute code. Please try again.' });
+    }
+  };
 
   const leftPanel = (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
@@ -98,7 +121,7 @@ export default function ProblemWorkspace({ problem }) {
       minSecondary={220}
       storageKey={`algoryth.split.editor.${problem.slug}`}
       className="h-215 lg:h-full"
-      primary={<CodeEditor initialLanguage="javascript" initialCode={starterCode} />}
+      primary={<CodeEditor initialLanguage="javascript" initialCode={starterCode} onRun={handleRun} />}
       secondary={
         <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
           <div className="border-b border-black/10 bg-zinc-50 dark:border-white/10 dark:bg-zinc-950">
@@ -109,8 +132,40 @@ export default function ProblemWorkspace({ problem }) {
               <span className="text-zinc-500 dark:text-zinc-400">Testcase</span>
             </div>
           </div>
-          <div className="min-h-0 flex-1 overflow-auto px-4 pb-5 pt-3 text-center text-sm text-zinc-500 dark:text-zinc-400">
-            You must run your code first.
+          <div className="min-h-0 flex-1 overflow-auto px-4 pb-5 pt-3">
+            {executionResults ? (
+              <div className="space-y-3">
+                {executionResults.results?.map((result, index) => (
+                  <div key={index} className="rounded-lg border border-black/10 bg-zinc-50 p-3 dark:border-white/10 dark:bg-zinc-950">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                        result.passed ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                      }`}>
+                        {result.passed ? 'PASS' : 'FAIL'}
+                      </span>
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                        {result.time}ms • {result.memory}KB
+                      </span>
+                    </div>
+                    <div className="text-xs text-zinc-700 dark:text-zinc-300">
+                      <div><strong>Input:</strong> {result.input}</div>
+                      <div><strong>Expected:</strong> {result.expected}</div>
+                      <div><strong>Output:</strong> {result.output}</div>
+                      {!result.passed && <div className="text-red-600 dark:text-red-400 mt-1">{result.error}</div>}
+                    </div>
+                  </div>
+                ))}
+                {executionResults.error && (
+                  <div className="text-center text-sm text-red-600 dark:text-red-400">
+                    {executionResults.error}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+                You must run your code first.
+              </div>
+            )}
           </div>
         </div>
       }

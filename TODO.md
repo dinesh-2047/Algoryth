@@ -1,32 +1,20 @@
-# TODO: Enhance CodeEditor and Replace Static Problems with Database
+# TODO: Implement Secure Code Execution Environment
 
-## 1. Install Dependencies
-- [ ] Install Prisma, @prisma/client, and pg (PostgreSQL client)
+## 1. Update Database Schema
+- [x] Add TestCase model to prisma/schema.prisma linked to Problem
 
-## 2. Set Up Prisma
-- [ ] Initialize Prisma (npx prisma init)
-- [ ] Create schema.prisma with models for Problem, User, Submission
-- [ ] Generate Prisma client
+## 2. Create Execution API
+- [x] Create src/app/api/execute/route.js using Judge0 API for secure code execution
 
-## 3. Migrate Data from problems.js
-- [ ] Create a migration script to insert data from problems.js into DB
-- [ ] Run Prisma migrations
+## 3. Update CodeEditor Component
+- [x] Add "Run" button to src/components/CodeEditor.jsx that sends code and language to /api/execute
 
-## 4. Enhance CodeEditor.jsx
-- [ ] Enable all languages in selector (JavaScript, TypeScript, C++, Python)
-- [ ] Enable auto-completion in Monaco options
-- [ ] Add theme selector (vs-dark, vs-light, etc.)
-- [ ] Add "Run Code" button that calls /api/execute
+## 4. Update ProblemWorkspace Component
+- [x] Enable Run button in src/components/ProblemWorkspace.jsx
+- [x] Add state for execution results
+- [x] Display pass/fail, execution time, and memory usage in test panel
 
-## 5. Update APIs
-- [ ] Modify /api/problems/route.js to query DB instead of static file
-- [ ] Modify /api/problems/[slug]/route.js to query DB
-- [ ] Add new /api/execute/route.js for code execution (basic Node.js eval)
-
-## 6. Remove Static File
-- [ ] Delete src/lib/problems.js after migration
-
-## 7. Test and Followup
-- [ ] Test the app locally
-- [ ] Ensure execution engine works
-- [ ] Verify DB queries work
+## 5. Followup Steps
+- [ ] Run Prisma migration
+- [ ] Install axios for API calls if needed
+- [ ] Test execution flow
