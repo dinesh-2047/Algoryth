@@ -6,18 +6,14 @@ import { useEffect, useMemo, useState } from "react";
 const Monaco = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
 export default function CodeEditor({
-  initialCode,
-  initialLanguage = "javascript",
+  code,
+  language = "javascript",
+  onCodeChange,
+  onLanguageChange,
   onRun,
 }) {
-  const [code, setCode] = useState(initialCode || "");
-  const [language, setLanguage] = useState(initialLanguage);
   const [theme, setTheme] = useState("vs-dark");
   const [isRunning, setIsRunning] = useState(false);
-
-  useEffect(() => {
-    setCode(initialCode || "");
-  }, [initialCode]);
 
   useEffect(() => {
     const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
@@ -52,7 +48,10 @@ export default function CodeEditor({
             <select
               className="h-9 rounded-full border border-black/10 bg-white px-3 text-xs font-semibold text-zinc-700 outline-none dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200"
               value={language}
-              onChange={(e) => setLanguage(e.target.value)}
+              onChange={(e) => {
+                const newLanguage = e.target.value;
+                if (onLanguageChange) onLanguageChange(newLanguage);
+              }}
             >
               <option value="javascript">JavaScript</option>
               <option value="typescript" disabled>
@@ -94,7 +93,9 @@ export default function CodeEditor({
           theme={theme}
           language={language}
           value={code}
-          onChange={(v) => setCode(v ?? "")}
+          onChange={(v) => {
+            if (onCodeChange) onCodeChange(v ?? "");
+          }}
           options={editorOptions}
         />
       </div>

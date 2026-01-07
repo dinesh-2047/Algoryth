@@ -7,14 +7,18 @@ import SplitPane from "./SplitPane";
 
 export default function ProblemWorkspace({ problem }) {
   const [executionResults, setExecutionResults] = useState(null);
-
   const starterCode = useMemo(
     () =>
       `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
     [problem.title]
   );
 
+  const [code, setCode] = useState(starterCode);
+  const [language, setLanguage] = useState("javascript");
+  const [isRunning, setIsRunning] = useState(false);
+
   const handleRun = async ({ code, language }) => {
+    setIsRunning(true);
     try {
       const response = await fetch('/api/execute', {
         method: 'POST',
@@ -32,6 +36,8 @@ export default function ProblemWorkspace({ problem }) {
       setExecutionResults(data);
     } catch (error) {
       setExecutionResults({ error: 'Failed to execute code. Please try again.' });
+    } finally {
+      setIsRunning(false);
     }
   };
 
@@ -121,7 +127,7 @@ export default function ProblemWorkspace({ problem }) {
       minSecondary={220}
       storageKey={`algoryth.split.editor.${problem.slug}`}
       className="h-215 lg:h-full"
-      primary={<CodeEditor initialLanguage="javascript" initialCode={starterCode} onRun={handleRun} />}
+      primary={<CodeEditor code={code} language={language} onCodeChange={setCode} onLanguageChange={setLanguage} onRun={handleRun} />}
       secondary={
         <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
           <div className="border-b border-black/10 bg-zinc-50 dark:border-white/10 dark:bg-zinc-950">
@@ -201,10 +207,11 @@ export default function ProblemWorkspace({ problem }) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            disabled
-            className="inline-flex h-9 items-center justify-center rounded-full bg-zinc-200 px-4 text-sm font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-400"
+            onClick={() => handleRun({ code, language })}
+            disabled={isRunning}
+            className="inline-flex h-9 items-center justify-center rounded-full border border-black/10 bg-white px-4 text-sm font-medium text-zinc-700 hover:bg-black/3 disabled:opacity-50 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
           >
-            Run
+            {isRunning ? "Running..." : "Run"}
           </button>
           <button
             type="button"
