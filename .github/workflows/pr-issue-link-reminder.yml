@@ -1,0 +1,50 @@
+name: PR issue link reminder
+
+on:
+  pull_request_target:
+    types: [opened, edited, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR body for auto-close keywords
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = (context.payload.pull_request.body || "").toLowerCase();
+            const isDraft = Boolean(context.payload.pull_request.draft);
+            if (isDraft) return;
+
+            const keywords = [
+              "fixes #",
+              "fix #",
+              "fixed #",
+              "closes #",
+              "close #",
+              "closed #",
+              "resolves #",
+              "resolve #",
+              "resolved #",
+            ];
+
+            const hasKeyword = keywords.some(k => body.includes(k));
+            if (hasKeyword) return;
+
+            const prNumber = context.payload.pull_request.number;
+            const msg = [
+              "Thanks for the PR!",
+              "",
+              "If this PR addresses an issue, please link it using an auto-close keyword so GitHub closes it on merge:",
+              "- Fixes #123 / Closes #123 / Resolves #123",
+            ].join("\n");
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: msg,
+            });

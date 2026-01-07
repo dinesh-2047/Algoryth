@@ -1,16 +1,63 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import CodeEditor from "./CodeEditor";
 import SplitPane from "./SplitPane";
 
 export default function ProblemWorkspace({ problem }) {
+  const [code, setCode] = useState("");
+  const [language, setLanguage] = useState("javascript");
+  const [isRunning, setIsRunning] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastSubmissionStatus, setLastSubmissionStatus] = useState(null);
+
   const starterCode = useMemo(
-    () =>
-      `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
+    () => `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
     [problem.title]
   );
+
+  const handleRun = async () => {
+    setIsRunning(true);
+    try {
+      const response = await fetch('/api/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: code || starterCode,
+          language
+        })
+      });
+      const result = await response.json();
+      setLastSubmissionStatus(`${result.status} in ${result.language}`);
+    } catch {
+      setLastSubmissionStatus("Execution Error");
+    }
+    setIsRunning(false);
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/submissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          problemId: problem.id,
+          code: code || starterCode,
+          status: 'Accepted' // Mock accepted
+        })
+      });
+      if (response.ok) {
+        setLastSubmissionStatus("Accepted");
+      } else {
+        setLastSubmissionStatus("Wrong Answer");
+      }
+    } catch {
+      setLastSubmissionStatus("Error");
+    }
+    setIsSubmitting(false);
+  };
 
   const leftPanel = (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
@@ -98,7 +145,7 @@ export default function ProblemWorkspace({ problem }) {
       minSecondary={220}
       storageKey={`algoryth.split.editor.${problem.slug}`}
       className="h-215 lg:h-full"
-      primary={<CodeEditor initialLanguage="javascript" initialCode={starterCode} />}
+      primary={<CodeEditor initialLanguage={language} initialCode={code || starterCode} onChange={setCode} onLanguageChange={setLanguage} />}
       secondary={
         <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
           <div className="border-b border-black/10 bg-zinc-50 dark:border-white/10 dark:bg-zinc-950">
@@ -110,7 +157,7 @@ export default function ProblemWorkspace({ problem }) {
             </div>
           </div>
           <div className="min-h-0 flex-1 overflow-auto px-4 pb-5 pt-3 text-center text-sm text-zinc-500 dark:text-zinc-400">
-            You must run your code first.
+            {lastSubmissionStatus || "You must run your code first."}
           </div>
         </div>
       }
@@ -146,17 +193,19 @@ export default function ProblemWorkspace({ problem }) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            disabled
-            className="inline-flex h-9 items-center justify-center rounded-full bg-zinc-200 px-4 text-sm font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-400"
+            onClick={handleRun}
+            disabled={isRunning || isSubmitting}
+            className="inline-flex h-9 items-center justify-center rounded-full bg-black px-4 text-sm font-medium text-white hover:bg-black/90 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-white/90"
           >
-            Run
+            {isRunning ? "Running..." : "Run"}
           </button>
           <button
             type="button"
-            disabled
-            className="inline-flex h-9 items-center justify-center rounded-full bg-zinc-200 px-4 text-sm font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-400"
+            onClick={handleSubmit}
+            disabled={isRunning || isSubmitting}
+            className="inline-flex h-9 items-center justify-center rounded-full bg-black px-4 text-sm font-medium text-white hover:bg-black/90 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-white/90"
           >
-            Submit
+            {isSubmitting ? "Submitting..." : "Submit"}
           </button>
         </div>
       </div>
