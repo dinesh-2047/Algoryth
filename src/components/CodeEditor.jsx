@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
+import { format } from "prettier";
 
 const Monaco = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
@@ -12,6 +13,7 @@ export default function CodeEditor({
   const [code, setCode] = useState(initialCode || "");
   const [language, setLanguage] = useState(initialLanguage);
   const [theme, setTheme] = useState("vs-dark");
+  const [isFormatting, setIsFormatting] = useState(false);
 
   useEffect(() => {
     setCode(initialCode || "");
@@ -24,6 +26,24 @@ export default function CodeEditor({
     mq?.addEventListener?.("change", update);
     return () => mq?.removeEventListener?.("change", update);
   }, []);
+
+  const handleAutoFormat = async () => {
+    setIsFormatting(true);
+    try {
+      const parser = language === "javascript" ? "babel" : "babel"; // Default to babel for now
+      const formatted = await format(code, {
+        parser,
+        semi: true,
+        singleQuote: true,
+        trailingComma: "es5",
+      });
+      setCode(formatted);
+    } catch (error) {
+      console.error("Formatting failed:", error);
+    } finally {
+      setIsFormatting(false);
+    }
+  };
 
   const editorOptions = useMemo(
     () => ({
@@ -65,9 +85,11 @@ export default function CodeEditor({
             </select>
             <button
               type="button"
-              className="inline-flex h-9 items-center justify-center rounded-full border border-black/10 bg-white px-4 text-xs font-semibold text-zinc-700 hover:bg-black/3 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
+              className="inline-flex h-9 items-center justify-center rounded-full border border-black/10 bg-white px-4 text-xs font-semibold text-zinc-700 hover:bg-black/3 disabled:opacity-50 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
+              onClick={handleAutoFormat}
+              disabled={isFormatting}
             >
-              Auto
+              {isFormatting ? "Formatting..." : "Auto"}
             </button>
           </div>
         </div>
