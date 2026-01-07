@@ -18,10 +18,15 @@ export function GET(request) {
 
   // Filter by search
   if (search) {
-    filtered = filtered.filter(p =>
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
-      p.tags.some(tag => tag.toLowerCase().includes(search.toLowerCase()))
-    );
+    const searchLower = search.toLowerCase();
+    filtered = filtered.filter(p => {
+      const problem = problems.find(prob => prob.id === p.id);
+      return (
+        p.title.toLowerCase().includes(searchLower) ||
+        p.tags.some(tag => tag.toLowerCase().includes(searchLower)) ||
+        problem.statement.toLowerCase().includes(searchLower)
+      );
+    });
   }
 
   // Filter by difficulty

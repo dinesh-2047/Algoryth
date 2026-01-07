@@ -39,26 +39,24 @@ function ProblemsPageContent() {
     if (searchQuery) params.set('search', searchQuery);
     if (diff) params.set('difficulty', diff);
     if (tags.length > 0) params.set('tags', tags.join(','));
-    params.set('sort', sortBy);
+    if (sortBy && sortBy !== 'title') params.set('sort', sortBy);
 
-    const res = await fetch(`/api/problems?${params}`);
+    const queryString = params.toString();
+    const url = `/api/problems${queryString ? `?${queryString}` : ''}`;
+
+    const res = await fetch(url);
     const data = await res.json();
     setProblems(data.items);
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchProblems(urlSearch, urlDifficulty, urlTags, urlSort);
   }, [urlSearch, urlDifficulty, urlTags, urlSort]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearch(urlSearch);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDifficulty(urlDifficulty);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedTags(urlTags);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSort(urlSort);
   }, [urlSearch, urlDifficulty, urlTags, urlSort]);
 
@@ -67,9 +65,10 @@ function ProblemsPageContent() {
     if (newSearch) params.set('search', newSearch);
     if (newDifficulty) params.set('difficulty', newDifficulty);
     if (newTags.length > 0) params.set('tags', newTags.join(','));
-    params.set('sort', newSort);
+    if (newSort && newSort !== 'title') params.set('sort', newSort); // Only include sort if not default
 
-    router.push(`/problems?${params}`, { scroll: false });
+    const queryString = params.toString();
+    router.push(`/problems${queryString ? `?${queryString}` : ''}`, { scroll: false });
   };
 
   const handleSearch = (value) => {
@@ -108,13 +107,26 @@ function ProblemsPageContent() {
         </div>
 
         <div className="w-full sm:w-80">
-          <input
-            aria-label="Search problems"
-            placeholder="Search problems..."
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="h-10 w-full rounded-xl border border-black/10 bg-white px-4 text-sm text-zinc-900 outline-none placeholder:text-zinc-500 focus:ring-2 focus:ring-black/10 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-50 dark:placeholder:text-zinc-400 dark:focus:ring-white/10"
-          />
+          <div className="relative">
+            <input
+              aria-label="Search problems"
+              placeholder="Search problems..."
+              value={search}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="h-10 w-full rounded-xl border border-black/10 bg-white px-4 pr-10 text-sm text-zinc-900 outline-none placeholder:text-zinc-500 focus:ring-2 focus:ring-black/10 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-50 dark:placeholder:text-zinc-400 dark:focus:ring-white/10"
+            />
+            {search && (
+              <button
+                onClick={() => handleSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+                aria-label="Clear search"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
