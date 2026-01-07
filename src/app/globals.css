@@ -4,8 +4,8 @@
 
 :root {
   /* Warm cream background for light mode */
-  --background: #f6f1e8;
-  --foreground: #0a0a0a;
+  --background: #f8f3e6;
+  --foreground: #2b2116;
 }
 
 @theme inline {
@@ -17,14 +17,14 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
-    --background: #000000;
-    --foreground: #f4f4f5;
+    --background: #18131f;
+    --foreground: #f6ede0;
   }
 }
 
 .dark {
-  --background: #000000;
-  --foreground: #f4f4f5;
+  --background: #18131f;
+  --foreground: #f6ede0;
   color-scheme: dark;
 }
 
@@ -33,7 +33,7 @@ html {
 }
 
 html.dark {
-  background: #000000;
+  background: var(--background);
 }
 
 body {
@@ -41,10 +41,6 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system,
     Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-}
-
-body.dark {
-  background: #000000 !important;
 }
 
 ::selection {

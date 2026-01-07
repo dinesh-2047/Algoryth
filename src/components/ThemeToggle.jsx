@@ -13,8 +13,10 @@ export default function ThemeToggle() {
     const root = document.documentElement;
     if (theme === "dark") {
       root.classList.add("dark");
+      root.classList.remove("light");
     } else {
       root.classList.remove("dark");
+      root.classList.add("light");
     }
   }, [theme, mounted]);
 
@@ -39,7 +41,7 @@ export default function ThemeToggle() {
     return (
       <button
         type="button"
-        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-amber-50 text-zinc-700 hover:bg-amber-200 dark:border-white/10 dark:bg-black dark:text-zinc-200 dark:hover:bg-white/10"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#deceb7] bg-[#fdf7ed] text-[#5d5245] hover:bg-[#f2e3cc] dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
         aria-label="Toggle theme"
       >
         <svg
@@ -63,7 +65,7 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={toggleTheme}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-amber-50 text-zinc-700 hover:bg-amber-200 dark:border-white/10 dark:bg-black dark:text-zinc-200 dark:hover:bg-white/10"
+      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#deceb7] bg-[#fdf7ed] text-[#5d5245] hover:bg-[#f2e3cc] dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
       aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
     >
       {theme === "light" ? (
