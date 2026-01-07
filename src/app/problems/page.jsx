@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useState, useMemo } from "react";
 import { problems } from "../../lib/problems";
 
 function difficultyClasses(difficulty) {
@@ -15,6 +18,26 @@ function difficultyClasses(difficulty) {
 }
 
 export default function ProblemsPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredProblems = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return problems;
+    }
+
+    return problems.filter(problem =>
+      problem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      problem.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [searchTerm]);
+
+  const handleSearch = (value) => {
+    setSearchTerm(value);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+  };
   return (
     <section className="flex flex-col gap-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -26,11 +49,26 @@ export default function ProblemsPage() {
         </div>
 
         <div className="w-full sm:w-80">
-          <input
-            aria-label="Search problems"
-            placeholder="Search (UI only)"
-            className="h-10 w-full rounded-xl border border-black/10 bg-white px-4 text-sm text-zinc-900 outline-none placeholder:text-zinc-500 focus:ring-2 focus:ring-black/10 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-50 dark:placeholder:text-zinc-400 dark:focus:ring-white/10"
-          />
+          <div className="relative">
+            <input
+              aria-label="Search problems"
+              placeholder="Search problems..."
+              value={searchTerm}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="h-10 w-full rounded-xl border border-black/10 bg-white px-4 pr-10 text-sm text-zinc-900 outline-none placeholder:text-zinc-500 focus:ring-2 focus:ring-black/10 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-50 dark:placeholder:text-zinc-400 dark:focus:ring-white/10"
+            />
+            {searchTerm && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+                aria-label="Clear search"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -43,7 +81,7 @@ export default function ProblemsPage() {
         </div>
 
         <div className="divide-y divide-black/10 dark:divide-white/10">
-          {problems.map((p, i) => (
+          {filteredProblems.map((p, i) => (
             <Link
               key={p.id}
               href={`/problems/${p.slug}`}
