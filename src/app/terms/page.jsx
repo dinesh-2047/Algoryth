@@ -5,17 +5,17 @@ export const metadata = {
 export default function TermsAndConditions() {
   return (
     <section className="mx-auto max-w-4xl px-4 py-12">
-      <div className="overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
-        <div className="border-b border-black/10 bg-zinc-50 px-6 py-5 dark:border-white/10 dark:bg-zinc-950">
+      <div className="overflow-hidden rounded-2xl border border-[#e0d5c2] bg-white dark:border-[#3c3347] dark:bg-[#211d27]">
+        <div className="border-b border-[#e0d5c2] bg-[#f7f0e0] px-6 py-5 dark:border-[#3c3347] dark:bg-[#292331]">
           <h1 className="text-2xl font-semibold tracking-tight">
             Terms & Conditions
           </h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-[#6f6251] dark:text-[#b5a59c]">
             Last updated: 7 January 2026
           </p>
         </div>
 
-        <div className="px-6 py-8 text-sm leading-6 text-zinc-700 dark:text-zinc-300 space-y-8">
+        <div className="px-6 py-8 text-sm leading-6 text-[#5d5245] dark:text-[#d7ccbe] space-y-8">
           <section>
             <h2 className="font-semibold text-base">1. Acceptance of Terms</h2>
             <p className="mt-2">
