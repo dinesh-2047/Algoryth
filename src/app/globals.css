@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #fafafa;
-  --foreground: #0a0a0a;
+  /* Warm cream background for light mode */
+  --background: #f8f3e6;
+  --foreground: #2b2116;
 }
 
 @theme inline {
@@ -13,14 +16,24 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0b0b0b;
-    --foreground: #f4f4f5;
+  :root:not(.light) {
+    --background: #18131f;
+    --foreground: #f6ede0;
   }
+}
+
+.dark {
+  --background: #18131f;
+  --foreground: #f6ede0;
+  color-scheme: dark;
 }
 
 html {
   color-scheme: light dark;
+}
+
+html.dark {
+  background: var(--background);
 }
 
 body {
