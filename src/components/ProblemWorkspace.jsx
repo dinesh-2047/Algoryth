@@ -5,58 +5,39 @@ import Link from "next/link";
 import CodeEditor from "./CodeEditor";
 import SplitPane from "./SplitPane";
 
-export default function ProblemWorkspace({ problem, onNext, onPrev }) {
-  const [code, setCode] = useState("");
-  const [language, setLanguage] = useState("javascript");
-  const [isRunning, setIsRunning] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [lastSubmissionStatus, setLastSubmissionStatus] = useState(null);
-
+export default function ProblemWorkspace({ problem }) {
+  const [executionResults, setExecutionResults] = useState(null);
   const starterCode = useMemo(
     () => `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
     [problem.title]
   );
 
-  const handleRun = async () => {
+  const [code, setCode] = useState(starterCode);
+  const [language, setLanguage] = useState("javascript");
+  const [isRunning, setIsRunning] = useState(false);
+
+  const handleRun = async ({ code, language }) => {
     setIsRunning(true);
     try {
       const response = await fetch('/api/execute', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          code: code || starterCode,
-          language
-        })
-      });
-      const result = await response.json();
-      setLastSubmissionStatus(`${result.status} in ${result.language}`);
-    } catch {
-      setLastSubmissionStatus("Execution Error");
-    }
-    setIsRunning(false);
-  };
-
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    try {
-      const response = await fetch('/api/submissions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+          code,
+          language,
           problemId: problem.id,
-          code: code || starterCode,
-          status: 'Accepted' // Mock accepted
-        })
+        }),
       });
-      if (response.ok) {
-        setLastSubmissionStatus("Accepted");
-      } else {
-        setLastSubmissionStatus("Wrong Answer");
-      }
-    } catch {
-      setLastSubmissionStatus("Error");
+
+      const data = await response.json();
+      setExecutionResults(data);
+    } catch (error) {
+      setExecutionResults({ error: 'Failed to execute code. Please try again.' });
+    } finally {
+      setIsRunning(false);
     }
-    setIsSubmitting(false);
   };
 
   const leftPanel = (
@@ -145,7 +126,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       minSecondary={220}
       storageKey={`algoryth.split.editor.${problem.slug}`}
       className="h-215 lg:h-full"
-      primary={<CodeEditor initialLanguage={language} initialCode={code || starterCode} onChange={setCode} onLanguageChange={setLanguage} />}
+      primary={<CodeEditor code={code} language={language} onCodeChange={setCode} onLanguageChange={setLanguage} onRun={handleRun} />}
       secondary={
         <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
           <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] dark:border-[#3c3347] dark:bg-[#292331]">
@@ -156,8 +137,40 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
               <span className="text-[#8a7a67] dark:text-[#b5a59c]">Testcase</span>
             </div>
           </div>
-          <div className="min-h-0 flex-1 overflow-auto px-4 pb-5 pt-3 text-center text-sm text-[#8a7a67] dark:text-[#b5a59c]">
-            {lastSubmissionStatus || "You must run your code first."}
+          <div className="min-h-0 flex-1 overflow-auto px-4 pb-5 pt-3">
+            {executionResults ? (
+              <div className="space-y-3">
+                {executionResults.results?.map((result, index) => (
+                  <div key={index} className="rounded-lg border border-black/10 bg-zinc-50 p-3 dark:border-white/10 dark:bg-zinc-950">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                        result.passed ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                      }`}>
+                        {result.passed ? 'PASS' : 'FAIL'}
+                      </span>
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                        {result.time}ms • {result.memory}KB
+                      </span>
+                    </div>
+                    <div className="text-xs text-zinc-700 dark:text-zinc-300">
+                      <div><strong>Input:</strong> {result.input}</div>
+                      <div><strong>Expected:</strong> {result.expected}</div>
+                      <div><strong>Output:</strong> {result.output}</div>
+                      {!result.passed && <div className="text-red-600 dark:text-red-400 mt-1">{result.error}</div>}
+                    </div>
+                  </div>
+                ))}
+                {executionResults.error && (
+                  <div className="text-center text-sm text-red-600 dark:text-red-400">
+                    {executionResults.error}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+                You must run your code first.
+              </div>
+            )}
           </div>
         </div>
       }
@@ -193,9 +206,9 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={handleRun}
-            disabled={isRunning || isSubmitting}
-            className="inline-flex h-9 items-center justify-center rounded-full bg-[#d69a44] px-4 text-sm font-medium text-[#2b1a09] hover:bg-[#c4852c] disabled:opacity-50 dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#e4b857]"
+            onClick={() => handleRun({ code, language })}
+            disabled={isRunning}
+            className="inline-flex h-9 items-center justify-center rounded-full border border-black/10 bg-white px-4 text-sm font-medium text-zinc-700 hover:bg-black/3 disabled:opacity-50 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
           >
             {isRunning ? "Running..." : "Run"}
           </button>

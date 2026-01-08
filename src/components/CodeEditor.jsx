@@ -8,19 +8,14 @@ import parserBabel from "prettier/plugins/babel";
 const Monaco = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
 export default function CodeEditor({
-  initialCode,
-  initialLanguage = "javascript",
-  onChange,
+  code,
+  language = "javascript",
+  onCodeChange,
   onLanguageChange,
+  onRun,
 }) {
-  const [code, setCode] = useState(initialCode || "");
-  const [language, setLanguage] = useState(initialLanguage);
   const [theme, setTheme] = useState("vs-dark");
-  const [isFormatting, setIsFormatting] = useState(false);
-
-  useEffect(() => {
-    setCode(initialCode || "");
-  }, [initialCode]);
+  const [isRunning, setIsRunning] = useState(false);
 
   useEffect(() => {
     const updateTheme = () => {
@@ -102,7 +97,10 @@ export default function CodeEditor({
             <select
               className="h-9 rounded-full border border-[#deceb7] bg-[#fff8ed] px-3 text-xs font-semibold text-[#5d5245] outline-none dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe]"
               value={language}
-              onChange={(e) => { setLanguage(e.target.value); onLanguageChange?.(e.target.value); }}
+              onChange={(e) => {
+                const newLanguage = e.target.value;
+                if (onLanguageChange) onLanguageChange(newLanguage);
+              }}
             >
               <option value="javascript">JavaScript</option>
               <option value="python">Python</option>
@@ -118,6 +116,19 @@ export default function CodeEditor({
             >
               {isFormatting ? "Formatting..." : "Auto"}
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (onRun) {
+                  setIsRunning(true);
+                  onRun({ code, language }).finally(() => setIsRunning(false));
+                }
+              }}
+              disabled={isRunning || !onRun}
+              className="inline-flex h-9 items-center justify-center rounded-full border border-black/10 bg-white px-4 text-xs font-semibold text-zinc-700 hover:bg-black/3 disabled:opacity-50 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
+            >
+              {isRunning ? "Running..." : "Run"}
+            </button>
           </div>
         </div>
       </div>
@@ -128,7 +139,9 @@ export default function CodeEditor({
           theme={theme}
           language={language}
           value={code}
-          onChange={(v) => setCode(v ?? "")}
+          onChange={(v) => {
+            if (onCodeChange) onCodeChange(v ?? "");
+          }}
           options={editorOptions}
         />
       </div>
