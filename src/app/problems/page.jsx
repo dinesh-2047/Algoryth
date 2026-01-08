@@ -42,8 +42,10 @@ export default function ProblemsPage() {
     <section className="flex flex-col gap-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Problems</h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <h1 className="text-2xl font-semibold tracking-tight text-[#2b2116] dark:text-[#f6ede0]">
+            Problems
+          </h1>
+          <p className="mt-1 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
             Browse problems. This uses mock data + API routes.
           </p>
         </div>
@@ -72,11 +74,58 @@ export default function ProblemsPage() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-950">
-        <div className="grid grid-cols-[56px_1.2fr_.45fr_.9fr] gap-4 border-b border-black/10 bg-zinc-50 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:border-white/10 dark:bg-black dark:text-zinc-400">
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-[#5d5245] dark:text-[#d7ccbe]">Difficulty:</label>
+          <select
+            value={urlDifficulty}
+            onChange={(e) => handleDifficulty(e.target.value)}
+            className="h-9 rounded-lg border border-[#deceb7] bg-white px-3 text-sm text-[#2b2116] outline-none dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#f6ede0]"
+          >
+            <option value="">All</option>
+            <option value="Easy">Easy</option>
+            <option value="Medium">Medium</option>
+            <option value="Hard">Hard</option>
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-[#5d5245] dark:text-[#d7ccbe]">Sort:</label>
+          <select
+            value={urlSort}
+            onChange={(e) => handleSort(e.target.value)}
+            className="h-9 rounded-lg border border-[#deceb7] bg-white px-3 text-sm text-[#2b2116] outline-none dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#f6ede0]"
+          >
+            <option value="title">Title</option>
+            <option value="difficulty">Difficulty</option>
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-[#5d5245] dark:text-[#d7ccbe]">Tags:</label>
+          <div className="flex flex-wrap gap-2">
+            {allTags.map(tag => (
+              <button
+                key={tag}
+                onClick={() => handleTag(tag)}
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs ${urlTags.includes(tag)
+                  ? "bg-[#d69a44] text-[#2b1a09] dark:bg-[#f2c66f] dark:text-[#231406]"
+                  : "border border-[#deceb7] text-[#5d5245] dark:border-[#40364f] dark:text-[#d7ccbe]"
+                  }`}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-[#e0d5c2] bg-white dark:border-[#3c3347] dark:bg-[#211d27]">
+        <div className="grid grid-cols-[56px_1.2fr_.45fr_.45fr_.9fr] gap-4 border-b border-[#e0d5c2] bg-[#f7f0e0] px-5 py-3 text-xs font-semibold uppercase tracking-wide text-[#8a7a67] dark:border-[#3c3347] dark:bg-[#292331] dark:text-[#b5a59c]">
           <div>#</div>
           <div>Title</div>
           <div>Difficulty</div>
+          <div>Status</div>
           <div>Tags</div>
         </div>
 
@@ -85,16 +134,17 @@ export default function ProblemsPage() {
             <Link
               key={p.id}
               href={`/problems/${p.slug}`}
-              className="grid grid-cols-[56px_1.2fr_.45fr_.9fr] gap-4 px-5 py-3 hover:bg-black/2 dark:hover:bg-white/5"
+
+              className="grid grid-cols-[56px_1.2fr_.45fr_.45fr_.9fr] gap-4 px-5 py-3 hover:bg-[#f6e9d2] dark:hover:bg-[#2d2535]"
             >
-              <div className="flex items-center text-xs text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center text-xs text-[#8a7a67] dark:text-[#b5a59c]">
                 {String(i + 1).padStart(2, "0")}
               </div>
               <div className="min-w-0">
-                <div className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                <div className="truncate text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">
                   {p.title}
                 </div>
-                <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                <div className="mt-1 text-xs text-[#b5a08a] dark:text-[#b5a59c]">
                   {p.id}
                 </div>
               </div>
@@ -109,11 +159,17 @@ export default function ProblemsPage() {
                 </span>
               </div>
 
+              <div className="flex items-center">
+                <span className="inline-flex items-center rounded-full border border-[#deceb7] bg-[#d69a441a] px-2.5 py-1 text-xs text-[#5d5245] dark:border-[#40364f] dark:bg-[#f6ede01a] dark:text-[#d7ccbe]">
+                  {p.status || "Not Started"}
+                </span>
+              </div>
+
               <div className="flex flex-wrap items-center gap-2">
                 {p.tags.map((t) => (
                   <span
                     key={`${p.id}-${t}`}
-                    className="inline-flex items-center rounded-full border border-black/10 bg-black/3 px-2.5 py-1 text-xs text-zinc-700 dark:border-white/10 dark:bg-white/10 dark:text-zinc-200"
+                    className="inline-flex items-center rounded-full border border-[#deceb7] bg-[#f2e3cc] px-2.5 py-1 text-xs text-[#5d5245] dark:border-[#40364f] dark:bg-[#2d2535] dark:text-[#d7ccbe]"
                   >
                     {t}
                   </span>
@@ -125,5 +181,13 @@ export default function ProblemsPage() {
       </div>
 
     </section>
+  );
+}
+
+export default function ProblemsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProblemsPageContent />
+    </Suspense>
   );
 }
