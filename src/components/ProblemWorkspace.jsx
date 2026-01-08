@@ -186,12 +186,32 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       {/* HEADER */}
       <div className="flex items-center justify-between gap-3 rounded-2xl border bg-[#fff8ed] px-4 py-3 dark:bg-[#211d27]">
         <div className="flex items-center gap-2">
-          <Link href="/problems">Problems</Link>
-
-          <button onClick={onPrev} disabled={!onPrev}>{"<"}</button>
-          <button onClick={onNext} disabled={!onNext}>{">"}</button>
-
-          <ProblemTimer running={timerRunning} />
+          <Link
+            href="/problems"
+            className="inline-flex h-9 items-center rounded-full px-3 text-sm font-medium text-[#5d5245] hover:bg-[#f2e3cc] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+          >
+            Problems
+          </Link>
+          <button
+            type="button"
+            onClick={onPrev}
+            disabled={!onPrev}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#deceb7] bg-[#fff8ed] text-sm text-[#5d5245] hover:bg-[#f2e3cc] disabled:opacity-50 dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+            aria-label="Previous"
+            onClick={onPrev}
+          >
+            {"<"}
+          </button>
+          <button
+            type="button"
+            onClick={onNext}
+            disabled={!onNext}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#deceb7] bg-[#fff8ed] text-sm text-[#5d5245] hover:bg-[#f2e3cc] disabled:opacity-50 dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+            aria-label="Next"
+            onClick={onNext}
+          >
+            {">"}
+          </button>
         </div>
 
         <div className="flex items-center gap-2">

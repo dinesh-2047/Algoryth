@@ -18,11 +18,10 @@ function difficultyClasses(difficulty) {
 }
 
 function ProblemsPageContent() {
+  // const [problems, setProblems] = useState([]); // problems state IS needed for fetch result
   const [problems, setProblems] = useState([]);
-  const [search, setSearch] = useState("");
-  const [difficulty, setDifficulty] = useState("");
-  const [selectedTags, setSelectedTags] = useState([]);
-  const [sort, setSort] = useState("title");
+  // Removed redundant local state that mirrors URL params
+
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -34,31 +33,26 @@ function ProblemsPageContent() {
     return { urlSearch: search, urlDifficulty: difficulty, urlTags: tags, urlSort: sort };
   }, [searchParams]);
 
-  const fetchProblems = async (searchQuery, diff, tags, sortBy) => {
-    const params = new URLSearchParams();
-    if (searchQuery) params.set('search', searchQuery);
-    if (diff) params.set('difficulty', diff);
-    if (tags.length > 0) params.set('tags', tags.join(','));
-    if (sortBy && sortBy !== 'title') params.set('sort', sortBy);
-
-    const queryString = params.toString();
-    const url = `/api/problems${queryString ? `?${queryString}` : ''}`;
-
-    const res = await fetch(url);
-    const data = await res.json();
-    setProblems(data.items);
-  };
-
   useEffect(() => {
-    fetchProblems(urlSearch, urlDifficulty, urlTags, urlSort);
+    const fetchProblems = async () => {
+      const params = new URLSearchParams();
+      if (urlSearch) params.set('search', urlSearch);
+      if (urlDifficulty) params.set('difficulty', urlDifficulty);
+      if (urlTags.length > 0) params.set('tags', urlTags.join(','));
+      if (urlSort && urlSort !== 'title') params.set('sort', urlSort);
+
+      const queryString = params.toString();
+      const url = `/api/problems${queryString ? `?${queryString}` : ''}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+      setProblems(data.items);
+    };
+
+    fetchProblems();
   }, [urlSearch, urlDifficulty, urlTags, urlSort]);
 
-  useEffect(() => {
-    setSearch(urlSearch);
-    setDifficulty(urlDifficulty);
-    setSelectedTags(urlTags);
-    setSort(urlSort);
-  }, [urlSearch, urlDifficulty, urlTags, urlSort]);
+  // Removed redundant useEffect that synced URL to local state
 
   const updateURL = (newSearch, newDifficulty, newTags, newSort) => {
     const params = new URLSearchParams();
@@ -72,26 +66,22 @@ function ProblemsPageContent() {
   };
 
   const handleSearch = (value) => {
-    setSearch(value);
-    updateURL(value, difficulty, selectedTags, sort);
+    updateURL(value, urlDifficulty, urlTags, urlSort);
   };
 
   const handleDifficulty = (value) => {
-    setDifficulty(value);
-    updateURL(search, value, selectedTags, sort);
+    updateURL(urlSearch, value, urlTags, urlSort);
   };
 
   const handleTag = (tag) => {
-    const newTags = selectedTags.includes(tag)
-      ? selectedTags.filter(t => t !== tag)
-      : [...selectedTags, tag];
-    setSelectedTags(newTags);
-    updateURL(search, difficulty, newTags, sort);
+    const newTags = urlTags.includes(tag)
+      ? urlTags.filter(t => t !== tag)
+      : [...urlTags, tag];
+    updateURL(urlSearch, urlDifficulty, newTags, urlSort);
   };
 
   const handleSort = (value) => {
-    setSort(value);
-    updateURL(search, difficulty, selectedTags, value);
+    updateURL(urlSearch, urlDifficulty, urlTags, value);
   };
 
   const allTags = ["arrays", "hash-map", "stack", "dp"];
@@ -113,11 +103,11 @@ function ProblemsPageContent() {
             <input
               aria-label="Search problems"
               placeholder="Search problems..."
-              value={search}
+              value={urlSearch}
               onChange={(e) => handleSearch(e.target.value)}
               className="h-10 w-full rounded-xl border border-[#deceb7] bg-white px-4 pr-10 text-sm text-[#2b2116] outline-none placeholder:text-[#8a7a67] focus:ring-2 focus:ring-[#c99a4c]/30 dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#f6ede0] dark:placeholder:text-[#a89cae] dark:focus:ring-[#f2c66f]/30"
             />
-            {search && (
+            {urlSearch && (
               <button
                 onClick={() => handleSearch('')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b5a08a] hover:text-[#6f6251] dark:text-[#7f748a] dark:hover:text-[#d7ccbe]"
@@ -136,7 +126,7 @@ function ProblemsPageContent() {
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-[#5d5245] dark:text-[#d7ccbe]">Difficulty:</label>
           <select
-            value={difficulty}
+            value={urlDifficulty}
             onChange={(e) => handleDifficulty(e.target.value)}
             className="h-9 rounded-lg border border-[#deceb7] bg-white px-3 text-sm text-[#2b2116] outline-none dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#f6ede0]"
           >
@@ -150,7 +140,7 @@ function ProblemsPageContent() {
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-[#5d5245] dark:text-[#d7ccbe]">Sort:</label>
           <select
-            value={sort}
+            value={urlSort}
             onChange={(e) => handleSort(e.target.value)}
             className="h-9 rounded-lg border border-[#deceb7] bg-white px-3 text-sm text-[#2b2116] outline-none dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#f6ede0]"
           >
@@ -166,11 +156,10 @@ function ProblemsPageContent() {
               <button
                 key={tag}
                 onClick={() => handleTag(tag)}
-                className={`inline-flex items-center rounded-full px-3 py-1 text-xs ${
-                  selectedTags.includes(tag)
-                    ? "bg-[#d69a44] text-[#2b1a09] dark:bg-[#f2c66f] dark:text-[#231406]"
-                    : "border border-[#deceb7] text-[#5d5245] dark:border-[#40364f] dark:text-[#d7ccbe]"
-                }`}
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs ${urlTags.includes(tag)
+                  ? "bg-[#d69a44] text-[#2b1a09] dark:bg-[#f2c66f] dark:text-[#231406]"
+                  : "border border-[#deceb7] text-[#5d5245] dark:border-[#40364f] dark:text-[#d7ccbe]"
+                  }`}
               >
                 {tag}
               </button>

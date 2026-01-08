@@ -1,5 +1,5 @@
 export async function POST(request) {
-  const { code, language } = await request.json();
+  const { language } = await request.json();
   // Mock execution
   const result = {
     status: "Accepted",

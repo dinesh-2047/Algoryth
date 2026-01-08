@@ -128,7 +128,11 @@ export default function CodeEditor({
           theme={theme}
           language={language}
           value={code}
-          onChange={(v) => setCode(v ?? "")}
+          onChange={(v) => {
+            const newCode = v ?? "";
+            setCode(newCode);
+            onChange?.(newCode);
+          }}
           options={editorOptions}
         />
       </div>

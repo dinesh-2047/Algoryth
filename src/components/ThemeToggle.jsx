@@ -9,7 +9,7 @@ export default function ThemeToggle() {
   // Apply theme whenever it changes
   useEffect(() => {
     if (!mounted) return;
-    
+
     const root = document.documentElement;
     if (theme === "dark") {
       root.classList.add("dark");
@@ -21,12 +21,13 @@ export default function ThemeToggle() {
   }, [theme, mounted]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     // Check localStorage first, then system preference
     const storedTheme = localStorage.getItem("theme");
     const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const initialTheme = storedTheme || (systemPrefersDark ? "dark" : "light");
-    
+
     setTheme(initialTheme);
   }, []);
 
