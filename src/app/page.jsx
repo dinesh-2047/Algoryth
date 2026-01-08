@@ -1,6 +1,37 @@
+"use client";
+
 import Link from "next/link";
+import { useState, useEffect } from "react";
 
 export default function Home() {
+  const [recommendedProblems, setRecommendedProblems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProblems() {
+      try {
+        const response = await fetch('/api/problems');
+        const data = await response.json();
+        // Filter for easy problems and take first 3
+        const easyProblems = data.items
+          .filter(p => p.difficulty === 'Easy')
+          .slice(0, 3);
+        setRecommendedProblems(easyProblems);
+      } catch (error) {
+        console.error('Failed to fetch problems:', error);
+        // Fallback to hardcoded problems if API fails
+        setRecommendedProblems([
+          { title: "Two Sum", slug: "two-sum", difficulty: "Easy" },
+          { title: "Valid Parentheses", slug: "valid-parentheses", difficulty: "Easy" },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProblems();
+  }, []);
+
   return (
     <section className="grid gap-6 lg:grid-cols-[1fr_340px]">
       <div className="grid gap-4">

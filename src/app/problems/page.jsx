@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, Suspense, useMemo } from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useMemo } from "react";
+import { problems } from "../../lib/problems";
 
 function difficultyClasses(difficulty) {
   switch (difficulty) {
@@ -54,16 +54,16 @@ function ProblemsPageContent() {
 
   // Removed redundant useEffect that synced URL to local state
 
-  const updateURL = (newSearch, newDifficulty, newTags, newSort) => {
-    const params = new URLSearchParams();
-    if (newSearch) params.set('search', newSearch);
-    if (newDifficulty) params.set('difficulty', newDifficulty);
-    if (newTags.length > 0) params.set('tags', newTags.join(','));
-    if (newSort && newSort !== 'title') params.set('sort', newSort); // Only include sort if not default
+  const filteredProblems = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return problems;
+    }
 
-    const queryString = params.toString();
-    router.push(`/problems${queryString ? `?${queryString}` : ''}`, { scroll: false });
-  };
+    return problems.filter(problem =>
+      problem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      problem.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [searchTerm]);
 
   const handleSearch = (value) => {
     updateURL(value, urlDifficulty, urlTags, urlSort);
@@ -173,7 +173,6 @@ function ProblemsPageContent() {
           <div>#</div>
           <div>Title</div>
           <div>Difficulty</div>
-          <div>Status</div>
           <div>Tags</div>
         </div>
 
@@ -229,13 +228,5 @@ function ProblemsPageContent() {
       </div>
 
     </section>
-  );
-}
-
-export default function ProblemsPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <ProblemsPageContent />
-    </Suspense>
   );
 }
