@@ -10,8 +10,24 @@ const firebaseConfig = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const auth = getAuth(app);
+// Initialize Firebase interactively or safely
+let app;
+let auth;
+
+try {
+    if (
+        process.env.NEXT_PUBLIC_FIREBASE_API_KEY &&
+        process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    ) {
+        app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+        auth = getAuth(app);
+    } else {
+        console.warn(
+            "Firebase configuration missing. Authentication will not work."
+        );
+    }
+} catch (error) {
+    console.error("Firebase initialization error:", error);
+}
 
 export { auth };

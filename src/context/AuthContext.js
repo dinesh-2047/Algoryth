@@ -18,6 +18,11 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (!auth) {
+            setLoading(false);
+            return;
+        }
+
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setUser(user);
             setLoading(false);
@@ -27,14 +32,17 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const signup = (email, password) => {
+        if (!auth) throw new Error("Authentication not configured");
         return createUserWithEmailAndPassword(auth, email, password);
     };
 
     const login = (email, password) => {
+        if (!auth) throw new Error("Authentication not configured");
         return signInWithEmailAndPassword(auth, email, password);
     };
 
     const logout = () => {
+        if (!auth) throw new Error("Authentication not configured");
         return signOut(auth);
     };
 
