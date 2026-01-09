@@ -17,6 +17,31 @@ export const problems = [
       { input: "nums = [2,7,11,15], target = 9", output: "[0,1]" },
       { input: "nums = [3,2,4], target = 6", output: "[1,2]" },
     ],
+    editorial: {
+      steps: [
+        "Understand the problem: Find two numbers in the array that add up to the target.",
+        "Use a hash map to store numbers and their indices.",
+        "Iterate through the array, for each number, check if target - num exists in the map.",
+        "If found, return the indices; else, add the current number to the map."
+      ],
+      solution: `function twoSum(nums, target) {
+  const map = new Map();
+  for (let i = 0; i < nums.length; i++) {
+    const complement = target - nums[i];
+    if (map.has(complement)) {
+      return [map.get(complement), i];
+    }
+    map.set(nums[i], i);
+  }
+  return [];
+}`,
+      complexity: "Time: O(n), Space: O(n)"
+    },
+    hints: [
+      { level: 1, text: "Think about using a data structure to store previously seen numbers." },
+      { level: 2, text: "A hash map can help find the complement quickly." },
+      { level: 3, text: "For each number, check if target - num is in the map." }
+    ],
   },
   {
     id: "p-1001",
