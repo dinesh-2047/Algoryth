@@ -52,7 +52,7 @@ export default function Home() {
                 <div className="font-medium text-[#2b2116] dark:text-[#f6ede0]">{p.title}</div>
                 <div className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">{p.diff}</div>
               </Link>
-            ))}
+            ))} 
           </div>
         </div>
       </div>

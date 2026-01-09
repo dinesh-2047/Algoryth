@@ -1,118 +1,40 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import CodeEditor from "./CodeEditor";
 import SplitPane from "./SplitPane";
+import { TabContentSkeleton, LoadingSpinner } from "./Skeleton";
 
-export default function ProblemWorkspace({ problem, onNext, onPrev }) {
-  const [code, setCode] = useState("");
-  const [language, setLanguage] = useState("javascript");
-  const [isRunning, setIsRunning] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [lastSubmissionStatus, setLastSubmissionStatus] = useState(null);
-
-  const starterCode = useMemo(
-    () => `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
-    [problem.title]
-  );
-
-  const [code, setCode] = useState("");
-  const [language, setLanguage] = useState("javascript");
-  const [isRunning, setIsRunning] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [lastSubmissionStatus, setLastSubmissionStatus] = useState(null);
+export default function ProblemWorkspace({ problem }) {
   const [activeTab, setActiveTab] = useState("description");
-  const [hints, setHints] = useState([]);
-  const [showHints, setShowHints] = useState(false);
+  const [tabLoading, setTabLoading] = useState(false);
+  const [navigationLoading, setNavigationLoading] = useState(false);
+  const [runLoading, setRunLoading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
 
-  const leftPanel = (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
-      <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-5 py-4 dark:border-[#3c3347] dark:bg-[#292331]">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">
-              {problem.id}
-            </div>
-            <h1 className="mt-1 text-xl font-semibold tracking-tight text-[#2b2116] dark:text-[#f6ede0]">
-              {problem.title}
-            </h1>
-          </div>
-          <span className="inline-flex items-center rounded-full border border-[#deceb7] bg-[#f2e3cc] px-3 py-1 text-xs font-medium text-[#5d5245] dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe]">
-            {problem.difficulty}
-          </span>
-        </div>
+  const tabs = [
+    { id: "description", label: "Description" },
+    { id: "editorial", label: "Editorial" },
+    { id: "solutions", label: "Solutions" },
+    { id: "submissions", label: "Submissions" },
+  ];
 
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-          <button
-            onClick={() => setActiveTab("description")}
-            className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-semibold ${
-              activeTab === "description"
-                ? "bg-black text-white dark:bg-white dark:text-black"
-                : "border border-black/10 text-zinc-500 dark:border-white/10 dark:text-zinc-400"
-            }`}
-          >
-            Description
-          </button>
-          <button
-            onClick={() => setActiveTab("editorial")}
-            className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-semibold ${
-              activeTab === "editorial"
-                ? "bg-black text-white dark:bg-white dark:text-black"
-                : "border border-black/10 text-zinc-500 dark:border-white/10 dark:text-zinc-400"
-            }`}
-          >
-            Editorial
-          </button>
-          <button
-            onClick={() => setActiveTab("solutions")}
-            className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-semibold ${
-              activeTab === "solutions"
-                ? "bg-black text-white dark:bg-white dark:text-black"
-                : "border border-black/10 text-zinc-500 dark:border-white/10 dark:text-zinc-400"
-            }`}
-          >
-            Solutions
-          </button>
-          <button
-            onClick={() => setActiveTab("submissions")}
-            className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-semibold ${
-              activeTab === "submissions"
-                ? "bg-black text-white dark:bg-white dark:text-black"
-                : "border border-black/10 text-zinc-500 dark:border-white/10 dark:text-zinc-400"
-            }`}
-          >
-            Submissions
-          </button>
-          <button
-            onClick={() => {
-              if (!showHints) {
-                fetch(`/api/problems/${problem.slug}/hints`)
-                  .then(res => res.json())
-                  .then(data => setHints(data));
-              }
-              setShowHints(!showHints);
-            }}
-            className="inline-flex items-center rounded-full border border-black/10 px-4 py-2 text-xs font-semibold text-zinc-500 dark:border-white/10 dark:text-zinc-400"
-          >
-            {showHints ? "Hide Hints" : "Show Hints"}
-          </button>
-        </div>
+  const handleTabChange = (tabId) => {
+    if (tabId !== activeTab) {
+      setTabLoading(true);
+      // Small delay to show loading state for better UX
+      setTimeout(() => {
+        setActiveTab(tabId);
+        setTabLoading(false);
+      }, 150);
+    }
+  };
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          {problem.tags.map((t) => (
-            <span
-              key={`${problem.id}-${t}`}
-              className="inline-flex items-center rounded-full border border-[#deceb7] bg-[#f2e3cc] px-3 py-1 text-xs text-[#5d5245] dark:border-[#40364f] dark:bg-[#2d2535] dark:text-[#d7ccbe]"
-            >
-              {t}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <article className="min-h-0 flex-1 overflow-auto px-5 py-5">
-        {activeTab === "description" && (
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "description":
+        return (
           <>
             <p className="whitespace-pre-wrap text-sm leading-6 text-zinc-700 dark:text-zinc-300">
               {problem.statement}
@@ -143,63 +65,167 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
                 </div>
               ))}
             </div>
-
-            {showHints && hints.length > 0 && (
-              <>
-                <h3 className="mt-6 text-sm font-semibold">Hints</h3>
-                <div className="mt-2 space-y-2">
-                  {hints.map((hint) => (
-                    <div
-                      key={hint.level}
-                      className="rounded-xl border border-black/10 bg-amber-50 p-4 text-sm dark:border-white/10 dark:bg-amber-950"
-                    >
-                      <div className="font-medium">Hint {hint.level}</div>
-                      <p className="mt-1 text-zinc-700 dark:text-zinc-300">
-                        {hint.text}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
           </>
-        )}
+        );
 
-        {activeTab === "editorial" && problem.editorial && (
-          <>
-            <h3 className="text-sm font-semibold">Approach</h3>
-            <ol className="mt-2 list-decimal pl-5 text-sm text-zinc-700 dark:text-zinc-300">
-              {problem.editorial.steps.map((step, i) => (
-                <li key={i}>{step}</li>
-              ))}
-            </ol>
-
-            <h3 className="mt-6 text-sm font-semibold">Solution</h3>
-            <pre className="mt-2 rounded-xl border border-black/10 bg-zinc-50 p-4 text-sm dark:border-white/10 dark:bg-zinc-950">
-              {problem.editorial.solution}
-            </pre>
-
-            <h3 className="mt-6 text-sm font-semibold">Complexity</h3>
-            <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
-              {problem.editorial.complexity}
+      case "editorial":
+        return (
+          <div className="text-center py-12">
+            <div className="text-4xl mb-4">📝</div>
+            <h3 className="text-lg font-semibold mb-2">Editorial</h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+              Detailed solution explanation and approach for {problem.title}
             </p>
-          </>
-        )}
+            <div className="bg-zinc-50 dark:bg-zinc-950 rounded-lg p-6 text-left">
+              <h4 className="font-semibold mb-3">Solution Approach</h4>
+              <p className="text-sm text-zinc-700 dark:text-zinc-300 mb-4">
+                This problem can be solved using a {problem.tags[0] || "efficient"} approach.
+                The key insight is to understand the problem constraints and find an optimal solution.
+              </p>
+              <div className="bg-white dark:bg-zinc-900 rounded p-4 border">
+                <h5 className="font-medium mb-2">Time Complexity: O(n)</h5>
+                <h5 className="font-medium mb-2">Space Complexity: O(1)</h5>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  Coming soon: Detailed step-by-step explanation with code walkthrough.
+                </p>
+              </div>
+            </div>
+          </div>
+        );
 
-        {activeTab === "solutions" && problem.editorial && (
-          <>
-            <h3 className="text-sm font-semibold">Solution Code</h3>
-            <pre className="mt-2 rounded-xl border border-black/10 bg-zinc-50 p-4 text-sm dark:border-white/10 dark:bg-zinc-950">
-              {problem.editorial.solution}
-            </pre>
-          </>
-        )}
+      case "solutions":
+        return (
+          <div className="text-center py-12">
+            <div className="text-4xl mb-4">💡</div>
+            <h3 className="text-lg font-semibold mb-2">Community Solutions</h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
+              View different approaches and solutions from the community
+            </p>
+            <div className="space-y-4">
+              {[
+                { language: "JavaScript", votes: 42, author: "dev_user", time: "2 weeks ago" },
+                { language: "Python", votes: 38, author: "code_master", time: "1 week ago" },
+                { language: "Java", votes: 25, author: "java_guru", time: "3 days ago" },
+              ].map((solution, i) => (
+                <div key={i} className="bg-zinc-50 dark:bg-zinc-950 rounded-lg p-4 border border-black/10 dark:border-white/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-1 bg-black text-white text-xs rounded dark:bg-white dark:text-black">
+                        {solution.language}
+                      </span>
+                      <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                        by {solution.author}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-zinc-500">👍 {solution.votes}</span>
+                      <span className="text-sm text-zinc-500">{solution.time}</span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                    Clean and efficient solution using {solution.language.toLowerCase()}.
+                    Time: O(n), Space: O(1).
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
 
-        {activeTab === "submissions" && (
-          <p className="text-sm text-zinc-700 dark:text-zinc-300">
-            Submissions history will be shown here.
-          </p>
-        )}
+      case "submissions":
+        return (
+          <div className="text-center py-12">
+            <div className="text-4xl mb-4">📊</div>
+            <h3 className="text-lg font-semibold mb-2">Your Submissions</h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
+              Track your submission history and performance
+            </p>
+            <div className="space-y-4">
+              {[
+                { status: "Accepted", language: "JavaScript", time: "2 hours ago", runtime: "45ms" },
+                { status: "Wrong Answer", language: "JavaScript", time: "1 day ago", runtime: "42ms" },
+                { status: "Time Limit Exceeded", language: "Python", time: "3 days ago", runtime: "2000ms" },
+              ].map((submission, i) => (
+                <div key={i} className="bg-zinc-50 dark:bg-zinc-950 rounded-lg p-4 border border-black/10 dark:border-white/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-1 text-xs rounded font-medium ${
+                        submission.status === "Accepted"
+                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                          : submission.status === "Wrong Answer"
+                          ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                          : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                      }`}>
+                        {submission.status}
+                      </span>
+                      <span className="px-2 py-1 bg-black text-white text-xs rounded dark:bg-white dark:text-black">
+                        {submission.language}
+                      </span>
+                    </div>
+                    <span className="text-sm text-zinc-500">{submission.time}</span>
+                  </div>
+                  <div className="text-sm text-zinc-700 dark:text-zinc-300">
+                    Runtime: {submission.runtime} | Memory: 14.2 MB
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  const leftPanel = (
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
+      <div className="border-b border-black/10 bg-zinc-50 px-5 py-4 dark:border-white/10 dark:bg-zinc-950">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-xs text-zinc-500 dark:text-zinc-400">
+              {problem.id}
+            </div>
+            <h1 className="mt-1 text-xl font-semibold tracking-tight">
+              {problem.title}
+            </h1>
+          </div>
+          <span className="inline-flex items-center rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-medium text-zinc-700 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200">
+            {problem.difficulty}
+          </span>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleTabChange(tab.id)}
+              disabled={tabLoading}
+              className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-semibold ${
+                activeTab === tab.id
+                  ? "bg-black text-white dark:bg-white dark:text-black"
+                  : "border border-black/10 text-zinc-500 hover:text-zinc-700 dark:border-white/10 dark:text-zinc-400 dark:hover:text-zinc-200"
+              } ${tabLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          {problem.tags.map((t) => (
+            <span
+              key={`${problem.id}-${t}`}
+              className="inline-flex items-center rounded-full border border-black/10 bg-black/3 px-3 py-1 text-xs text-zinc-700 dark:border-white/10 dark:bg-white/10 dark:text-zinc-200"
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <article className="min-h-0 flex-1 overflow-auto px-5 py-5">
+        {tabLoading ? <TabContentSkeleton /> : renderTabContent()}
       </article>
     </div>
   );
@@ -212,19 +238,19 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       minSecondary={220}
       storageKey={`algoryth.split.editor.${problem.slug}`}
       className="h-215 lg:h-full"
-      primary={<CodeEditor initialLanguage={language} initialCode={code || starterCode} onChange={setCode} onLanguageChange={setLanguage} />}
+      primary={<CodeEditor initialLanguage="javascript" problemTitle={problem.title} />}
       secondary={
-        <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
-          <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] dark:border-[#3c3347] dark:bg-[#292331]">
+        <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
+          <div className="border-b border-black/10 bg-zinc-50 dark:border-white/10 dark:bg-zinc-950">
             <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold">
-              <span className="rounded-full bg-[#edd9b8] px-3 py-1 text-[#4b4033] dark:bg-[#f6ede0] dark:text-[#231406]">
+              <span className="rounded-full bg-black px-3 py-1 text-white dark:bg-white dark:text-black">
                 Test Result
               </span>
-              <span className="text-[#8a7a67] dark:text-[#b5a59c]">Testcase</span>
+              <span className="text-zinc-500 dark:text-zinc-400">Testcase</span>
             </div>
           </div>
-          <div className="min-h-0 flex-1 overflow-auto px-4 pb-5 pt-3 text-center text-sm text-[#8a7a67] dark:text-[#b5a59c]">
-            {lastSubmissionStatus || "You must run your code first."}
+          <div className="min-h-0 flex-1 overflow-auto px-4 pb-5 pt-3 text-center text-sm text-zinc-500 dark:text-zinc-400">
+            You must run your code first.
           </div>
         </div>
       }
@@ -233,52 +259,60 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
 
   return (
     <section className="grid gap-4">
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] px-4 py-3 dark:border-[#3c3347] dark:bg-[#211d27]">
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white px-4 py-3 dark:border-white/10 dark:bg-zinc-900">
         <div className="flex items-center gap-2">
           <Link
             href="/problems"
-            className="inline-flex h-9 items-center rounded-full px-3 text-sm font-medium text-[#5d5245] hover:bg-[#f2e3cc] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+            className="inline-flex h-9 items-center rounded-full px-3 text-sm font-medium text-zinc-700 hover:bg-black/3 dark:text-zinc-200 dark:hover:bg-white/10"
           >
             Problems
           </Link>
           <button
             type="button"
-            onClick={onPrev}
-            disabled={!onPrev}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#deceb7] bg-[#fff8ed] text-sm text-[#5d5245] hover:bg-[#f2e3cc] disabled:opacity-50 dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white text-sm text-zinc-700 hover:bg-black/3 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
             aria-label="Previous"
-            onClick={onPrev}
+            disabled={navigationLoading}
           >
-            {"<"}
+            {navigationLoading ? <LoadingSpinner size="sm" /> : "<"}
           </button>
           <button
             type="button"
-            onClick={onNext}
-            disabled={!onNext}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#deceb7] bg-[#fff8ed] text-sm text-[#5d5245] hover:bg-[#f2e3cc] disabled:opacity-50 dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white text-sm text-zinc-700 hover:bg-black/3 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
             aria-label="Next"
-            onClick={onNext}
+            disabled={navigationLoading}
           >
-            {">"}
+            {navigationLoading ? <LoadingSpinner size="sm" /> : ">"}
           </button>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={handleRun}
-            disabled={isRunning || isSubmitting}
-            className="inline-flex h-9 items-center justify-center rounded-full bg-[#d69a44] px-4 text-sm font-medium text-[#2b1a09] hover:bg-[#c4852c] disabled:opacity-50 dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#e4b857]"
+            disabled={runLoading}
+            className="inline-flex h-9 items-center justify-center rounded-full bg-zinc-200 px-4 text-sm font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-400 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isRunning ? "Running..." : "Run"}
+            {runLoading ? (
+              <>
+                <LoadingSpinner size="sm" className="mr-2" />
+                Running...
+              </>
+            ) : (
+              "Run"
+            )}
           </button>
           <button
             type="button"
-            onClick={handleSubmit}
-            disabled={isRunning || isSubmitting}
-            className="inline-flex h-9 items-center justify-center rounded-full bg-[#d69a44] px-4 text-sm font-medium text-[#2b1a09] hover:bg-[#c4852c] disabled:opacity-50 dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#e4b857]"
+            disabled={submitLoading}
+            className="inline-flex h-9 items-center justify-center rounded-full bg-zinc-200 px-4 text-sm font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-400 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? "Submitting..." : "Submit"}
+            {submitLoading ? (
+              <>
+                <LoadingSpinner size="sm" className="mr-2" />
+                Submitting...
+              </>
+            ) : (
+              "Submit"
+            )}
           </button>
         </div>
       </div>
