@@ -17,74 +17,24 @@ function difficultyClasses(difficulty) {
   }
 }
 
-function ProblemsPageContent() {
-  // const [problems, setProblems] = useState([]); // problems state IS needed for fetch result
-  const [problems, setProblems] = useState([]);
-  // Removed redundant local state that mirrors URL params
+function statusClasses(status) {
+  switch (status) {
+    case "Solved":
+      return "bg-green-500/10 text-green-700 dark:text-green-300";
+    case "Attempted":
+      return "bg-yellow-500/10 text-yellow-700 dark:text-yellow-300";
+    default:
+      return "bg-gray-500/10 text-gray-700 dark:text-gray-300";
+  }
+}
 
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
-  const { urlSearch, urlDifficulty, urlTags, urlSort } = useMemo(() => {
-    const search = searchParams.get('search') || '';
-    const difficulty = searchParams.get('difficulty') || '';
-    const tags = searchParams.get('tags')?.split(',') || [];
-    const sort = searchParams.get('sort') || 'title';
-    return { urlSearch: search, urlDifficulty: difficulty, urlTags: tags, urlSort: sort };
-  }, [searchParams]);
-
-  useEffect(() => {
-    const fetchProblems = async () => {
-      const params = new URLSearchParams();
-      if (urlSearch) params.set('search', urlSearch);
-      if (urlDifficulty) params.set('difficulty', urlDifficulty);
-      if (urlTags.length > 0) params.set('tags', urlTags.join(','));
-      if (urlSort && urlSort !== 'title') params.set('sort', urlSort);
-
-      const queryString = params.toString();
-      const url = `/api/problems${queryString ? `?${queryString}` : ''}`;
-
-      const res = await fetch(url);
-      const data = await res.json();
-      setProblems(data.items);
-    };
-
-    fetchProblems();
-  }, [urlSearch, urlDifficulty, urlTags, urlSort]);
-
-  // Removed redundant useEffect that synced URL to local state
-
-  const updateURL = (newSearch, newDifficulty, newTags, newSort) => {
-    const params = new URLSearchParams();
-    if (newSearch) params.set('search', newSearch);
-    if (newDifficulty) params.set('difficulty', newDifficulty);
-    if (newTags.length > 0) params.set('tags', newTags.join(','));
-    if (newSort && newSort !== 'title') params.set('sort', newSort); // Only include sort if not default
-
-    const queryString = params.toString();
-    router.push(`/problems${queryString ? `?${queryString}` : ''}`, { scroll: false });
+export default function ProblemsPage() {
+  // Mock progress for now
+  const problemStatuses = {
+    "p-1000": "Solved",
+    "p-1001": "Attempted",
+    "p-2000": "Not Started"
   };
-
-  const handleSearch = (value) => {
-    updateURL(value, urlDifficulty, urlTags, urlSort);
-  };
-
-  const handleDifficulty = (value) => {
-    updateURL(urlSearch, value, urlTags, urlSort);
-  };
-
-  const handleTag = (tag) => {
-    const newTags = urlTags.includes(tag)
-      ? urlTags.filter(t => t !== tag)
-      : [...urlTags, tag];
-    updateURL(urlSearch, urlDifficulty, newTags, urlSort);
-  };
-
-  const handleSort = (value) => {
-    updateURL(urlSearch, urlDifficulty, urlTags, value);
-  };
-
-  const allTags = ["arrays", "hash-map", "stack", "dp"];
 
   return (
     <section className="flex flex-col gap-6">
@@ -96,6 +46,12 @@ function ProblemsPageContent() {
           <p className="mt-1 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
             Browse problems. This uses mock data + API routes.
           </p>
+          <Link href="/submissions" className="mt-2 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400">
+            View Submissions
+          </Link>
+          <Link href="/progress" className="ml-4 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400">
+            View Progress
+          </Link>
         </div>
 
         <div className="w-full sm:w-80">
@@ -122,54 +78,8 @@ function ProblemsPageContent() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-[#5d5245] dark:text-[#d7ccbe]">Difficulty:</label>
-          <select
-            value={urlDifficulty}
-            onChange={(e) => handleDifficulty(e.target.value)}
-            className="h-9 rounded-lg border border-[#deceb7] bg-white px-3 text-sm text-[#2b2116] outline-none dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#f6ede0]"
-          >
-            <option value="">All</option>
-            <option value="Easy">Easy</option>
-            <option value="Medium">Medium</option>
-            <option value="Hard">Hard</option>
-          </select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-[#5d5245] dark:text-[#d7ccbe]">Sort:</label>
-          <select
-            value={urlSort}
-            onChange={(e) => handleSort(e.target.value)}
-            className="h-9 rounded-lg border border-[#deceb7] bg-white px-3 text-sm text-[#2b2116] outline-none dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#f6ede0]"
-          >
-            <option value="title">Title</option>
-            <option value="difficulty">Difficulty</option>
-          </select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-[#5d5245] dark:text-[#d7ccbe]">Tags:</label>
-          <div className="flex flex-wrap gap-2">
-            {allTags.map(tag => (
-              <button
-                key={tag}
-                onClick={() => handleTag(tag)}
-                className={`inline-flex items-center rounded-full px-3 py-1 text-xs ${urlTags.includes(tag)
-                  ? "bg-[#d69a44] text-[#2b1a09] dark:bg-[#f2c66f] dark:text-[#231406]"
-                  : "border border-[#deceb7] text-[#5d5245] dark:border-[#40364f] dark:text-[#d7ccbe]"
-                  }`}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="overflow-hidden rounded-2xl border border-[#e0d5c2] bg-white dark:border-[#3c3347] dark:bg-[#211d27]">
-        <div className="grid grid-cols-[56px_1.2fr_.45fr_.45fr_.9fr] gap-4 border-b border-[#e0d5c2] bg-[#f7f0e0] px-5 py-3 text-xs font-semibold uppercase tracking-wide text-[#8a7a67] dark:border-[#3c3347] dark:bg-[#292331] dark:text-[#b5a59c]">
+      <div className="overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-950">
+        <div className="grid grid-cols-[56px_1.2fr_.45fr_.45fr_.9fr] gap-4 border-b border-black/10 bg-zinc-50 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:border-white/10 dark:bg-black dark:text-zinc-400">
           <div>#</div>
           <div>Title</div>
           <div>Difficulty</div>
@@ -182,8 +92,7 @@ function ProblemsPageContent() {
             <Link
               key={p.id}
               href={`/problems/${p.slug}`}
-
-              className="grid grid-cols-[56px_1.2fr_.45fr_.45fr_.9fr] gap-4 px-5 py-3 hover:bg-[#f6e9d2] dark:hover:bg-[#2d2535]"
+              className="grid grid-cols-[56px_1.2fr_.45fr_.45fr_.9fr] gap-4 px-5 py-3 hover:bg-black/2 dark:hover:bg-white/5"
             >
               <div className="flex items-center text-xs text-[#8a7a67] dark:text-[#b5a59c]">
                 {String(i + 1).padStart(2, "0")}
@@ -208,8 +117,12 @@ function ProblemsPageContent() {
               </div>
 
               <div className="flex items-center">
-                <span className="inline-flex items-center rounded-full border border-[#deceb7] bg-[#d69a441a] px-2.5 py-1 text-xs text-[#5d5245] dark:border-[#40364f] dark:bg-[#f6ede01a] dark:text-[#d7ccbe]">
-                  {p.status || "Not Started"}
+                <span
+                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${statusClasses(
+                    problemStatuses[p.id] || "Not Started"
+                  )}`}
+                >
+                  {problemStatuses[p.id] || "Not Started"}
                 </span>
               </div>
 
