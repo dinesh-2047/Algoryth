@@ -1,6 +1,6 @@
 import { getProblemBySlug } from "../../../lib/problems";
 import { notFound } from "next/navigation";
-import ProblemWorkspace from "../../../components/ProblemWorkspace";
+import ProblemNavigator from "../../../components/ProblemNavigator";
 
 export default async function ProblemDetailPage({ params }) {
   const { slug } = await params;
@@ -10,5 +10,5 @@ export default async function ProblemDetailPage({ params }) {
     notFound();
   }
 
-  return <ProblemWorkspace problem={problem} />;
+  return <ProblemNavigator initialSlug={slug} />;
 }
