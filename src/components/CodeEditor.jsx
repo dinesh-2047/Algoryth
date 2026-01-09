@@ -146,6 +146,23 @@ export default function CodeEditor({
             >
               Auto
             </button>
+
+            {/* Adding Run and Submit buttons */}
+            <button
+              type="button"
+              className="inline-flex h-9 items-center justify-center rounded-full border bg-white px-4 text-xs font-semibold hover:bg-[#f6e9d2] dark:border dark:bg-[#221d2b] dark:hover:bg-[#2d2535]"
+              onClick={() => onRun?.()}
+            >
+              Run
+            </button>
+
+            <button
+              type="button"
+              className="inline-flex h-9 items-center justify-center rounded-full border bg-white px-4 text-xs font-semibold hover:bg-[#f6e9d2] dark:border dark:bg-[#221d2b] dark:hover:bg-[#2d2535]"
+              onClick={() => onSubmit?.()}
+            >
+              Submit
+            </button>
           </div>
         </div>
       </div>

@@ -180,6 +180,7 @@ export default function ProblemWorkspace({ problem }) {
 
   const leftPanel = (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
+      {/* Problem header, tags, description, constraints, examples */}
       <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-5 py-4 dark:border-[#3c3347] dark:bg-[#292331]">
         <div className="flex items-center justify-between gap-3">
           <div>
