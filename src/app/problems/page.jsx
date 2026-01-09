@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, Suspense, useMemo } from "react";
-import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
+import ProblemCard from "@/components/ProblemCard";
 
 function difficultyClasses(difficulty) {
   switch (difficulty) {
@@ -168,64 +168,33 @@ function ProblemsPageContent() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-[#e0d5c2] bg-white dark:border-[#3c3347] dark:bg-[#211d27]">
-        <div className="grid grid-cols-[56px_1.2fr_.45fr_.45fr_.9fr] gap-4 border-b border-[#e0d5c2] bg-[#f7f0e0] px-5 py-3 text-xs font-semibold uppercase tracking-wide text-[#8a7a67] dark:border-[#3c3347] dark:bg-[#292331] dark:text-[#b5a59c]">
-          <div>#</div>
-          <div>Title</div>
-          <div>Difficulty</div>
-          <div>Status</div>
-          <div>Tags</div>
-        </div>
-
-        <div className="divide-y divide-[#e0d5c2] dark:divide-[#3c3347]">
-          {problems.map((p, i) => (
-            <Link
-              key={p.id}
-              href={`/problems/${p.slug}`}
-
-              className="grid grid-cols-[56px_1.2fr_.45fr_.45fr_.9fr] gap-4 px-5 py-3 hover:bg-[#f6e9d2] dark:hover:bg-[#2d2535]"
+      {/* Problem Cards Grid */}
+      <div className="grid gap-6 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+        {problems.length > 0 ? (
+          problems.map((p, i) => <ProblemCard key={p.id} problem={p} index={i} />)
+        ) : (
+          <div className="col-span-full rounded-xl border border-[#e0d5c2] bg-white p-12 text-center dark:border-[#3c3347] dark:bg-[#211d27]">
+            <svg
+              className="mx-auto h-12 w-12 text-[#b5a08a] dark:text-[#7f748a]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              <div className="flex items-center text-xs text-[#8a7a67] dark:text-[#b5a59c]">
-                {String(i + 1).padStart(2, "0")}
-              </div>
-              <div className="min-w-0">
-                <div className="truncate text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">
-                  {p.title}
-                </div>
-                <div className="mt-1 text-xs text-[#b5a08a] dark:text-[#b5a59c]">
-                  {p.id}
-                </div>
-              </div>
-
-              <div className="flex items-center">
-                <span
-                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${difficultyClasses(
-                    p.difficulty
-                  )}`}
-                >
-                  {p.difficulty}
-                </span>
-              </div>
-
-              <div className="flex items-center">
-                <span className="inline-flex items-center rounded-full border border-[#deceb7] bg-[#d69a441a] px-2.5 py-1 text-xs text-[#5d5245] dark:border-[#40364f] dark:bg-[#f6ede01a] dark:text-[#d7ccbe]">
-                  {p.status || "Not Started"}
-                </span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                {p.tags.map((t) => (
-                  <span
-                    key={`${p.id}-${t}`}
-                    className="inline-flex items-center rounded-full border border-[#deceb7] bg-[#f2e3cc] px-2.5 py-1 text-xs text-[#5d5245] dark:border-[#40364f] dark:bg-[#2d2535] dark:text-[#d7ccbe]"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </Link>
-          ))}
-        </div>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <h3 className="mt-4 text-lg font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+              No problems found
+            </h3>
+            <p className="mt-2 text-sm text-[#8a7a67] dark:text-[#b5a59c]">
+              Try adjusting your filters or search query
+            </p>
+          </div>
+        )}
       </div>
 
     </section>
