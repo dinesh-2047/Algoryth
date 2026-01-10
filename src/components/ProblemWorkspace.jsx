@@ -173,8 +173,8 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           onLanguageChange={setLanguage}
           onRun={handleRun}
           onSubmit={handleSubmit}
-          runDisabled={isRunning || isCodeEmpty}
-          submitDisabled={isSubmitting || isCodeEmpty}
+          isRunning={isRunning}
+          isSubmitting={isSubmitting}
         />
       }
       secondary={

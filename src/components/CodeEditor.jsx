@@ -12,8 +12,10 @@ export default function CodeEditor({
   initialLanguage = "javascript",
   onChange,
   onLanguageChange,
-  onRun,      
-  onSubmit, 
+  onRun,
+  onSubmit,
+  isRunning,
+  isSubmitting,
 }) {
   const [code, setCode] = useState(initialCode || "");
   const [language, setLanguage] = useState(initialLanguage);
@@ -121,21 +123,22 @@ export default function CodeEditor({
               {isFormatting ? "Formatting..." : "Auto"}
             </button>
 
-            {/* Adding Run and Submit buttons */}
             <button
               type="button"
-              className="inline-flex h-9 items-center justify-center rounded-full border bg-white px-4 text-xs font-semibold hover:bg-[#f6e9d2] dark:border dark:bg-[#221d2b] dark:hover:bg-[#2d2535]"
+              className="inline-flex h-9 items-center justify-center rounded-full border bg-white px-4 text-xs font-semibold hover:bg-[#f6e9d2] disabled:opacity-50 dark:border dark:bg-[#221d2b] dark:hover:bg-[#2d2535]"
               onClick={() => onRun?.()}
+              disabled={isRunning || isSubmitting}
             >
-              Run
+              {isRunning ? "Running..." : "Run"}
             </button>
 
             <button
               type="button"
-              className="inline-flex h-9 items-center justify-center rounded-full border bg-white px-4 text-xs font-semibold hover:bg-[#f6e9d2] dark:border dark:bg-[#221d2b] dark:hover:bg-[#2d2535]"
+              className="inline-flex h-9 items-center justify-center rounded-full border bg-white px-4 text-xs font-semibold hover:bg-[#f6e9d2] disabled:opacity-50 dark:border dark:bg-[#221d2b] dark:hover:bg-[#2d2535]"
               onClick={() => onSubmit?.()}
+              disabled={isRunning || isSubmitting}
             >
-              Submit
+              {isSubmitting ? "Submitting..." : "Submit"}
             </button>
           </div>
         </div>

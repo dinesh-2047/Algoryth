@@ -1,65 +1,74 @@
-"use client";
-
-import { useEffect, useState, Suspense, useMemo } from "react";
-import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
-
-function difficultyClasses(difficulty) {
-  switch (difficulty) {
-    case "Easy":
-      return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
-    case "Medium":
-      return "bg-amber-500/10 text-amber-700 dark:text-amber-300";
-    case "Hard":
-      return "bg-rose-500/10 text-rose-700 dark:text-rose-300";
-    default:
-      return "bg-zinc-500/10 text-zinc-700 dark:text-zinc-300";
-  }
-}
+'use client';
+import { useEffect, useState, Suspense, useMemo } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import ProblemCard from '../../components/ProblemCard';
 
 function ProblemsPageContent() {
-  // const [problems, setProblems] = useState([]); // problems state IS needed for fetch result
   const [problems, setProblems] = useState([]);
-  // Removed redundant local state that mirrors URL params
-
+  const [bookmarkedProblems, setBookmarkedProblems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const { urlSearch, urlDifficulty, urlTags, urlSort } = useMemo(() => {
     const search = searchParams.get('search') || '';
     const difficulty = searchParams.get('difficulty') || '';
-    const tags = searchParams.get('tags')?.split(',') || [];
+    const tags = searchParams.get('tags')?.split(',').filter(Boolean) || [];
     const sort = searchParams.get('sort') || 'title';
     return { urlSearch: search, urlDifficulty: difficulty, urlTags: tags, urlSort: sort };
   }, [searchParams]);
 
+  // Fetch problems from API
   useEffect(() => {
     const fetchProblems = async () => {
-      const params = new URLSearchParams();
-      if (urlSearch) params.set('search', urlSearch);
-      if (urlDifficulty) params.set('difficulty', urlDifficulty);
-      if (urlTags.length > 0) params.set('tags', urlTags.join(','));
-      if (urlSort && urlSort !== 'title') params.set('sort', urlSort);
+      try {
+        setLoading(true);
+        const params = new URLSearchParams();
+        if (urlSearch) params.set('search', urlSearch);
+        if (urlDifficulty) params.set('difficulty', urlDifficulty);
+        if (urlTags.length > 0) params.set('tags', urlTags.join(','));
+        if (urlSort && urlSort !== 'title') params.set('sort', urlSort);
 
-      const queryString = params.toString();
-      const url = `/api/problems${queryString ? `?${queryString}` : ''}`;
+        const queryString = params.toString();
+        const url = `/api/problems${queryString ? `?${queryString}` : ''}`;
+        const res = await fetch(url);
 
-      const res = await fetch(url);
-      const data = await res.json();
-      setProblems(data.items);
+        if (!res.ok) {
+          throw new Error(`API error: ${res.status}`);
+        }
+
+        const data = await res.json();
+        setProblems(data.items || []);
+      } catch (error) {
+        console.error("Failed to fetch problems:", error);
+        setProblems([]); // Fallback to empty list so we don't crash
+      } finally {
+        setLoading(false);
+      }
     };
-
     fetchProblems();
   }, [urlSearch, urlDifficulty, urlTags, urlSort]);
 
-  // Removed redundant useEffect that synced URL to local state
+  // Load bookmarked problems from localStorage (runs once on mount)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('bookmarkedProblems');
+      if (saved) {
+        try {
+          setBookmarkedProblems(JSON.parse(saved));
+        } catch (error) {
+          console.error('Failed to parse bookmarks:', error);
+        }
+      }
+    }
+  }, []);
 
   const updateURL = (newSearch, newDifficulty, newTags, newSort) => {
     const params = new URLSearchParams();
     if (newSearch) params.set('search', newSearch);
     if (newDifficulty) params.set('difficulty', newDifficulty);
     if (newTags.length > 0) params.set('tags', newTags.join(','));
-    if (newSort && newSort !== 'title') params.set('sort', newSort); // Only include sort if not default
+    if (newSort && newSort !== 'title') params.set('sort', newSort);
 
     const queryString = params.toString();
     router.push(`/problems${queryString ? `?${queryString}` : ''}`, { scroll: false });
@@ -84,20 +93,43 @@ function ProblemsPageContent() {
     updateURL(urlSearch, urlDifficulty, urlTags, value);
   };
 
-  const allTags = ["arrays", "hash-map", "stack", "dp"];
+  const handleBookmark = (problemId) => {
+    const newBookmarks = bookmarkedProblems.includes(problemId)
+      ? bookmarkedProblems.filter(id => id !== problemId)
+      : [...bookmarkedProblems, problemId];
+
+    setBookmarkedProblems(newBookmarks);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bookmarkedProblems', JSON.stringify(newBookmarks));
+    }
+  };
+
+  const allTags = ['arrays', 'hash-map', 'stack', 'dp', 'sliding-window', 'binary-search', 'graphs', 'trees'];
+
+  const displayProblems = useMemo(() => {
+    // This sorting logic is now handled by the API, but we can keep client-side as a fallback or for non-API sorting
+    return [...problems].sort((a, b) => {
+      if (urlSort === 'difficulty') {
+        const order = { Easy: 1, Medium: 2, Hard: 3 };
+        return order[a.difficulty] - order[b.difficulty];
+      }
+      // Default sort by title (or whatever the API returns)
+      return 0;
+    });
+  }, [problems, urlSort]);
 
   return (
-    <section className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <section className="flex flex-col gap-8">
+      {/* Header Section */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-[#2b2116] dark:text-[#f6ede0]">
+          <h1 className="text-3xl font-bold tracking-tight text-[#2b2116] dark:text-[#f6ede0]">
             Problems
           </h1>
-          <p className="mt-1 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
-            Browse problems. This uses mock data + API routes.
+          <p className="mt-2 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
+            Master data structures & algorithms with curated problems
           </p>
         </div>
-
         <div className="w-full sm:w-80">
           <div className="relative">
             <input
@@ -122,7 +154,8 @@ function ProblemsPageContent() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4">
+      {/* Filters Section */}
+      <div className="flex flex-wrap items-center gap-4 rounded-xl bg-[#f7f0e0] p-4 dark:bg-[#292331]">
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-[#5d5245] dark:text-[#d7ccbe]">Difficulty:</label>
           <select
@@ -136,7 +169,6 @@ function ProblemsPageContent() {
             <option value="Hard">Hard</option>
           </select>
         </div>
-
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-[#5d5245] dark:text-[#d7ccbe]">Sort:</label>
           <select
@@ -144,97 +176,71 @@ function ProblemsPageContent() {
             onChange={(e) => handleSort(e.target.value)}
             className="h-9 rounded-lg border border-[#deceb7] bg-white px-3 text-sm text-[#2b2116] outline-none dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#f6ede0]"
           >
-            <option value="title">Title</option>
+            <option value="title">Default</option>
             <option value="difficulty">Difficulty</option>
+            <option value="acceptance">Acceptance</option>
           </select>
         </div>
-
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-[#5d5245] dark:text-[#d7ccbe]">Tags:</label>
-          <div className="flex flex-wrap gap-2">
-            {allTags.map(tag => (
-              <button
-                key={tag}
-                onClick={() => handleTag(tag)}
-                className={`inline-flex items-center rounded-full px-3 py-1 text-xs ${urlTags.includes(tag)
-                  ? "bg-[#d69a44] text-[#2b1a09] dark:bg-[#f2c66f] dark:text-[#231406]"
-                  : "border border-[#deceb7] text-[#5d5245] dark:border-[#40364f] dark:text-[#d7ccbe]"
-                  }`}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-[#e0d5c2] bg-white dark:border-[#3c3347] dark:bg-[#211d27]">
-        <div className="grid grid-cols-[56px_1.2fr_.45fr_.45fr_.9fr] gap-4 border-b border-[#e0d5c2] bg-[#f7f0e0] px-5 py-3 text-xs font-semibold uppercase tracking-wide text-[#8a7a67] dark:border-[#3c3347] dark:bg-[#292331] dark:text-[#b5a59c]">
-          <div>#</div>
-          <div>Title</div>
-          <div>Difficulty</div>
-          <div>Status</div>
-          <div>Tags</div>
-        </div>
+      {/* Tags Quick Filter */}
+      <div className="flex flex-wrap items-center gap-2">
+        {allTags.map(tag => (
+          <button
+            key={tag}
+            onClick={() => handleTag(tag)}
+            className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-semibold transition-all ${urlTags.includes(tag)
+                ? 'bg-[#d69a44] text-white shadow-md dark:bg-[#f2c66f] dark:text-[#231406]'
+                : 'border border-[#deceb7] bg-white text-[#5d5245] hover:bg-[#f6e9d2] dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]'
+              }`}
+          >
+            {tag}
+          </button>
+        ))}
+      </div>
 
-        <div className="divide-y divide-[#e0d5c2] dark:divide-[#3c3347]">
-          {problems.map((p, i) => (
-            <Link
-              key={p.id}
-              href={`/problems/${p.slug}`}
-
-              className="grid grid-cols-[56px_1.2fr_.45fr_.45fr_.9fr] gap-4 px-5 py-3 hover:bg-[#f6e9d2] dark:hover:bg-[#2d2535]"
-            >
-              <div className="flex items-center text-xs text-[#8a7a67] dark:text-[#b5a59c]">
-                {String(i + 1).padStart(2, "0")}
-              </div>
-              <div className="min-w-0">
-                <div className="truncate text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">
-                  {p.title}
-                </div>
-                <div className="mt-1 text-xs text-[#b5a08a] dark:text-[#b5a59c]">
-                  {p.id}
-                </div>
-              </div>
-
-              <div className="flex items-center">
-                <span
-                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${difficultyClasses(
-                    p.difficulty
-                  )}`}
-                >
-                  {p.difficulty}
-                </span>
-              </div>
-
-              <div className="flex items-center">
-                <span className="inline-flex items-center rounded-full border border-[#deceb7] bg-[#d69a441a] px-2.5 py-1 text-xs text-[#5d5245] dark:border-[#40364f] dark:bg-[#f6ede01a] dark:text-[#d7ccbe]">
-                  {p.status || "Not Started"}
-                </span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                {p.tags.map((t) => (
-                  <span
-                    key={`${p.id}-${t}`}
-                    className="inline-flex items-center rounded-full border border-[#deceb7] bg-[#f2e3cc] px-2.5 py-1 text-xs text-[#5d5245] dark:border-[#40364f] dark:bg-[#2d2535] dark:text-[#d7ccbe]"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </Link>
+      {/* Problems Grid */}
+      {loading ? (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-[380px] rounded-xl bg-gray-200 dark:bg-gray-800 animate-pulse"></div>
           ))}
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {displayProblems.map((problem, index) => (
+            <ProblemCard
+              key={problem.id}
+              problem={problem}
+              index={index}
+              onBookmark={handleBookmark}
+              isBookmarked={bookmarkedProblems.includes(problem.id)}
+            />
+          ))}
+        </div>
+      )}
 
+      {!loading && displayProblems.length === 0 && (
+        <div className="flex flex-col items-center justify-center text-center py-16 rounded-xl bg-[#f7f0e0] dark:bg-[#292331]">
+          <h3 className="text-xl font-semibold text-[#2b2116] dark:text-[#f6ede0]">No Problems Found</h3>
+          <p className="mt-2 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
+            Try adjusting your search or filter criteria.
+          </p>
+        </div>
+      )}
     </section>
   );
 }
 
 export default function ProblemsPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="h-[380px] rounded-xl bg-gray-200 dark:bg-gray-800 animate-pulse"></div>
+        ))}
+      </div>
+    }>
       <ProblemsPageContent />
     </Suspense>
   );
