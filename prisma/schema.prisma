@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Problem {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  difficulty  String
+  tags        String[] // Array of strings
+  statement   String
+  constraints String[] // Array of strings
+  examples    Json[]   // Array of objects
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  submissions Submission[]
+}
+
+model User {
+  id        String @id @default(cuid())
+  email     String @unique
+  name      String?
+  rating    Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  submissions Submission[]
+  accounts   Account[]
+  sessions   Session[]
+}
+
+model Submission {
+  id        String   @id @default(cuid())
+  code      String
+  language  String
+  result    String?  // Execution result
+  status    String   // e.g., "success", "error"
+  userId    String
+  problemId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+}
