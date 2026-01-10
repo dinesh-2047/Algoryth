@@ -19,6 +19,20 @@ export const problems = [
       { input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explaination: "We need to find two numbers in the array whose sum equals the target value 9.\nThe number at index 0 is 2. \nThe number at index 1 is 7. \n2 + 7 = 9, which matches the target. \nSo, we return their indices: [0, 1]." },
       { input: "nums = [3,2,4], target = 6", output: "[1,2]", explaination: "We need to find two numbers in the array whose sum equals the target value 6.\nThe number at index 1 is 2. \nThe number at index 2 is 4. \n2 + 4 = 6, which matches the target. \nSo, we return their indices: [1, 2]." },
     ],
+    testCases: [
+  {
+    input: JSON.stringify({ nums: [2,7,11,15], target: 9 }),
+    output: JSON.stringify([0,1])
+  },
+  {
+    input: JSON.stringify({ nums: [3,2,4], target: 6 }),
+    output: JSON.stringify([1,2])
+  },
+  {
+    input: JSON.stringify({ nums: [3,3], target: 6 }),
+    output: JSON.stringify([0,1])
+  }
+]
   },
   {
     id: "p-1001",
@@ -33,6 +47,21 @@ export const problems = [
       { input: "s = \"()\"", output: "true", explaination: "The string contains one opening bracket ( followed by one closing bracket ).\nSince every opening bracket is properly closed in the correct order, the parentheses are balanced.\nSo, the string is valid, and the output is true." },
       { input: "s = \"([)]\"", output: "false", explaination: "The string has the brackets (, [, ), and ].\nAlthough each type of bracket appears, they are not in the correct order.\nThe opening ( should be closed by ) before closing [.\nBut here, [ is opened and ) comes next, which breaks the proper nesting rule.\nBecause the brackets are not properly nested, the string is invalid, so the output is false." },
     ],
+    testCases: [
+  {
+    input: JSON.stringify("()"),
+    output: JSON.stringify(true)
+  },
+  {
+    input: JSON.stringify("()[]{}"),
+    output: JSON.stringify(true)
+  },
+  {
+    input: JSON.stringify("(]"),
+    output: JSON.stringify(false)
+  }
+]
+
   },
   {
   id: "p-1002",
@@ -51,7 +80,22 @@ export const problems = [
       input: "nums = [1,1,0,1,1,1]",
       output: "3"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify([1,1,0,1,1,1]),
+    output: JSON.stringify(3)
+  },
+  {
+    input: JSON.stringify([1,0,1,1,0,1]),
+    output: JSON.stringify(2)
+  },
+  {
+    input: JSON.stringify([0,0,0]),
+    output: JSON.stringify(0)
+  }
+]
+
 },
 {
   id: "p-1003",
@@ -69,7 +113,22 @@ export const problems = [
       input: 's = "anagram", t = "nagaram"',
       output: "true"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify({ s: "anagram", t: "nagaram" }),
+    output: JSON.stringify(true)
+  },
+  {
+    input: JSON.stringify({ s: "rat", t: "car" }),
+    output: JSON.stringify(false)
+  },
+  {
+    input: JSON.stringify({ s: "aacc", t: "ccac" }),
+    output: JSON.stringify(false)
+  }
+]
+
 },
 {
   id: "p-1004",
@@ -87,7 +146,22 @@ export const problems = [
       input: "nums = [1,1,2]",
       output: "2"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify([1,1,2]),
+    output: JSON.stringify(2)
+  },
+  {
+    input: JSON.stringify([0,0,1,1,1,2,2,3,3,4]),
+    output: JSON.stringify(5)
+  },
+  {
+    input: JSON.stringify([1]),
+    output: JSON.stringify(1)
+  }
+]
+
 },
 {
   id: "p-1005",
@@ -105,7 +179,22 @@ export const problems = [
       input: 's = "leetcode"',
       output: "0"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify("leetcode"),
+    output: JSON.stringify(0)
+  },
+  {
+    input: JSON.stringify("loveleetcode"),
+    output: JSON.stringify(2)
+  },
+  {
+    input: JSON.stringify("aabb"),
+    output: JSON.stringify(-1)
+  }
+]
+
 },
 {
   id: "p-1006",
@@ -123,7 +212,22 @@ export const problems = [
       input: 's = "A man, a plan, a canal: Panama"',
       output: "true"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify("A man, a plan, a canal: Panama"),
+    output: JSON.stringify(true)
+  },
+  {
+    input: JSON.stringify("race a car"),
+    output: JSON.stringify(false)
+  },
+  {
+    input: JSON.stringify(" "),
+    output: JSON.stringify(true)
+  }
+]
+
 },
 {
   id: "p-1007",
@@ -141,7 +245,22 @@ export const problems = [
       input: "nums = [0,1,0,3,12]",
       output: "[1,3,12,0,0]"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify([0,1,0,3,12]),
+    output: JSON.stringify([1,3,12,0,0])
+  },
+  {
+    input: JSON.stringify([0,0,1]),
+    output: JSON.stringify([1,0,0])
+  },
+  {
+    input: JSON.stringify([1,2,3]),
+    output: JSON.stringify([1,2,3])
+  }
+]
+
 },
 {
   id: "p-1008",
@@ -159,7 +278,22 @@ export const problems = [
       input: "push(1), push(2), pop()",
       output: "2"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify(["push",1,"push",2,"pop"]),
+    output: JSON.stringify(2)
+  },
+  {
+    input: JSON.stringify(["push",10,"top"]),
+    output: JSON.stringify(10)
+  },
+  {
+    input: JSON.stringify(["push",5,"pop","isEmpty"]),
+    output: JSON.stringify(true)
+  }
+]
+
 },
 {
   id: "p-1009",
@@ -177,7 +311,22 @@ export const problems = [
       input: "n = 5",
       output: "5"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify(0),
+    output: JSON.stringify(0)
+  },
+  {
+    input: JSON.stringify(1),
+    output: JSON.stringify(1)
+  },
+  {
+    input: JSON.stringify(5),
+    output: JSON.stringify(5)
+  }
+]
+
 },
   {
     id: "p-2000",
@@ -189,7 +338,23 @@ export const problems = [
       "Given an integer array nums, find the contiguous subarray (containing at least one number) which has the largest sum and return its sum.",
     constraints: ["1 ≤ nums.length ≤ 10^5", "-10^4 ≤ nums[i] ≤ 10^4"],
     examples: [{ input: "nums = [-2,1,-3,4,-1,2,1,-5,4]", output: "6", explaination: "We need to find a contiguous subarray with the maximum possible sum.\nIf we look at the array, the subarray:\n[4, -1, 2, 1] has the largest sum.\n4 + (-1) + 2 + 1 = 6\nSo, the maximum subarray sum is 6." }],
+    testCases: [
+  {
+    input: JSON.stringify([-2,1,-3,4,-1,2,1,-5,4]),
+    output: JSON.stringify(6)
   },
+  {
+    input: JSON.stringify([1]),
+    output: JSON.stringify(1)
+  },
+  {
+    input: JSON.stringify([5,4,-1,7,8]),
+    output: JSON.stringify(23)
+  }
+]
+
+  },
+  
   {
   id: "p-2001",
   slug: "subarray-sum-equals-k",
@@ -206,7 +371,22 @@ export const problems = [
       input: "nums = [1,1,1], k = 2",
       output: "2"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify({ nums: [1,1,1], k: 2 }),
+    output: JSON.stringify(2)
+  },
+  {
+    input: JSON.stringify({ nums: [1,2,3], k: 3 }),
+    output: JSON.stringify(2)
+  },
+  {
+    input: JSON.stringify({ nums: [1,-1,0], k: 0 }),
+    output: JSON.stringify(3)
+  }
+]
+
 },
 {
   id: "p-2002",
@@ -224,7 +404,22 @@ export const problems = [
       input: 's = "babad"',
       output: '"bab"'
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify("babad"),
+    output: JSON.stringify("bab")
+  },
+  {
+    input: JSON.stringify("cbbd"),
+    output: JSON.stringify("bb")
+  },
+  {
+    input: JSON.stringify("a"),
+    output: JSON.stringify("a")
+  }
+]
+
 },
 {
   id: "p-2003",
@@ -242,7 +437,22 @@ export const problems = [
       input: "temperatures = [73,74,75,71,69,72,76,73]",
       output: "[1,1,4,2,1,1,0,0]"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify([73,74,75,71,69,72,76,73]),
+    output: JSON.stringify([1,1,4,2,1,1,0,0])
+  },
+  {
+    input: JSON.stringify([30,40,50,60]),
+    output: JSON.stringify([1,1,1,0])
+  },
+  {
+    input: JSON.stringify([30,60,90]),
+    output: JSON.stringify([1,1,0])
+  }
+]
+
 },
 {
   id: "p-2004",
@@ -260,7 +470,22 @@ export const problems = [
       input: "nums = [1,2,3,4]",
       output: "[24,12,8,6]"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify([1,2,3,4]),
+    output: JSON.stringify([24,12,8,6])
+  },
+  {
+    input: JSON.stringify([0,1,2,3]),
+    output: JSON.stringify([6,0,0,0])
+  },
+  {
+    input: JSON.stringify([2,3,4,5]),
+    output: JSON.stringify([60,40,30,24])
+  }
+]
+
 },
 {
   id: "p-2005",
@@ -278,7 +503,22 @@ export const problems = [
       input: "n = 3",
       output: '["((()))","(()())","(())()","()(())","()()()"]'
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify(1),
+    output: JSON.stringify(["()"])
+  },
+  {
+    input: JSON.stringify(2),
+    output: JSON.stringify(["(())","()()"])
+  },
+  {
+    input: JSON.stringify(3),
+    output: JSON.stringify(["((()))","(()())","(())()","()(())","()()()"])
+  }
+]
+
 },{
   id: "p-2006",
   slug: "container-with-most-water",
@@ -295,7 +535,22 @@ export const problems = [
       input: "height = [1,8,6,2,5,4,8,3,7]",
       output: "49"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify([1,8,6,2,5,4,8,3,7]),
+    output: JSON.stringify(49)
+  },
+  {
+    input: JSON.stringify([1,1]),
+    output: JSON.stringify(1)
+  },
+  {
+    input: JSON.stringify([4,3,2,1,4]),
+    output: JSON.stringify(16)
+  }
+]
+
 },
 {
   id: "p-2007",
@@ -313,7 +568,22 @@ export const problems = [
       input: 's = "3[a]2[bc]"',
       output: '"aaabcbc"'
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify("3[a]2[bc]"),
+    output: JSON.stringify("aaabcbc")
+  },
+  {
+    input: JSON.stringify("3[a2[c]]"),
+    output: JSON.stringify("accaccacc")
+  },
+  {
+    input: JSON.stringify("2[abc]3[cd]ef"),
+    output: JSON.stringify("abcabccdcdcdef")
+  }
+]
+
 },
 {
   id: "p-2008",
@@ -331,7 +601,22 @@ export const problems = [
       input: "nums = [4,5,6,7,0,1,2], target = 0",
       output: "4"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify({ nums: [4,5,6,7,0,1,2], target: 0 }),
+    output: JSON.stringify(4)
+  },
+  {
+    input: JSON.stringify({ nums: [4,5,6,7,0,1,2], target: 3 }),
+    output: JSON.stringify(-1)
+  },
+  {
+    input: JSON.stringify({ nums: [1], target: 0 }),
+    output: JSON.stringify(-1)
+  }
+]
+
 },
 {
   id: "p-3000",
@@ -349,7 +634,22 @@ export const problems = [
       input: "nums = [1,3,-1,-3,5,3,6,7], k = 3",
       output: "[3,3,5,5,6,7]"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify({ nums: [1,3,-1,-3,5,3,6,7], k: 3 }),
+    output: JSON.stringify([3,3,5,5,6,7])
+  },
+  {
+    input: JSON.stringify({ nums: [1], k: 1 }),
+    output: JSON.stringify([1])
+  },
+  {
+    input: JSON.stringify({ nums: [9,10,9,-7,-4,-8,2,-6], k: 5 }),
+    output: JSON.stringify([10,10,9,2])
+  }
+]
+
 },
 {
   id: "p-3001",
@@ -367,7 +667,23 @@ export const problems = [
       input: 's = "ADOBECODEBANC", t = "ABC"',
       output: '"BANC"'
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify({ s: "ADOBECODEBANC", t: "ABC" }),
+    output: JSON.stringify("BANC")
+  },
+  {
+    input: JSON.stringify({ s: "a", t: "a" }),
+    output: JSON.stringify("a")
+  },
+  {
+    input: JSON.stringify({ s: "a", t: "aa" }),
+    output: JSON.stringify("")
+  }
+]
+
+  
 },
 {
   id: "p-3002",
@@ -385,7 +701,22 @@ export const problems = [
       input: "heights = [2,1,5,6,2,3]",
       output: "10"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify([2,1,5,6,2,3]),
+    output: JSON.stringify(10)
+  },
+  {
+    input: JSON.stringify([2,4]),
+    output: JSON.stringify(4)
+  },
+  {
+    input: JSON.stringify([6,2,5,4,5,1,6]),
+    output: JSON.stringify(12)
+  }
+]
+
 },
 {
   id: "p-3003",
@@ -403,7 +734,31 @@ export const problems = [
       input: 'board = [["A","B","C"],["D","E","F"]], word = "ABE"',
       output: "true"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify({
+      board: [["A","B","C","E"],["S","F","C","S"],["A","D","E","E"]],
+      word: "ABCCED"
+    }),
+    output: JSON.stringify(true)
+  },
+  {
+    input: JSON.stringify({
+      board: [["A","B","C","E"],["S","F","C","S"],["A","D","E","E"]],
+      word: "SEE"
+    }),
+    output: JSON.stringify(true)
+  },
+  {
+    input: JSON.stringify({
+      board: [["A","B","C","E"],["S","F","C","S"],["A","D","E","E"]],
+      word: "ABCB"
+    }),
+    output: JSON.stringify(false)
+  }
+]
+
 },
 {
   id: "p-3004",
@@ -421,7 +776,22 @@ export const problems = [
       input: "lists = [[1,4,5],[1,3,4],[2,6]]",
       output: "[1,1,2,3,4,4,5,6]"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify([[1,4,5],[1,3,4],[2,6]]),
+    output: JSON.stringify([1,1,2,3,4,4,5,6])
+  },
+  {
+    input: JSON.stringify([]),
+    output: JSON.stringify([])
+  },
+  {
+    input: JSON.stringify([[1],[0]]),
+    output: JSON.stringify([0,1])
+  }
+]
+
 },
 {
   id: "p-3005",
@@ -443,7 +813,22 @@ export const problems = [
       input: 's = "aa", p = "a"',
       output: "false"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify({ s: "aa", p: "a" }),
+    output: JSON.stringify(false)
+  },
+  {
+    input: JSON.stringify({ s: "aa", p: "a*" }),
+    output: JSON.stringify(true)
+  },
+  {
+    input: JSON.stringify({ s: "ab", p: ".*" }),
+    output: JSON.stringify(true)
+  }
+]
+
 },
 {
   id: "p-3006",
@@ -461,7 +846,22 @@ export const problems = [
       input: "height = [0,1,0,2,1,0,1,3,2,1,2,1]",
       output: "6"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify([0,1,0,2,1,0,1,3,2,1,2,1]),
+    output: JSON.stringify(6)
+  },
+  {
+    input: JSON.stringify([4,2,0,3,2,5]),
+    output: JSON.stringify(9)
+  },
+  {
+    input: JSON.stringify([1,1,1]),
+    output: JSON.stringify(0)
+  }
+]
+
 },
 {
   id: "p-3007",
@@ -479,7 +879,22 @@ export const problems = [
       input: 's = ")()())"',
       output: "4"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify(")()())"),
+    output: JSON.stringify(4)
+  },
+  {
+    input: JSON.stringify("(()"),
+    output: JSON.stringify(2)
+  },
+  {
+    input: JSON.stringify(""),
+    output: JSON.stringify(0)
+  }
+]
+
 },
 {
   id: "p-3008",
@@ -497,7 +912,22 @@ export const problems = [
       input: 'word1 = "horse", word2 = "ros"',
       output: "3"
     }
-  ]
+  ],
+  testCases: [
+  {
+    input: JSON.stringify({ word1: "horse", word2: "ros" }),
+    output: JSON.stringify(3)
+  },
+  {
+    input: JSON.stringify({ word1: "intention", word2: "execution" }),
+    output: JSON.stringify(5)
+  },
+  {
+    input: JSON.stringify({ word1: "", word2: "abc" }),
+    output: JSON.stringify(3)
+  }
+]
+
 }
 
 
