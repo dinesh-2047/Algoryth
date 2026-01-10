@@ -178,9 +178,9 @@ export default function ProblemWorkspace({ problem }) {
     }
   };
 
+
   const leftPanel = (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
-      {/* Problem header, tags, description, constraints, examples */}
       <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-5 py-4 dark:border-[#3c3347] dark:bg-[#292331]">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -231,6 +231,7 @@ export default function ProblemWorkspace({ problem }) {
     </div>
   );
 
+
   const rightPanel = (
     <SplitPane
       direction="vertical"
@@ -241,14 +242,9 @@ export default function ProblemWorkspace({ problem }) {
       className="h-215 lg:h-full"
       primary={<CodeEditor initialLanguage="javascript" problemTitle={problem.title} />}
       secondary={
-        <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
-          <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] dark:border-[#3c3347] dark:bg-[#292331]">
-            <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold">
-              <span className="rounded-full bg-[#edd9b8] px-3 py-1 text-[#4b4033] dark:bg-[#f6ede0] dark:text-[#231406]">
-                Test Result
-              </span>
-              <span className="text-[#8a7a67] dark:text-[#b5a59c]">Testcase</span>
-            </div>
+        <div className="flex h-full flex-col rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
+          <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-4 py-2 text-xs font-semibold dark:border-[#3c3347] dark:bg-[#292331]">
+            Test Result
           </div>
           <div className="min-h-0 flex-1 overflow-auto px-4 pb-5 pt-3 text-center text-sm text-zinc-500 dark:text-zinc-400">
             You must run your code first.
@@ -258,9 +254,10 @@ export default function ProblemWorkspace({ problem }) {
     />
   );
 
+
   return (
     <section className="grid gap-4">
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] px-4 py-3 dark:border-[#3c3347] dark:bg-[#211d27]">
+      <div className="flex items-center justify-between rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] px-4 py-3 dark:border-[#3c3347] dark:bg-[#211d27]">
         <div className="flex items-center gap-2">
           <Link
             href="/problems"
@@ -332,7 +329,6 @@ export default function ProblemWorkspace({ problem }) {
           storageKey={`algoryth.split.problem.${problem.slug}`}
           primary={leftPanel}
           secondary={rightPanel}
-          className="h-full"
         />
       </div>
 
