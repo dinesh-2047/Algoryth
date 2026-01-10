@@ -5,7 +5,7 @@ import Link from "next/link";
 import CodeEditor from "./CodeEditor";
 import SplitPane from "./SplitPane";
 import ProblemTimer from "./ProblemTimer";
-
+import { useEffect } from "react";
 export default function ProblemWorkspace({ problem, onNext, onPrev }) {
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("javascript");
@@ -14,6 +14,16 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
   const [lastSubmissionStatus, setLastSubmissionStatus] = useState(null);
   const [timerRunning, setTimerRunning] = useState(true);
   const [inputError, setInputError] = useState(null);
+  const [customInput, setCustomInput] = useState("");
+
+
+  useEffect(() => {
+    setLastSubmissionStatus(null);
+    setInputError(null);
+    setCode("");
+    setTimerRunning(true);
+  }, [problem.id]);
+
 
   const starterCode = useMemo(
     () => `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
@@ -41,22 +51,40 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
     setLastSubmissionStatus(null);
 
     try {
+      const sampleInput = problem.examples?.[0]?.input ?? null;
+
       const response = await fetch("/api/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, language }),
+        body: JSON.stringify({
+          code,
+          input: sampleInput
+            ? JSON.stringify(sampleInput)
+            : undefined,
+        }),
       });
+
       const result = await response.json();
-      setLastSubmissionStatus(`${result.status} in ${result.language}`);
+
+      if (result.error) {
+        setLastSubmissionStatus(`Error:\n${result.error}`);
+      } else {
+        setLastSubmissionStatus(
+          `Output:\n${result.result ?? result.output ?? "No output"}`
+        );
+      }
     } catch {
-      setLastSubmissionStatus("Execution Error");
-    }
+       setLastSubmissionStatus("Execution Error");
+   }
 
     setIsRunning(false);
   };
 
+
+
+
   const handleSubmit = async () => {
-    if (!validateBeforeRun()) return;
+  if (!validateBeforeRun()) return;
 
     setTimerRunning(false);
     setIsSubmitting(true);
@@ -79,8 +107,6 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       setLastSubmissionStatus("Submission Error");
     }
 
-    setIsSubmitting(false);
-  };
 
   const leftPanel = (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
@@ -189,7 +215,31 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
                 {inputError}
               </div>
             )}
-            {lastSubmissionStatus || "You must run your code first."}
+    {/* RUN RESULTS */}
+{Array.isArray(lastSubmissionStatus) ? (
+  lastSubmissionStatus.map((t, i) => (
+    <div
+      key={i}
+      className="mb-3 rounded border border-[#deceb7] bg-[#fff8ed] p-3 text-left dark:border-[#40364f] dark:bg-[#221d2b]"
+    >
+      <div><b>Input:</b> {t.input}</div>
+      <div><b>Expected:</b> {t.expected}</div>
+      <div>
+        <b>Your Output:</b>{" "}
+        {t.actual ?? <span className="text-red-600">{t.error}</span>}
+      </div>
+      <div
+        className={
+          t.passed ? "text-green-600 font-semibold" : "text-red-600 font-semibold"
+        }
+      >
+        {t.passed ? "Passed" : "Failed"}
+      </div>
+    </div>
+  ))
+) : (
+  lastSubmissionStatus || "You must run your code first."
+)}
           </div>
         </div>
       }
