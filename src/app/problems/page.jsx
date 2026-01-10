@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, Suspense, useMemo } from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useMemo } from "react";
+import { problems } from "../../lib/problems";
 
 function difficultyClasses(difficulty) {
   switch (difficulty) {
@@ -17,6 +17,8 @@ function difficultyClasses(difficulty) {
   }
 }
 
+export default function ProblemsPage() {
+  const [searchTerm, setSearchTerm] = useState("");
 function ProblemsPageContent() {
   // const [problems, setProblems] = useState([]); // problems state IS needed for fetch result
   const [problems, setProblems] = useState([]);
@@ -54,18 +56,24 @@ function ProblemsPageContent() {
 
   // Removed redundant useEffect that synced URL to local state
 
-  const updateURL = (newSearch, newDifficulty, newTags, newSort) => {
-    const params = new URLSearchParams();
-    if (newSearch) params.set('search', newSearch);
-    if (newDifficulty) params.set('difficulty', newDifficulty);
-    if (newTags.length > 0) params.set('tags', newTags.join(','));
-    if (newSort && newSort !== 'title') params.set('sort', newSort); // Only include sort if not default
+  const filteredProblems = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return problems;
+    }
 
-    const queryString = params.toString();
-    router.push(`/problems${queryString ? `?${queryString}` : ''}`, { scroll: false });
-  };
+    return problems.filter(problem =>
+      problem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      problem.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [searchTerm]);
 
   const handleSearch = (value) => {
+    setSearchTerm(value);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+  };
     updateURL(value, urlDifficulty, urlTags, urlSort);
   };
 
@@ -103,10 +111,15 @@ function ProblemsPageContent() {
             <input
               aria-label="Search problems"
               placeholder="Search problems..."
+              value={searchTerm}
               value={urlSearch}
               onChange={(e) => handleSearch(e.target.value)}
               className="h-10 w-full rounded-xl border border-[#deceb7] bg-white px-4 pr-10 text-sm text-[#2b2116] outline-none placeholder:text-[#8a7a67] focus:ring-2 focus:ring-[#c99a4c]/30 dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#f6ede0] dark:placeholder:text-[#a89cae] dark:focus:ring-[#f2c66f]/30"
             />
+            {searchTerm && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
             {urlSearch && (
               <button
                 onClick={() => handleSearch('')}
@@ -122,6 +135,8 @@ function ProblemsPageContent() {
         </div>
       </div>
 
+      <div className="overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-950">
+        <div className="grid grid-cols-[56px_1.2fr_.45fr_.9fr] gap-4 border-b border-black/10 bg-zinc-50 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:border-white/10 dark:bg-black dark:text-zinc-400">
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-[#5d5245] dark:text-[#d7ccbe]">Difficulty:</label>
@@ -173,10 +188,15 @@ function ProblemsPageContent() {
           <div>#</div>
           <div>Title</div>
           <div>Difficulty</div>
-          <div>Status</div>
           <div>Tags</div>
         </div>
 
+        <div className="divide-y divide-black/10 dark:divide-white/10">
+          {filteredProblems.map((p, i) => (
+            <Link
+              key={p.id}
+              href={`/problems/${p.slug}`}
+              className="grid grid-cols-[56px_1.2fr_.45fr_.9fr] gap-4 px-5 py-3 hover:bg-black/2 dark:hover:bg-white/5"
         <div className="divide-y divide-[#e0d5c2] dark:divide-[#3c3347]">
           {problems.map((p, i) => (
             <Link
@@ -229,13 +249,5 @@ function ProblemsPageContent() {
       </div>
 
     </section>
-  );
-}
-
-export default function ProblemsPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <ProblemsPageContent />
-    </Suspense>
   );
 }

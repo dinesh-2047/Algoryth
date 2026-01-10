@@ -7,22 +7,39 @@ import parserBabel from "prettier/plugins/babel";
 
 const Monaco = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
+// Starter code templates for different languages
+const getStarterCode = (language, problemTitle = "Problem") => {
+  const templates = {
+    javascript: `// ${problemTitle}\n\nfunction solve(input) {\n  // TODO\n}\n`,
+    typescript: `// ${problemTitle}\n\nfunction solve(input: any): any {\n  // TODO\n}\n`,
+    python: `# ${problemTitle}\n\ndef solve(input):\n    # TODO\n    pass\n`,
+    cpp: `// ${problemTitle}\n\n#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    // TODO\n};\n`,
+    java: `// ${problemTitle}\n\npublic class Solution {\n    // TODO\n}\n`,
+  };
+  
+  return templates[language] || templates.javascript;
+};
+
 export default function CodeEditor({
   initialCode,
   initialLanguage = "javascript",
-  onChange,
-  onLanguageChange,
-  onRun,      
-  onSubmit, 
+  problemTitle,
 }) {
-  const [code, setCode] = useState(initialCode || "");
   const [language, setLanguage] = useState(initialLanguage);
   const [theme, setTheme] = useState("vs-dark");
-  const [isFormatting, setIsFormatting] = useState(false);
 
+  // Generate code based on language and initial props
+  const code = useMemo(() => {
+    if (initialCode) return initialCode;
+    return getStarterCode(language, problemTitle);
+  }, [initialCode, language, problemTitle]);
+
+  const [editorCode, setEditorCode] = useState(code);
+
+  // Update editor code when computed code changes (language change or initial props)
   useEffect(() => {
-    setCode(initialCode || "");
-  }, [initialCode]);
+    setEditorCode(code);
+  }, [code]);
 
   useEffect(() => {
     const updateTheme = () => {
@@ -104,21 +121,30 @@ export default function CodeEditor({
             <select
               className="h-9 rounded-full border border-[#deceb7] bg-[#fff8ed] px-3 text-xs font-semibold text-[#5d5245] outline-none dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe]"
               value={language}
-              onChange={(e) => { setLanguage(e.target.value); onLanguageChange?.(e.target.value); }}
+              onChange={(e) => setLanguage(e.target.value)}
             >
               <option value="javascript">JavaScript</option>
-              <option value="python">Python</option>
-              <option value="java">Java</option>
-              <option value="cpp">C++</option>
-              <option value="go">Go</option>
+              <option value="typescript">
+                TypeScript
+              </option>
+              <option value="python">
+                Python
+              </option>
+              <option value="java">
+                Java
+              </option>
+              <option value="cpp">
+                C++
+              </option>
             </select>
             <button
               type="button"
+              className="inline-flex h-9 items-center justify-center rounded-full border border-black/10 bg-white px-4 text-xs font-semibold text-zinc-700 hover:bg-black/3 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
               className="inline-flex h-9 items-center justify-center rounded-full border border-[#deceb7] bg-white px-4 text-xs font-semibold text-[#5d5245] hover:bg-[#f6e9d2] disabled:opacity-50 dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
               onClick={handleAutoFormat}
               disabled={isFormatting}
             >
-              {isFormatting ? "Formatting..." : "Auto"}
+              Auto
             </button>
 
             {/* Adding Run and Submit buttons */}

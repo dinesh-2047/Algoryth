@@ -1,24 +1,34 @@
 import { NextResponse } from "next/server";
 import { getProblemBySlug } from "../../../../lib/problems";
+import { withErrorHandler, createSuccessResponse, NotFoundError, validateSlug } from "../../../../lib/api-utils";
 
-export function GET(
-  _req,
-  { params }
-) {
-  const problem = getProblemBySlug(params.slug);
+export const GET = withErrorHandler(async (req, { params }) => {
+  // Validate slug parameter
+  const { slug } = params;
+  validateSlug(slug);
+
+  const problem = getProblemBySlug(slug);
 
   if (!problem) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    throw new NotFoundError("Problem");
   }
 
-  return NextResponse.json({
+  // Validate that the problem has all required fields
+  if (!problem.id || !problem.title || !problem.statement) {
+    console.error(`Problem ${slug} is missing required fields`);
+    throw new NotFoundError("Problem");
+  }
+
+  const problemData = {
     id: problem.id,
     slug: problem.slug,
     title: problem.title,
-    difficulty: problem.difficulty,
-    tags: problem.tags,
+    difficulty: problem.difficulty || "Unknown",
+    tags: Array.isArray(problem.tags) ? problem.tags : [],
     statement: problem.statement,
-    constraints: problem.constraints,
-    examples: problem.examples,
-  });
-}
+    constraints: Array.isArray(problem.constraints) ? problem.constraints : [],
+    examples: Array.isArray(problem.examples) ? problem.examples : [],
+  };
+
+  return NextResponse.json(createSuccessResponse(problemData));
+});
