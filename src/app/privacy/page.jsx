@@ -2,93 +2,59 @@ export const metadata = {
   title: "Privacy Policy · Algoryth",
 };
 
-const SECTIONS = [
+const POLICY_SECTIONS = [
   {
     title: "1. Introduction",
-    content: (
-      <p>
-        Algoryth respects your privacy and is committed to protecting your
-        personal information. This Privacy Policy explains how we collect,
-        use, and safeguard your data when you use our platform.
-      </p>
-    ),
+    content:
+      "Algoryth respects your privacy and is committed to protecting your personal information. This Privacy Policy explains how we collect, use, and safeguard your data when you use our platform.",
   },
   {
     title: "2. Information We Collect",
-    content: (
-      <ul className="list-disc pl-5 space-y-1">
-        <li>Account information such as username and email address</li>
-        <li>Problem submissions, solutions, and activity data</li>
-        <li>Usage analytics to improve platform performance</li>
-        <li>Optional profile information you choose to provide</li>
-      </ul>
-    ),
+    list: [
+      "Account information such as username and email address",
+      "Problem submissions, solutions, and activity data",
+      "Usage analytics to improve platform performance",
+      "Optional profile information you choose to provide",
+    ],
   },
   {
     title: "3. How We Use Your Information",
-    content: (
-      <ul className="list-disc pl-5 space-y-1">
-        <li>To provide and maintain Algoryth services</li>
-        <li>To improve problem quality and platform experience</li>
-        <li>To communicate important updates or notices</li>
-        <li>To ensure platform security and prevent misuse</li>
-      </ul>
-    ),
+    list: [
+      "To provide and maintain Algoryth services",
+      "To improve problem quality and platform experience",
+      "To communicate important updates or notices",
+      "To ensure platform security and prevent misuse",
+    ],
   },
   {
     title: "4. Cookies",
-    content: (
-      <p>
-        Algoryth may use cookies or similar technologies to enhance user
-        experience, analyze usage patterns, and maintain session integrity.
-      </p>
-    ),
+    content:
+      "Algoryth may use cookies or similar technologies to enhance user experience, analyze usage patterns, and maintain session integrity.",
   },
   {
     title: "5. Data Sharing",
-    content: (
-      <p>
-        We do not sell or rent your personal information. Data may only be
-        shared if required by law or to protect the integrity of the
-        platform.
-      </p>
-    ),
+    content:
+      "We do not sell or rent your personal information. Data may only be shared if required by law or to protect the integrity of the platform.",
   },
   {
     title: "6. Data Security",
-    content: (
-      <p>
-        We implement reasonable technical and organizational measures to
-        protect your data, but no system can guarantee absolute security.
-      </p>
-    ),
+    content:
+      "We implement reasonable technical and organizational measures to protect your data, but no system can guarantee absolute security.",
   },
   {
     title: "7. Your Rights",
-    content: (
-      <p>
-        You may request access, correction, or deletion of your data by
-        contacting us through the platform or repository.
-      </p>
-    ),
+    content:
+      "You may request access, correction, or deletion of your data by contacting us through the platform or repository.",
   },
   {
     title: "8. Changes to This Policy",
-    content: (
-      <p>
-        We may update this Privacy Policy periodically. Continued use of
-        Algoryth after changes implies acceptance.
-      </p>
-    ),
+    content:
+      "We may update this Privacy Policy periodically. Continued use of Algoryth after changes implies acceptance.",
   },
   {
     title: "9. Contact",
-    content: (
-      <p>
-        For privacy-related questions, please open an issue or discussion
-        on our GitHub repository.
-      </p>
-    ),
+    content:
+      "For privacy-related questions, please open an issue or discussion on our GitHub repository.",
   },
 ];
 
@@ -107,19 +73,24 @@ export default function PrivacyPolicy() {
           </p>
         </div>
 
-        {/* Content */}
-        <div className="px-6 py-8 text-sm leading-6 text-[#5d5245] dark:text-[#d7ccbe] space-y-8">
-          {SECTIONS.map((section) => (
-            <section key={section.title}>
-              <h2 className="font-semibold text-base">
-                {section.title}
-              </h2>
-              <div className="mt-2">
-                {section.content}
-              </div>
+        <div className="space-y-8 px-6 py-8 text-sm leading-6 text-[#5d5245] dark:text-[#d7ccbe]">
+          {POLICY_SECTIONS.map((section, index) => (
+            <section key={index}>
+              <h2 className="text-base font-semibold">{section.title}</h2>
+              {section.content && (
+                <p className="mt-2">{section.content}</p>
+              )}
+              {section.list && (
+                <ul className="mt-2 list-disc space-y-1 pl-5">
+                  {section.list.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+              )}
             </section>
           ))}
         </div>
+
 
       </div>
     </section>
