@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import prettier from "prettier/standalone";
 import parserBabel from "prettier/plugins/babel";
 import {
@@ -105,7 +105,7 @@ export default function CodeEditor({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [code, language, isRunning, isSubmitting, showShortcuts]); // Re-bind if dependencies change to ensure latest state
+  }, [code, language, isRunning, isSubmitting, showShortcuts, handleAutoFormat, onRun, onSubmit]); // Re-bind if dependencies change to ensure latest state
 
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
@@ -149,13 +149,13 @@ export default function CodeEditor({
             return { suggestions };
           },
         });
-      } catch (e) {
+      } catch {
         // ignore registration errors for unsupported languages
       }
     });
   };
 
-  const handleAutoFormat = async () => {
+  const handleAutoFormat = useCallback(async () => {
     setIsFormatting(true);
     try {
       if (language !== "javascript") {
@@ -177,7 +177,7 @@ export default function CodeEditor({
     } finally {
       setIsFormatting(false);
     }
-  };
+  }, [code, language, onChange]);
 
   const handleCopy = async () => {
     try {
