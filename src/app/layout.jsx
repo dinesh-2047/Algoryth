@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import ThemeToggle from "../components/ThemeToggle";
 import AuthButton from "../components/AuthButton";
+import Footer from "../components/Footer";
 import { AuthProvider } from "../context/AuthContext";
 import "./globals.css";
 
@@ -108,11 +109,7 @@ export default function RootLayout({ children }) {
 
         <main className="mx-auto w-full max-w-7xl px-6 py-8">{children}</main>
 
-        <footer className="border-t border-[#e0d5c2] bg-[#fdf7ed] dark:border-[#3c3347] dark:bg-[#1f1b27]">
-          <div className="mx-auto w-full max-w-7xl px-6 py-6 text-sm text-[#8a7a67] dark:text-[#b5a59c]">
-            Algoryth · {new Date().getFullYear()}
-          </div>
-        </footer>
+        <Footer />
         </AuthProvider>
       </body>
     </html>
