@@ -99,7 +99,7 @@ export default function CodeEditor({
       // Help: Shift+? (which is just ?) or Ctrl+/
       if ((e.ctrlKey || e.metaKey) && e.key === '/') {
         e.preventDefault();
-        setShowShortcuts(!showShortcuts);
+        setShowShortcuts((s) => !s);
       }
     };
 
@@ -185,7 +185,7 @@ export default function CodeEditor({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy command:", err);
+      console.error("Failed to copy code:", err);
     }
   };
 
@@ -198,17 +198,13 @@ export default function CodeEditor({
   };
 
   const handleLanguageSwitch = (newLang) => {
+    const prevLang = language;
     setLanguage(newLang);
     onLanguageChange?.(newLang);
 
-    // Check if code is empty or just default template of previous lang, if so, switch to new template
-    // For simplicity, we'll just check if it's "mostly" empty or user requests it. 
-    // Actually, let's prompt or just do it if code length is small.
-    // For this feature request, "Create language selector dropdown with template starters" implies checking.
-    // Let's rely on manual reset for now to avoid losing user work, or just change if empty.
-
-    const currentTemplate = getTemplate(language);
-    if (!code || code.trim() === '' || code.trim() === currentTemplate.trim()) {
+    // If the editor is empty or still contains the previous language template, replace with the new template
+    const prevTemplate = getTemplate(prevLang);
+    if (!code || code.trim() === '' || code.trim() === prevTemplate.trim()) {
       const newTemplate = getTemplate(newLang);
       setCode(newTemplate);
       onChange?.(newTemplate);
@@ -366,7 +362,6 @@ export default function CodeEditor({
               <Share2 className="h-4 w-4" />
             </button>
           </div>
-
           {/* Right: Run Actions */}
           <div className="flex items-center gap-2">
             <button

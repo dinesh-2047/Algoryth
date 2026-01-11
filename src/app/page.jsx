@@ -91,10 +91,20 @@ export default function Home() {
             </div>
 
             <div className="mt-4 grid gap-2 text-sm">
-              <span className="text-[#8a7a67] dark:text-[#b5a59c]">Settings</span>
-              <span className="text-[#8a7a67] dark:text-[#b5a59c]">Submissions</span>
-              <span className="text-[#8a7a67] dark:text-[#b5a59c]">Contests</span>
+            <Link href="/settings" className="text-zinc-500 hover:underline">
+  Settings
+</Link>
+
+<Link href="/submissions" className="text-zinc-500 hover:underline">
+  Submissions
+</Link>
+
+<Link href="/contests" className="text-zinc-500 hover:underline">
+  Contests
+</Link>
+
             </div>
+
           </div>
         </div>
       </aside>
