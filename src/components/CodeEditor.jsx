@@ -81,6 +81,18 @@ export default function CodeEditor({
     }
   };
 
+  const handleRunClick = () => {
+    // Prevent running if code is empty or only whitespace
+    if (!code.trim()) return;
+    onRun?.();
+  };
+
+  const handleSubmitClick = () => {
+    // Prevent submitting if code is empty or only whitespace
+    if (!code.trim()) return;
+    onSubmit?.();
+  };
+
   const editorOptions = useMemo(
     () => ({
       minimap: { enabled: false },
@@ -106,7 +118,10 @@ export default function CodeEditor({
             <select
               className="h-9 rounded-full border border-[#deceb7] bg-[#fff8ed] px-3 text-xs font-semibold text-[#5d5245] outline-none dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe]"
               value={language}
-              onChange={(e) => { setLanguage(e.target.value); onLanguageChange?.(e.target.value); }}
+              onChange={(e) => {
+                setLanguage(e.target.value);
+                onLanguageChange?.(e.target.value);
+              }}
             >
               <option value="javascript">JavaScript</option>
               <option value="python">Python</option>
@@ -126,8 +141,8 @@ export default function CodeEditor({
             <button
               type="button"
               className="inline-flex h-9 items-center justify-center rounded-full border bg-white px-4 text-xs font-semibold hover:bg-[#f6e9d2] disabled:opacity-50 dark:border dark:bg-[#221d2b] dark:hover:bg-[#2d2535]"
-              onClick={() => onRun?.()}
-              disabled={isRunning || isSubmitting}
+              onClick={handleRunClick}
+              disabled={isRunning || isSubmitting || !code.trim()}
             >
               {isRunning ? "Running..." : "Run"}
             </button>
@@ -135,8 +150,8 @@ export default function CodeEditor({
             <button
               type="button"
               className="inline-flex h-9 items-center justify-center rounded-full border bg-white px-4 text-xs font-semibold hover:bg-[#f6e9d2] disabled:opacity-50 dark:border dark:bg-[#221d2b] dark:hover:bg-[#2d2535]"
-              onClick={() => onSubmit?.()}
-              disabled={isRunning || isSubmitting}
+              onClick={handleSubmitClick}
+              disabled={isRunning || isSubmitting || !code.trim()}
             >
               {isSubmitting ? "Submitting..." : "Submit"}
             </button>
