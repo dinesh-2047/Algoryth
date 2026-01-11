@@ -173,6 +173,10 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           onLanguageChange={setLanguage}
           onRun={handleRun}
           onSubmit={handleSubmit}
+          onReset={() => {
+            setCode(starterCode);
+            setInputError(null);
+          }}
           isRunning={isRunning}
           isSubmitting={isSubmitting}
         />
@@ -214,10 +218,20 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
         </div>
 
         <div className="flex items-center gap-2">
-          <button onClick={handleRun} disabled={isRunning || isSubmitting}>
+          <button
+            onClick={handleRun}
+            disabled={isRunning || isSubmitting}
+            title="Run (Ctrl + Enter)"
+            className="inline-flex h-9 items-center justify-center rounded-full border border-[#deceb7] bg-white px-4 text-xs font-semibold text-[#5d5245] hover:bg-[#f6e9d2] disabled:opacity-50 cursor-pointer dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+          >
             {isRunning ? "Running..." : "Run"}
           </button>
-          <button onClick={handleSubmit} disabled={isRunning || isSubmitting}>
+          <button
+            onClick={handleSubmit}
+            disabled={isRunning || isSubmitting}
+            title="Submit (Ctrl + Shift + Enter)"
+            className="inline-flex h-9 items-center justify-center rounded-full border border-[#deceb7] bg-white px-4 text-xs font-semibold text-[#5d5245] hover:bg-[#f6e9d2] disabled:opacity-50 cursor-pointer dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+          >
             {isSubmitting ? "Submitting..." : "Submit"}
           </button>
         </div>
