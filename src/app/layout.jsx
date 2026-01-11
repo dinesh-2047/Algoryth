@@ -103,6 +103,19 @@ export default function RootLayout({ children }) {
              Rating
              </Link>
 
+                <Link
+                  href="/submissions"
+                  className="rounded-full px-3 py-2 text-[#5d5245] hover:bg-[#f2e3cc] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+                >
+                  Submissions
+                </Link>
+                <Link
+                  href="/settings"
+                  className="rounded-full px-3 py-2 text-[#5d5245] hover:bg-[#f2e3cc] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+                >
+                  Settings
+                </Link>
+
             </div>
           </div>
         </header>
