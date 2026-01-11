@@ -187,7 +187,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
         </div>
       </div>
 
-      <div className="hidden lg:block h-225">
+      <div className="hidden lg:flex lg:justify-center h-225">
         <SplitPane
           direction="horizontal"
           initialPrimary={760}
@@ -196,7 +196,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           storageKey={`algoryth.split.problem.${problem.slug}`}
           primary={leftPanel}
           secondary={rightPanel}
-          className="h-full"
+          className="h-full w-full max-w-[1220px] mx-auto"
         />
       </div>
 

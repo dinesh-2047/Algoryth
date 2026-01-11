@@ -23,6 +23,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning className="bg-[#f8f3e6] dark:bg-[#18131f]">
       <body
+        suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-[#f8f3e6] text-[#2b2116] antialiased transition-colors duration-300 dark:bg-[#18131f] dark:text-[#f6ede0]`}
       >
         <script
@@ -99,7 +100,7 @@ export default function RootLayout({ children }) {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-7xl px-6 py-8">{children}</main>
+        <main className="mx-auto w-full max-w-7xl px-6 py-8 overflow-x-hidden">{children}</main>
 
         <footer className="border-t border-[#e0d5c2] bg-[#fdf7ed] dark:border-[#3c3347] dark:bg-[#1f1b27]">
           <div className="mx-auto w-full max-w-7xl px-6 py-6 text-sm text-[#8a7a67] dark:text-[#b5a59c]">

@@ -17,7 +17,7 @@ import {
   Keyboard,
   X
 } from "lucide-react";
-import { getTemplate } from "../utils/editorUtils";
+import { getTemplate, LANGUAGE_SNIPPETS } from "../utils/editorUtils";
 
 const Monaco = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
@@ -134,8 +134,25 @@ export default function CodeEditor({
       }
     });
 
-    // Provide snippets (basic example)
-    // In a real app, you'd likely want to register these globally once or manage disposables
+    // Register completion providers for snippets from utils
+    Object.keys(LANGUAGE_SNIPPETS).forEach((lang) => {
+      try {
+        monaco.languages.registerCompletionItemProvider(lang, {
+          provideCompletionItems: () => {
+            const suggestions = LANGUAGE_SNIPPETS[lang].map((s) => ({
+              label: s.label,
+              kind: monaco.languages.CompletionItemKind.Snippet,
+              insertText: s.insertText,
+              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              documentation: s.detail,
+            }));
+            return { suggestions };
+          },
+        });
+      } catch (e) {
+        // ignore registration errors for unsupported languages
+      }
+    });
   };
 
   const handleAutoFormat = async () => {
@@ -234,7 +251,7 @@ export default function CodeEditor({
             <div className="relative">
               <button
                 onClick={() => setShowLanguageObj(!showLanguageObj)}
-                className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#5d5245] shadow-sm hover:bg-[#f6e9d2] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+                className="inline-flex h-8 items-center gap-2 rounded-lg bg-white px-3 text-xs font-semibold text-[#5d5245] shadow-sm hover:bg-[#f6e9d2] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
               >
                 <FileCode className="h-3.5 w-3.5" />
                 <span>{languages.find(l => l.id === language)?.name}</span>
