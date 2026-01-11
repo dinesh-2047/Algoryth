@@ -14,6 +14,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
   const [lastSubmissionStatus, setLastSubmissionStatus] = useState(null);
   const [timerRunning, setTimerRunning] = useState(true);
   const [inputError, setInputError] = useState(null);
+  const [openHints, setOpenHints] = useState([]);
 
   const starterCode = useMemo(
     () => `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
@@ -80,6 +81,13 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
     }
 
     setIsSubmitting(false);
+  };
+
+
+  const toggleHint = (i) => {
+    setOpenHints((prev) => 
+      prev.includes(i) ? prev.filter((x) => x!=i) : [...prev, i]
+    );
   };
 
   const leftPanel = (
@@ -149,6 +157,22 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
               </pre>
             </div>
           ))}
+        </div>
+        <div>
+          <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">Hints</h3>
+          <div className="mt-2 grid gap-3">
+            {problem.hints.map((hint, i) => (
+              <div key={i} className="rounded-lg border p-3  border-[#e0d5c2]  text-sm" onClick={() => toggleHint(i)}>
+                  <span>
+                    Hint {i+1}
+                  </span>
+
+                {openHints.includes(i) && (
+                  <p className="mt-1 overflow-auto whitespace-pre-wrap text-[#5d5245] dark:text-[#d7ccbe]">{hint}</p>
+                )}
+              </div>
+            ))}
+            </div>
         </div>
       </article>
     </div>
