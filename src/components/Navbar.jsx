@@ -8,7 +8,7 @@ import AuthButton from './AuthButton';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
+
   // Close menu when resizing to larger screens
   useEffect(() => {
     const handleResize = () => {
@@ -32,7 +32,7 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-20 border-b border-[#e0d5c2] bg-[#fdf7ed]/90 backdrop-blur dark:border-[#3c3347] dark:bg-[#1f1b27]/90">
-      <div className="mx-auto w-full max-w-7xl px-6">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
         <div className="flex items-center gap-4 py-3">
           <Link href="/" className="flex items-center">
             <Image
@@ -107,7 +107,7 @@ const Navbar = () => {
                 className="h-9 w-full rounded-full border border-[#deceb7] bg-[#fdf7ed] px-4 text-sm text-[#2b2116] outline-none placeholder:text-[#8a7a67] focus:ring-2 focus:ring-[#c99a4c]/30 dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#f6ede0] dark:placeholder:text-[#a89cae] dark:focus:ring-[#f2c66f]/30"
               />
             </div>
-            
+
             <div className="flex flex-col gap-1 pb-3">
               {navLinks.map((link) => (
                 <Link
@@ -120,7 +120,7 @@ const Navbar = () => {
                 </Link>
               ))}
             </div>
-            
+
             <div className="pt-3 border-t border-[#e0d5c2] dark:border-[#3c3347]">
               <AuthButton />
             </div>

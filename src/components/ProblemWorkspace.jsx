@@ -129,8 +129,8 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
 
 
   const toggleHint = (i) => {
-    setOpenHints((prev) => 
-      prev.includes(i) ? prev.filter((x) => x!=i) : [...prev, i]
+    setOpenHints((prev) =>
+      prev.includes(i) ? prev.filter((x) => x != i) : [...prev, i]
     );
   };
 
@@ -207,16 +207,16 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           <div className="mt-2 grid gap-3">
             {problem.hints.map((hint, i) => (
               <div key={i} className="rounded-lg border p-3  border-[#e0d5c2]  text-sm" onClick={() => toggleHint(i)}>
-                  <span>
-                    Hint {i+1}
-                  </span>
+                <span>
+                  Hint {i + 1}
+                </span>
 
                 {openHints.includes(i) && (
                   <p className="mt-1 overflow-auto whitespace-pre-wrap text-[#5d5245] dark:text-[#d7ccbe]">{hint}</p>
                 )}
               </div>
             ))}
-            </div>
+          </div>
         </div>
       </article>
     </div>
@@ -229,7 +229,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       minPrimary={260}
       minSecondary={220}
       storageKey={`algoryth.split.editor.${problem.slug}`}
-      className="h-215 lg:h-full"
+      className="min-h-[500px] h-auto lg:h-full"
       primary={
         <CodeEditor
           initialLanguage={language}
@@ -432,7 +432,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
         </div>
       </div>
 
-      <div className="hidden lg:block h-225">
+      <div className="hidden lg:block h-[calc(100vh-250px)] min-h-[600px]">
         <SplitPane
           direction="horizontal"
           initialPrimary={760}

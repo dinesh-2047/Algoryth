@@ -29,9 +29,9 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-[#f8f3e6] text-[#2b2116] antialiased transition-colors duration-300 dark:bg-[#18131f] dark:text-[#f6ede0]`}
       >
         <AuthProvider>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
               (function() {
                 const storedTheme = localStorage.getItem('theme');
                 const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -45,12 +45,11 @@ export default function RootLayout({ children }) {
                 }
               })();
             `,
-          }}
-        />
-        <Navbar />
-        <main className="mx-auto w-full max-w-7xl px-6 py-8">{children}</main>
-
-        <Footer />
+            }}
+          />
+          <Navbar />
+          <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">{children}</main>
+          <Footer />
         </AuthProvider>
       </body>
     </html>
