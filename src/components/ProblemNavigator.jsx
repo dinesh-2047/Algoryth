@@ -1,37 +1,34 @@
 "use client";
 
-import { problems } from "../lib/problems";
 import { useState } from "react";
+import { problems } from "../lib/problems";
 import ProblemWorkspace from "./ProblemWorkspace";
 
-export default function ProblemNavigator({initialSlug}) {
+export default function ProblemNavigator({ initialSlug }) {
+  const initialIndex = problems.findIndex(
+    (p) => p.slug === initialSlug
+  );
 
-    const pId = problems.findIndex(
-        (p) => p.slug === initialSlug
-    );
+  const [currentPId, setCurrentPId] = useState(initialIndex);
 
-    const [currentPId, setCurrentPId] = useState(pId);
-
-    const handleNext = () => {
-        if (currentPId < problems.length - 1) {
-            const nextPId = currentPId+1;
-            setCurrentPId(nextPId);
-        }
+  const handleNext = () => {
+    if (currentPId < problems.length - 1) {
+      setCurrentPId((prev) => prev + 1);
     }
+  };
 
-    const handlePrev = () => {
-        if (currentPId > 0) {
-            const prevPId = currentPId - 1;
-            setCurrentPId(prevPId);
-        }
+  const handlePrev = () => {
+    if (currentPId > 0) {
+      setCurrentPId((prev) => prev - 1);
     }
+  };
 
-    return (
-        <ProblemWorkspace
-        problem={problems[currentPId]}
-        onNext={handleNext}
-        onPrev={handlePrev}
-        />
-    );
-
+  return (
+    <ProblemWorkspace
+      key={problems[currentPId].slug}   // ✅ IMPORTANT
+      problem={problems[currentPId]}
+      onNext={handleNext}
+      onPrev={handlePrev}
+    />
+  );
 }
