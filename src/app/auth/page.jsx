@@ -17,9 +17,7 @@ export default function AuthPage() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash;
-      if (hash === '#signup') {
-        setIsFlipped(true);
-      }
+      setIsFlipped(hash === '#signup');
     }
   }, []);
 
@@ -194,7 +192,7 @@ export default function AuthPage() {
                       onClick={() => setIsFlipped(true)}
                       className="text-sm text-[#8a7a67] hover:text-[#d69a44] dark:text-[#b5a59c] dark:hover:text-[#f2c66f] font-medium underline decoration-transparent hover:decoration-[#d69a44] dark:hover:decoration-[#f2c66f] transition-all duration-200 cursor-pointer"
                     >
-                      Don't have an account? <span className="hover:text-[#d69a44] dark:hover:text-[#f2c66f]">Sign up</span>
+                      Don&apos;t have an account? <span className="hover:text-[#d69a44] dark:hover:text-[#f2c66f]">Sign up</span>
                     </button>
                   </div>
                 </div>
