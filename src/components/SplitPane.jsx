@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 
 export default function SplitPane({
   direction = "horizontal",
@@ -51,7 +51,7 @@ export default function SplitPane({
     [isHorizontal, minPrimary, primarySize]
   );
 
-  function clampSize(nextSize) {
+  const clampSize = useCallback((nextSize) => {
     const el = containerRef.current;
     if (!el) return nextSize;
 
@@ -59,7 +59,7 @@ export default function SplitPane({
     const total = isHorizontal ? rect.width : rect.height;
     const maxPrimary = Math.max(minPrimary, total - minSecondary);
     return Math.min(Math.max(nextSize, minPrimary), maxPrimary);
-  }
+  }, [isHorizontal, minPrimary, minSecondary]);
 
   function onPointerDown(e) {
     const el = containerRef.current;
@@ -79,7 +79,7 @@ export default function SplitPane({
 
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, [isHorizontal, minPrimary, minSecondary]);
+  }, [isHorizontal, minPrimary, minSecondary, clampSize]);
 
   useEffect(() => {
     function onMove(e) {
@@ -99,14 +99,13 @@ export default function SplitPane({
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
     };
-  }, [isHorizontal, minPrimary, minSecondary]);
+  }, [isHorizontal, minPrimary, minSecondary, clampSize]);
 
   return (
     <div
       ref={containerRef}
-      className={`flex ${
-        isHorizontal ? "flex-row" : "flex-col"
-      } gap-0 ${className}`}
+      className={`flex ${isHorizontal ? "flex-row" : "flex-col"
+        } gap-0 ${className}`}
     >
       <div style={primaryStyle} className="min-w-0 min-h-0">
         {primary}
@@ -126,8 +125,8 @@ export default function SplitPane({
         <div
           className={
             isHorizontal
-            ? "absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-zinc-300 group-hover:bg-zinc-400 dark:bg-white/10 dark:group-hover:bg-white/20"
-            : "absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-zinc-300 group-hover:bg-zinc-400 dark:bg-white/10 dark:group-hover:bg-white/20"
+              ? "absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-zinc-300 group-hover:bg-zinc-400 dark:bg-white/10 dark:group-hover:bg-white/20"
+              : "absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-zinc-300 group-hover:bg-zinc-400 dark:bg-white/10 dark:group-hover:bg-white/20"
           }
         />
       </div>

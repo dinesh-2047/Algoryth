@@ -13,6 +13,7 @@
     "@monaco-editor/react": "^4.7.0",
     "@prisma/client": "^7.2.0",
     "monaco-editor": "^0.55.1",
+    "mongoose": "^8.0.0",
     "next": "16.1.1",
     "next-auth": "^4.24.13",
     "pg": "^8.16.3",
@@ -22,6 +23,8 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "25.0.3",
     "@types/react": "19.2.7",
     "eslint": "^9",

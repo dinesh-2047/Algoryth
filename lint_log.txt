@@ -1,0 +1,70 @@
+
+> algoryth@0.1.0 lint
+> eslint
+
+
+C:\Users\shaswat\OneDrive\Documents\workProves\opensource\algoryth-fix-fork\src\app\api\execute\route.js
+  2:11  warning  'code' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\shaswat\OneDrive\Documents\workProves\opensource\algoryth-fix-fork\src\app\problems\page.jsx
+  53:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  51 |
+  52 |   useEffect(() => {
+> 53 |     fetchProblems(urlSearch, urlDifficulty, urlTags, urlSort);
+     |     ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  54 |   }, [urlSearch, urlDifficulty, urlTags, urlSort]);
+  55 |
+  56 |   useEffect(() => {  react-hooks/set-state-in-effect
+  57:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  55 |
+  56 |   useEffect(() => {
+> 57 |     setSearch(urlSearch);
+     |     ^^^^^^^^^ Avoid calling setState() directly within an effect
+  58 |     setDifficulty(urlDifficulty);
+  59 |     setSelectedTags(urlTags);
+  60 |     setSort(urlSort);                             react-hooks/set-state-in-effect
+
+C:\Users\shaswat\OneDrive\Documents\workProves\opensource\algoryth-fix-fork\src\components\CodeEditor.jsx
+  13:3  warning  'onChange' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\shaswat\OneDrive\Documents\workProves\opensource\algoryth-fix-fork\src\components\ProblemWorkspace.jsx
+  8:53  warning  'onNext' is defined but never used  @typescript-eslint/no-unused-vars
+  8:61  warning  'onPrev' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\shaswat\OneDrive\Documents\workProves\opensource\algoryth-fix-fork\src\components\SplitPane.jsx
+   82:6  warning  React Hook useEffect has a missing dependency: 'clampSize'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  102:6  warning  React Hook useEffect has a missing dependency: 'clampSize'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\shaswat\OneDrive\Documents\workProves\opensource\algoryth-fix-fork\src\components\ThemeToggle.jsx
+  24:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  22 |
+  23 |   useEffect(() => {
+> 24 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  25 |     // Check localStorage first, then system preference
+  26 |     const storedTheme = localStorage.getItem("theme");
+  27 |     const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;  react-hooks/set-state-in-effect
+
+✖ 9 problems (3 errors, 6 warnings)
+
