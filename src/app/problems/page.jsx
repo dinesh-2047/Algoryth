@@ -6,6 +6,7 @@ import ProblemCard from "../../components/ProblemCard";
 function ProblemsPageContent() {
   const [problems, setProblems] = useState([]);
   const [bookmarkedProblems, setBookmarkedProblems] = useState([]);
+  const [highlightedId, setHighlightedId] = useState(null);
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -116,6 +117,13 @@ function ProblemsPageContent() {
 
     const remainingProblems = problems.filter((p) => p.id !== problemId);
     setProblems([problemToMove, ...remainingProblems]);
+    
+    // Smooth scroll to top
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    
+    // Visual feedback highlight
+    setHighlightedId(problemId);
+    setTimeout(() => setHighlightedId(null), 2000);
   };
 
 
@@ -317,6 +325,7 @@ const displayProblems = useMemo(() => {
               onBookmark={handleBookmark}
               isBookmarked={bookmarkedProblems.includes(problem.id)}
               onMoveToTop={handleMoveToTop}
+              isHighlighted={highlightedId === problem.id}
             />
           ))}
         </div>
