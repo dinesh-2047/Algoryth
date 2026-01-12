@@ -142,7 +142,7 @@ export default function ProblemWorkspace({ problem }) {
       secondary={
         <div className="flex h-full flex-col rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
           <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-4 py-2 text-xs font-semibold dark:border-[#3c3347] dark:bg-[#292331]">
-            Test Result
+            Test Results
           </div>
           <div className="min-h-0 flex-1 overflow-auto px-4 pb-5 pt-3">
             {executionResults ? (

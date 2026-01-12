@@ -112,6 +112,7 @@ function ProblemsPageContent() {
   };
 
   const allTags = [
+    "daily",
     "arrays",
     "hash-map",
     "stack",
@@ -122,17 +123,40 @@ function ProblemsPageContent() {
     "trees",
   ];
 
-  const displayProblems = useMemo(() => {
-    // This sorting logic is now handled by the API, but we can keep client-side as a fallback or for non-API sorting
-    return [...problems].sort((a, b) => {
-      if (urlSort === "difficulty") {
-        const order = { Easy: 1, Medium: 2, Hard: 3 };
-        return order[a.difficulty] - order[b.difficulty];
-      }
-      // Default sort by title (or whatever the API returns)
-      return 0;
-    });
-  }, [problems, urlSort]);
+// Base list (only API + sorting, no daily logic)
+const baseProblems = useMemo(() => {
+  let list = [...problems];
+
+  if (urlSort === "difficulty") {
+    const order = { Easy: 1, Medium: 2, Hard: 3 };
+    list.sort((a, b) => order[a.difficulty] - order[b.difficulty]);
+  }
+
+  return list;
+}, [problems, urlSort]);
+
+// Daily problem (static per day)
+const dailyProblem = useMemo(() => {
+  if (!baseProblems.length) return null;
+
+  const today = new Date();
+  const seed =
+    today.getFullYear() * 10000 +
+    (today.getMonth() + 1) * 100 +
+    today.getDate();
+
+  const index = seed % baseProblems.length;
+  return baseProblems[index];
+}, [baseProblems]);
+
+// Final display list
+const displayProblems = useMemo(() => {
+  if (urlTags.includes("daily") && dailyProblem) {
+    return [dailyProblem];
+  }
+
+  return baseProblems;
+}, [baseProblems, urlTags, dailyProblem]);
 
   return (
     <section className="flex flex-col gap-8">
@@ -229,6 +253,40 @@ function ProblemsPageContent() {
           </button>
         ))}
       </div>
+
+      {dailyProblem && (
+        <div className="relative overflow-hidden rounded-3xl border border-[#e7c27d] bg-gradient-to-br from-[#fff4da] via-[#fff9ef] to-white p-6 shadow-lg dark:border-[#f2c66f]/40 dark:from-[#1f1a24] dark:via-[#251f2c] dark:to-[#141018]">
+          <div className="absolute -top-24 -right-24 h-56 w-56 rounded-full bg-[#f2c66f]/30 blur-3xl" />
+          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🌟</span>
+                <h2 className="text-xl font-bold text-[#2b2116] dark:text-[#f6ede0]">
+                  Daily Challenge
+                </h2>
+              </div>
+              <p className="mt-1 text-sm text-[#6b5d4a] dark:text-[#bfb4c6]">
+                {new Date().toLocaleDateString(undefined, {
+                  weekday: "long",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5">
+            <ProblemCard
+              problem={{ ...dailyProblem, tags: [...(dailyProblem.tags || []), "daily"] }}
+              index={0}
+              onBookmark={handleBookmark}
+              isBookmarked={bookmarkedProblems.includes(dailyProblem.id)}
+            />
+          </div>
+        </div>
+      )}
+
+
 
       {/* Problems Grid */}
       {loading ? (
