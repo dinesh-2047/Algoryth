@@ -110,6 +110,14 @@ function ProblemsPageContent() {
       localStorage.setItem("bookmarkedProblems", JSON.stringify(newBookmarks));
     }
   };
+  const handleMoveToTop = (problemId) => {
+    const problemToMove = problems.find((p) => p.id === problemId);
+    if (!problemToMove) return;
+
+    const remainingProblems = problems.filter((p) => p.id !== problemId);
+    setProblems([problemToMove, ...remainingProblems]);
+  };
+
 
   const allTags = [
     "daily",
@@ -281,6 +289,7 @@ const displayProblems = useMemo(() => {
               index={0}
               onBookmark={handleBookmark}
               isBookmarked={bookmarkedProblems.includes(dailyProblem.id)}
+              onMoveToTop={handleMoveToTop}
             />
           </div>
         </div>
@@ -307,6 +316,7 @@ const displayProblems = useMemo(() => {
               index={index}
               onBookmark={handleBookmark}
               isBookmarked={bookmarkedProblems.includes(problem.id)}
+              onMoveToTop={handleMoveToTop}
             />
           ))}
         </div>

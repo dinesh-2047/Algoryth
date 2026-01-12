@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle2, FileText } from "lucide-react";
+import { CheckCircle2, FileText, ArrowUpFromLine } from "lucide-react";
 
 function getDifficultyColor(difficulty) {
   switch (difficulty) {
@@ -49,6 +49,7 @@ export default function ProblemCard({
   index,
   onBookmark,
   isBookmarked,
+  onMoveToTop,
 }) {
   const difficultyColor = getDifficultyColor(problem.difficulty);
 
@@ -175,6 +176,17 @@ export default function ProblemCard({
           title="View editorial (coming soon)"
         >
           <FileText className="h-4 w-4" />
+        </button>
+        <button
+          className="rounded-lg border-2 border-[#deceb7] p-2.5 text-[#5d5245] transition-all hover:bg-[#f6e9d2] dark:border-[#40364f] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onMoveToTop?.(problem.id);
+          }}
+          title="Move this problem to the top"
+        >
+          <ArrowUpFromLine className="h-4 w-4" />
         </button>
       </div>
 
