@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext();
 
@@ -9,23 +9,21 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Check if user is logged in from localStorage or session storage
-    const token = localStorage.getItem('algoryth_token');
-    const storedUser = localStorage.getItem('algoryth_user');
-    
-    if (token && storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
+  const [user, setUser] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('algoryth_token');
+      const storedUser = localStorage.getItem('algoryth_user');
+      if (token && storedUser) {
+        try {
+          return JSON.parse(storedUser);
+        } catch (error) {
+          console.error('Error parsing stored user:', error);
+        }
       }
     }
-    setLoading(false);
-  }, []);
+    return null;
+  });
+  const [loading] = useState(false);
 
   const login = async (credentials) => {
     try {

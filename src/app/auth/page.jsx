@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -10,16 +10,13 @@ import ToastNotification from '../../components/ToastNotification';
 export default function AuthPage() {
   const router = useRouter();
   const { login, signup } = useAuth();
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
-
-  // Check URL hash to determine initial view
-  useEffect(() => {
+  const [isFlipped, setIsFlipped] = useState(() => {
     if (typeof window !== 'undefined') {
-      const hash = window.location.hash;
-      setIsFlipped(hash === '#signup');
+      return window.location.hash === '#signup';
     }
-  }, []);
+    return false;
+  });
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
 
   const handleSubmit = async (e, formType) => {
     e.preventDefault();

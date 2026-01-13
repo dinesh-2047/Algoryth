@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useLayoutEffect } from 'react';
 
 const ToastNotification = ({ message, type = 'success', isVisible, onClose }) => {
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(isVisible);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isVisible) {
-      setShow(true);
       const timer = setTimeout(() => {
         setShow(false);
         if (onClose) onClose();

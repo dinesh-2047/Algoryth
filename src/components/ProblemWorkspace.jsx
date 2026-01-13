@@ -103,24 +103,11 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           problemId: problem.id,
         }),
       });
-
       const result = await response.json();
-
-      if (!response.ok) {
-        setExecutionResult({
-          status: "Error",
-          error: result.error || "Submission failed",
-        });
-      } else {
-        setExecutionResult({
-          ...result,
-          isSubmission: true,
-        });
-      }
     } catch (error) {
       setExecutionResult({
         status: "Error",
-        error: "Network error: Could not connect to submission server",
+        error: "Network error: Could not connect to execution server",
       });
     }
 

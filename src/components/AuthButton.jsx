@@ -2,19 +2,13 @@
 
 import { useAuth } from '../context/AuthContext';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export default function AuthButton() {
   const { user, logout, loading } = useAuth();
-  const [mounted, setMounted] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Ensure we're running on the client side
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (loading || !mounted) {
+  if (loading) {
     // Render nothing or a loading state while checking auth status
     return (
       <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
