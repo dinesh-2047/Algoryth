@@ -125,6 +125,10 @@ export default function Home() {
             </div>
 
             <div className="mt-4 grid gap-2 text-sm">
+            <Link href="/bookmarks" className="text-zinc-500 hover:underline">
+  Bookmarks
+</Link>
+
             <Link href="/settings" className="text-zinc-500 hover:underline">
   Settings
 </Link>
