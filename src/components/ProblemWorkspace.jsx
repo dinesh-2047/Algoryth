@@ -55,7 +55,6 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           code,
           language,
           testCases,
-          problemId: problem.id,
         }),
       });
 
@@ -69,7 +68,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       } else {
         setExecutionResult(result);
       }
-    } catch (error) {
+    } catch {
       setExecutionResult({
         status: "Error",
         error: "Network error: Could not connect to execution server",
@@ -100,11 +99,19 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           code,
           language,
           testCases,
-          problemId: problem.id,
         }),
       });
       const result = await response.json();
-    } catch (error) {
+
+      if (!response.ok) {
+        setExecutionResult({
+          status: "Error",
+          error: result.error || "Execution failed",
+        });
+      } else {
+        setExecutionResult({ ...result, isSubmission: true });
+      }
+    } catch {
       setExecutionResult({
         status: "Error",
         error: "Network error: Could not connect to execution server",

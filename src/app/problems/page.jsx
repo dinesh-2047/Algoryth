@@ -1,5 +1,11 @@
 
 
+"use client";
+
+import { useState, useMemo, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import ProblemCard from "../../components/ProblemCard";
+
 function ProblemsPageContent() {
   const [problems, setProblems] = useState([]);
   const [bookmarkedProblems, setBookmarkedProblems] = useState([]);
@@ -97,9 +103,7 @@ function ProblemsPageContent() {
     updateURL(urlSearch, urlDifficulty, urlTags, value);
   };
 
-  const resetFilters = () => {
-    updateURL('', '', [], 'title');
-  };
+
 
   const handleBookmark = (problemId) => {
     const newBookmarks = bookmarkedProblems.includes(problemId)
@@ -313,9 +317,7 @@ const displayProblems = useMemo(() => {
         </div>
       )}
 
-      {!loading && displayProblems.length === 0 && (
 
-      )}
     </section>
   );
 }
