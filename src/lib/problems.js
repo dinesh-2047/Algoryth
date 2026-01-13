@@ -19,6 +19,7 @@ export const problems = [
       { input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explaination: "We need to find two numbers in the array whose sum equals the target value 9.\nThe number at index 0 is 2. \nThe number at index 1 is 7. \n2 + 7 = 9, which matches the target. \nSo, we return their indices: [0, 1]." },
       { input: "nums = [3,2,4], target = 6", output: "[1,2]", explaination: "We need to find two numbers in the array whose sum equals the target value 6.\nThe number at index 1 is 2. \nThe number at index 2 is 4. \n2 + 4 = 6, which matches the target. \nSo, we return their indices: [1, 2]." },
     ],
+    hints: ["Think about what number would complete the current one."],
   },
   {
     id: "p-1001",
@@ -33,6 +34,7 @@ export const problems = [
       { input: "s = \"()\"", output: "true", explaination: "The string contains one opening bracket ( followed by one closing bracket ).\nSince every opening bracket is properly closed in the correct order, the parentheses are balanced.\nSo, the string is valid, and the output is true." },
       { input: "s = \"([)]\"", output: "false", explaination: "The string has the brackets (, [, ), and ].\nAlthough each type of bracket appears, they are not in the correct order.\nThe opening ( should be closed by ) before closing [.\nBut here, [ is opened and ) comes next, which breaks the proper nesting rule.\nBecause the brackets are not properly nested, the string is invalid, so the output is false." },
     ],
+    hints: ["Can stack be used to keep track of opening brackets?", "A closing bracket should match a open bracket"],
   },
   {
   id: "p-1002",
@@ -49,9 +51,11 @@ export const problems = [
   examples: [
     {
       input: "nums = [1,1,0,1,1,1]",
-      output: "3"
+      output: "3",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-1003",
@@ -67,9 +71,11 @@ export const problems = [
   examples: [
     {
       input: 's = "anagram", t = "nagaram"',
-      output: "true"
+      output: "true",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-1004",
@@ -85,9 +91,11 @@ export const problems = [
   examples: [
     {
       input: "nums = [1,1,2]",
-      output: "2"
+      output: "2",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-1005",
@@ -103,9 +111,11 @@ export const problems = [
   examples: [
     {
       input: 's = "leetcode"',
-      output: "0"
+      output: "0",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-1006",
@@ -121,9 +131,11 @@ export const problems = [
   examples: [
     {
       input: 's = "A man, a plan, a canal: Panama"',
-      output: "true"
+      output: "true",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-1007",
@@ -139,9 +151,11 @@ export const problems = [
   examples: [
     {
       input: "nums = [0,1,0,3,12]",
-      output: "[1,3,12,0,0]"
+      output: "[1,3,12,0,0]",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-1008",
@@ -157,9 +171,11 @@ export const problems = [
   examples: [
     {
       input: "push(1), push(2), pop()",
-      output: "2"
+      output: "2",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-1009",
@@ -175,9 +191,11 @@ export const problems = [
   examples: [
     {
       input: "n = 5",
-      output: "5"
+      output: "5",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
   {
     id: "p-2000",
@@ -189,6 +207,7 @@ export const problems = [
       "Given an integer array nums, find the contiguous subarray (containing at least one number) which has the largest sum and return its sum.",
     constraints: ["1 ≤ nums.length ≤ 10^5", "-10^4 ≤ nums[i] ≤ 10^4"],
     examples: [{ input: "nums = [-2,1,-3,4,-1,2,1,-5,4]", output: "6", explaination: "We need to find a contiguous subarray with the maximum possible sum.\nIf we look at the array, the subarray:\n[4, -1, 2, 1] has the largest sum.\n4 + (-1) + 2 + 1 = 6\nSo, the maximum subarray sum is 6." }],
+    hints: ["You don’t need to look at every possible subarray to find the best one.","Can current negative sum maximize the total?"],
   },
   {
   id: "p-2001",
@@ -204,9 +223,11 @@ export const problems = [
   examples: [
     {
       input: "nums = [1,1,1], k = 2",
-      output: "2"
+      output: "2",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-2002",
@@ -222,9 +243,11 @@ export const problems = [
   examples: [
     {
       input: 's = "babad"',
-      output: '"bab"'
+      output: '"bab"',
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-2003",
@@ -240,9 +263,11 @@ export const problems = [
   examples: [
     {
       input: "temperatures = [73,74,75,71,69,72,76,73]",
-      output: "[1,1,4,2,1,1,0,0]"
+      output: "[1,1,4,2,1,1,0,0]",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-2004",
@@ -258,9 +283,11 @@ export const problems = [
   examples: [
     {
       input: "nums = [1,2,3,4]",
-      output: "[24,12,8,6]"
+      output: "[24,12,8,6]",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-2005",
@@ -276,9 +303,11 @@ export const problems = [
   examples: [
     {
       input: "n = 3",
-      output: '["((()))","(()())","(())()","()(())","()()()"]'
+      output: '["((()))","(()())","(())()","()(())","()()()"]',
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },{
   id: "p-2006",
   slug: "container-with-most-water",
@@ -293,9 +322,11 @@ export const problems = [
   examples: [
     {
       input: "height = [1,8,6,2,5,4,8,3,7]",
-      output: "49"
+      output: "49",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-2007",
@@ -311,9 +342,11 @@ export const problems = [
   examples: [
     {
       input: 's = "3[a]2[bc]"',
-      output: '"aaabcbc"'
+      output: '"aaabcbc"',
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-2008",
@@ -329,9 +362,11 @@ export const problems = [
   examples: [
     {
       input: "nums = [4,5,6,7,0,1,2], target = 0",
-      output: "4"
+      output: "4",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-3000",
@@ -347,9 +382,11 @@ export const problems = [
   examples: [
     {
       input: "nums = [1,3,-1,-3,5,3,6,7], k = 3",
-      output: "[3,3,5,5,6,7]"
+      output: "[3,3,5,5,6,7]",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-3001",
@@ -365,9 +402,11 @@ export const problems = [
   examples: [
     {
       input: 's = "ADOBECODEBANC", t = "ABC"',
-      output: '"BANC"'
+      output: '"BANC"',
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-3002",
@@ -383,9 +422,11 @@ export const problems = [
   examples: [
     {
       input: "heights = [2,1,5,6,2,3]",
-      output: "10"
+      output: "10",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-3003",
@@ -401,9 +442,11 @@ export const problems = [
   examples: [
     {
       input: 'board = [["A","B","C"],["D","E","F"]], word = "ABE"',
-      output: "true"
+      output: "true",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-3004",
@@ -419,9 +462,11 @@ export const problems = [
   examples: [
     {
       input: "lists = [[1,4,5],[1,3,4],[2,6]]",
-      output: "[1,1,2,3,4,4,5,6]"
+      output: "[1,1,2,3,4,4,5,6]",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-3005",
@@ -441,9 +486,11 @@ export const problems = [
   examples: [
     {
       input: 's = "aa", p = "a"',
-      output: "false"
+      output: "false",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-3006",
@@ -459,9 +506,11 @@ export const problems = [
   examples: [
     {
       input: "height = [0,1,0,2,1,0,1,3,2,1,2,1]",
-      output: "6"
+      output: "6",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-3007",
@@ -477,9 +526,11 @@ export const problems = [
   examples: [
     {
       input: 's = ")()())"',
-      output: "4"
+      output: "4",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 },
 {
   id: "p-3008",
@@ -495,9 +546,11 @@ export const problems = [
   examples: [
     {
       input: 'word1 = "horse", word2 = "ros"',
-      output: "3"
+      output: "3",
+      explaination: ""
     }
-  ]
+  ],
+  hints: [],
 }
 
 

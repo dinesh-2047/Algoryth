@@ -3,10 +3,31 @@
 import { useEffect, useState } from "react";
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState("light");
+  // Initialize theme from localStorage/system preference using lazy initialization
+  // This avoids unnecessary setState calls in useEffect
+  const [theme, setTheme] = useState(() => {
+    // During SSR, return default theme
+    if (typeof window === "undefined") return "light";
+
+    // On client, read from localStorage or system preference
+    const storedTheme = localStorage.getItem("theme");
+    if (storedTheme) return storedTheme;
+
+    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    return systemPrefersDark ? "dark" : "light";
+  });
+
   const [mounted, setMounted] = useState(false);
 
-  // Apply theme whenever it changes
+  // Mark component as mounted to prevent hydration mismatch
+  // This is a standard Next.js pattern for client-only features
+  // The setState here is intentional and necessary for SSR/CSR synchronization
+  useEffect(() => {
+    setMounted(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Apply theme changes to the DOM
   useEffect(() => {
     if (!mounted) return;
 
@@ -18,27 +39,18 @@ export default function ThemeToggle() {
       root.classList.remove("dark");
       root.classList.add("light");
     }
+
+    // Persist theme preference
+    localStorage.setItem("theme", theme);
   }, [theme, mounted]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-    // Check localStorage first, then system preference
-    const storedTheme = localStorage.getItem("theme");
-    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const initialTheme = storedTheme || (systemPrefersDark ? "dark" : "light");
-
-    setTheme(initialTheme);
-  }, []);
 
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
   };
 
+  // Prevent hydration mismatch by not rendering interactive button until mounted
   if (!mounted) {
-    // Return a placeholder to avoid hydration mismatch
     return (
       <button
         type="button"
@@ -103,4 +115,3 @@ export default function ThemeToggle() {
     </button>
   );
 }
-
