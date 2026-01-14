@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <section className="grid gap-6 lg:grid-cols-[1fr_340px]">
+    <section className="grid gap-6 md:grid-cols-1 lg:grid-cols-[1fr_340px]">
       <div className="grid gap-4">
         <div className="overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
           <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-6 py-4 dark:border-[#3c3347] dark:bg-[#292331]">
@@ -53,7 +53,7 @@ export default function Home() {
                 <div className="font-medium text-[#2b2116] dark:text-[#f6ede0]">{p.title}</div>
                 <div className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">{p.diff}</div>
               </Link>
-            ))} 
+            ))}
           </div>
         </div>
 
@@ -125,17 +125,17 @@ export default function Home() {
             </div>
 
             <div className="mt-4 grid gap-2 text-sm">
-            <Link href="/settings" className="text-zinc-500 hover:underline">
-  Settings
-</Link>
+              <Link href="/settings" className="text-zinc-500 hover:underline">
+                Settings
+              </Link>
 
-<Link href="/submissions" className="text-zinc-500 hover:underline">
-  Submissions
-</Link>
+              <Link href="/submissions" className="text-zinc-500 hover:underline">
+                Submissions
+              </Link>
 
-<Link href="/contests" className="text-zinc-500 hover:underline">
-  Contests
-</Link>
+              <Link href="/contests" className="text-zinc-500 hover:underline">
+                Contests
+              </Link>
 
             </div>
 

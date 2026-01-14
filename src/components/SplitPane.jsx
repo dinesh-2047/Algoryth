@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 
 export default function SplitPane({
   direction = "horizontal",
-  minPrimary = 280,
-  minSecondary = 320,
+  minPrimary = 150,
+  minSecondary = 150,
   initialPrimary = 560,
   storageKey,
   primary,

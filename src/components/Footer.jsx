@@ -4,10 +4,10 @@ import Link from "next/link";
 export default function Footer() {
   return (
     <footer className="mt-16">
-      <div className="mx-auto max-w-7xl px-4">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="overflow-hidden rounded-2xl border border-[#e0d5c2] bg-white dark:border-[#3c3347] dark:bg-[#211d27]">
           {/* Top */}
-          <div className="grid gap-8 px-6 py-10 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-8 px-4 py-10 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
             {/* Brand */}
             <div>
               <div className="flex items-center gap-2 text-sm font-semibold tracking-tight text-[#2b2116] dark:text-[#f6ede0]">
@@ -37,7 +37,7 @@ export default function Footer() {
                     Problems
                   </Link>
                 </li>
-               
+
               </ul>
             </div>
 
