@@ -1,4 +1,4 @@
-# TODO: Implement Secure Code Execution Environment
+# TODO: Implement the Secure Code Execution Environment
 
 ## 1. Update Database Schema
 - [x] Add TestCase model to prisma/schema.prisma linked to Problem
