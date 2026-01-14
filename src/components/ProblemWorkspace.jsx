@@ -4,13 +4,13 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import CodeEditor from "./CodeEditor";
 import SplitPane from "./SplitPane";
+import ProblemTimer from "./ProblemTimer";
 
 export default function ProblemWorkspace({ problem }) {
   const [executionResults, setExecutionResults] = useState(null);
 
   const starterCode = useMemo(
-    () =>
-      `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
+    () => `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
     [problem.title]
   );
 
@@ -35,35 +35,27 @@ export default function ProblemWorkspace({ problem }) {
     }
   };
 
+
+  const toggleHint = (i) => {
+    setOpenHints((prev) => 
+      prev.includes(i) ? prev.filter((x) => x!=i) : [...prev, i]
+    );
+  };
+
   const leftPanel = (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
-      <div className="border-b border-black/10 bg-zinc-50 px-5 py-4 dark:border-white/10 dark:bg-zinc-950">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
+      <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-5 py-4 dark:border-[#3c3347] dark:bg-[#292331]">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-xs text-zinc-500 dark:text-zinc-400">
+            <div className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">
               {problem.id}
             </div>
-            <h1 className="mt-1 text-xl font-semibold tracking-tight">
+            <h1 className="mt-1 text-xl font-semibold tracking-tight text-[#2b2116] dark:text-[#f6ede0]">
               {problem.title}
             </h1>
           </div>
-          <span className="inline-flex items-center rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-medium text-zinc-700 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200">
+          <span className="inline-flex items-center rounded-full border border-[#deceb7] bg-[#f2e3cc] px-3 py-1 text-xs font-medium text-[#5d5245] dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe]">
             {problem.difficulty}
-          </span>
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-          <span className="inline-flex items-center rounded-full bg-black px-4 py-2 text-xs font-semibold text-white dark:bg-white dark:text-black">
-            Description
-          </span>
-          <span className="inline-flex items-center rounded-full border border-black/10 px-4 py-2 text-xs font-semibold text-zinc-500 dark:border-white/10 dark:text-zinc-400">
-            Editorial
-          </span>
-          <span className="inline-flex items-center rounded-full border border-black/10 px-4 py-2 text-xs font-semibold text-zinc-500 dark:border-white/10 dark:text-zinc-400">
-            Solutions
-          </span>
-          <span className="inline-flex items-center rounded-full border border-black/10 px-4 py-2 text-xs font-semibold text-zinc-500 dark:border-white/10 dark:text-zinc-400">
-            Submissions
           </span>
         </div>
 
@@ -71,7 +63,7 @@ export default function ProblemWorkspace({ problem }) {
           {problem.tags.map((t) => (
             <span
               key={`${problem.id}-${t}`}
-              className="inline-flex items-center rounded-full border border-black/10 bg-black/3 px-3 py-1 text-xs text-zinc-700 dark:border-white/10 dark:bg-white/10 dark:text-zinc-200"
+              className="inline-flex items-center rounded-full border border-[#deceb7] bg-[#f2e3cc] px-3 py-1 text-xs text-[#5d5245] dark:border-[#40364f] dark:bg-[#2d2535] dark:text-[#d7ccbe]"
             >
               {t}
             </span>
@@ -80,34 +72,59 @@ export default function ProblemWorkspace({ problem }) {
       </div>
 
       <article className="min-h-0 flex-1 overflow-auto px-5 py-5">
-        <p className="whitespace-pre-wrap text-sm leading-6 text-zinc-700 dark:text-zinc-300">
+        <p className="whitespace-pre-wrap text-sm leading-6 text-[#5d5245] dark:text-[#d7ccbe]">
           {problem.statement}
         </p>
 
-        <h3 className="mt-6 text-sm font-semibold">Constraints</h3>
-        <ul className="mt-2 list-disc pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+        <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+          Constraints
+        </h3>
+        <ul className="mt-2 list-disc pl-5 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
           {problem.constraints.map((c) => (
             <li key={c}>{c}</li>
           ))}
         </ul>
 
-        <h3 className="mt-6 text-sm font-semibold">Examples</h3>
+        <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+          Examples
+        </h3>
         <div className="mt-2 grid gap-3">
           {problem.examples.map((ex, i) => (
             <div
               key={`${problem.id}-ex-${i}`}
-              className="rounded-xl border border-black/10 bg-zinc-50 p-4 text-sm dark:border-white/10 dark:bg-zinc-950"
+              className="rounded-xl border border-[#e0d5c2] bg-[#fff8ed] p-4 text-sm dark:border-[#3c3347] dark:bg-[#292331]"
             >
-              <div className="font-medium">Input</div>
-              <pre className="mt-1 overflow-auto whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
+              <div className="font-medium text-[#2b2116] dark:text-[#f6ede0]">
+                Input
+              </div>
+              <pre className="mt-1 overflow-auto whitespace-pre-wrap text-[#5d5245] dark:text-[#d7ccbe]">
                 {ex.input}
               </pre>
-              <div className="mt-3 font-medium">Output</div>
-              <pre className="mt-1 overflow-auto whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
+
+              <div className="mt-3 font-medium text-[#2b2116] dark:text-[#f6ede0]">
+                Output
+              </div>
+              <pre className="mt-1 overflow-auto whitespace-pre-wrap text-[#5d5245] dark:text-[#d7ccbe]">
                 {ex.output}
               </pre>
             </div>
           ))}
+        </div>
+        <div>
+          <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">Hints</h3>
+          <div className="mt-2 grid gap-3">
+            {problem.hints.map((hint, i) => (
+              <div key={i} className="rounded-lg border p-3  border-[#e0d5c2]  text-sm" onClick={() => toggleHint(i)}>
+                  <span>
+                    Hint {i+1}
+                  </span>
+
+                {openHints.includes(i) && (
+                  <p className="mt-1 overflow-auto whitespace-pre-wrap text-[#5d5245] dark:text-[#d7ccbe]">{hint}</p>
+                )}
+              </div>
+            ))}
+            </div>
         </div>
       </article>
     </div>
@@ -123,14 +140,9 @@ export default function ProblemWorkspace({ problem }) {
       className="h-215 lg:h-full"
       primary={<CodeEditor initialLanguage="javascript" initialCode={starterCode} onRun={handleRun} />}
       secondary={
-        <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
-          <div className="border-b border-black/10 bg-zinc-50 dark:border-white/10 dark:bg-zinc-950">
-            <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold">
-              <span className="rounded-full bg-black px-3 py-1 text-white dark:bg-white dark:text-black">
-                Test Result
-              </span>
-              <span className="text-zinc-500 dark:text-zinc-400">Testcase</span>
-            </div>
+        <div className="flex h-full flex-col rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
+          <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-4 py-2 text-xs font-semibold dark:border-[#3c3347] dark:bg-[#292331]">
+            Test Results
           </div>
           <div className="min-h-0 flex-1 overflow-auto px-4 pb-5 pt-3">
             {executionResults ? (
@@ -174,44 +186,37 @@ export default function ProblemWorkspace({ problem }) {
 
   return (
     <section className="grid gap-4">
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white px-4 py-3 dark:border-white/10 dark:bg-zinc-900">
+      <div className="flex items-center justify-between rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] px-4 py-3 dark:border-[#3c3347] dark:bg-[#211d27]">
         <div className="flex items-center gap-2">
           <Link
             href="/problems"
-            className="inline-flex h-9 items-center rounded-full px-3 text-sm font-medium text-zinc-700 hover:bg-black/3 dark:text-zinc-200 dark:hover:bg-white/10"
+            className="inline-flex h-9 items-center rounded-full px-3 text-sm font-medium text-[#5d5245] hover:bg-[#f2e3cc] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
           >
             Problems
           </Link>
-          <button
-            type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white text-sm text-zinc-700 hover:bg-black/3 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
-            aria-label="Previous"
-          >
-            {"<"}
-          </button>
-          <button
-            type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white text-sm text-zinc-700 hover:bg-black/3 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
-            aria-label="Next"
-          >
-            {">"}
-          </button>
+
+          <button onClick={onPrev} disabled={!onPrev}>{"<"}</button>
+          <button onClick={onNext} disabled={!onNext}>{">"}</button>
+
+          <ProblemTimer running={timerRunning} />
         </div>
 
         <div className="flex items-center gap-2">
           <button
-            type="button"
-            disabled
-            className="inline-flex h-9 items-center justify-center rounded-full bg-zinc-200 px-4 text-sm font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-400"
+            onClick={handleRun}
+            disabled={isRunning || isSubmitting}
+            title="Run (Ctrl + Enter)"
+            className="inline-flex h-9 items-center justify-center rounded-full border border-[#deceb7] bg-white px-4 text-xs font-semibold text-[#5d5245] hover:bg-[#f6e9d2] disabled:opacity-50 cursor-pointer dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
           >
-            Run
+            {isRunning ? "Running..." : "Run"}
           </button>
           <button
-            type="button"
-            disabled
-            className="inline-flex h-9 items-center justify-center rounded-full bg-zinc-200 px-4 text-sm font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-400"
+            onClick={handleSubmit}
+            disabled={isRunning || isSubmitting}
+            title="Submit (Ctrl + Shift + Enter)"
+            className="inline-flex h-9 items-center justify-center rounded-full border border-[#deceb7] bg-white px-4 text-xs font-semibold text-[#5d5245] hover:bg-[#f6e9d2] disabled:opacity-50 cursor-pointer dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
           >
-            Submit
+            {isSubmitting ? "Submitting..." : "Submit"}
           </button>
         </div>
       </div>
@@ -225,7 +230,6 @@ export default function ProblemWorkspace({ problem }) {
           storageKey={`algoryth.split.problem.${problem.slug}`}
           primary={leftPanel}
           secondary={rightPanel}
-          className="h-full"
         />
       </div>
 
