@@ -8,6 +8,10 @@ import ProblemTimer from "./ProblemTimer";
 
 export default function ProblemWorkspace({ problem }) {
   const [executionResults, setExecutionResults] = useState(null);
+  const [openHints, setOpenHints] = useState([]);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [timerRunning, setTimerRunning] = useState(false);
 
   const starterCode = useMemo(
     () => `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
@@ -147,7 +151,7 @@ export default function ProblemWorkspace({ problem }) {
           <div className="min-h-0 flex-1 overflow-auto px-4 pb-5 pt-3">
             {executionResults ? (
               <div className="space-y-3">
-                {executionResults.results?.map((result, index) => (
+                {executionResults.testResults?.map((result, index) => (
                   <div key={index} className="rounded-lg border border-black/10 bg-zinc-50 p-3 dark:border-white/10 dark:bg-zinc-950">
                     <div className="flex items-center justify-between mb-2">
                       <span className={`text-xs font-medium px-2 py-1 rounded-full ${
@@ -156,20 +160,25 @@ export default function ProblemWorkspace({ problem }) {
                         {result.passed ? 'PASS' : 'FAIL'}
                       </span>
                       <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                        {result.time}ms • {result.memory}KB
+                        {result.executionTime}ms
                       </span>
                     </div>
                     <div className="text-xs text-zinc-700 dark:text-zinc-300">
                       <div><strong>Input:</strong> {result.input}</div>
-                      <div><strong>Expected:</strong> {result.expected}</div>
-                      <div><strong>Output:</strong> {result.output}</div>
-                      {!result.passed && <div className="text-red-600 dark:text-red-400 mt-1">{result.error}</div>}
+                      <div><strong>Expected:</strong> {result.expectedOutput}</div>
+                      <div><strong>Output:</strong> {result.actualOutput}</div>
+                      {!result.passed && result.error && <div className="text-red-600 dark:text-red-400 mt-1">{result.error}</div>}
                     </div>
                   </div>
                 ))}
                 {executionResults.error && (
                   <div className="text-center text-sm text-red-600 dark:text-red-400">
                     {executionResults.error}
+                  </div>
+                )}
+                {executionResults.status && (
+                  <div className="text-center text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    Status: {executionResults.status} ({executionResults.passedTests}/{executionResults.totalTests} tests passed)
                   </div>
                 )}
               </div>

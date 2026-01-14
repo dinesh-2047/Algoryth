@@ -16,5 +16,5 @@
 
 ## 5. Followup Steps
 - [ ] Run Prisma migration
-- [ ] Install axios for API calls if needed
+- [x] Install axios for API calls if needed (not needed, using fetch)
 - [ ] Test execution flow

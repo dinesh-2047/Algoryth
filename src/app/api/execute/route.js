@@ -11,6 +11,10 @@
  * - Error handling and security
  */
 
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
 const PISTON_API_URL = "https://emkc.org/api/v2/piston";
 
 // Language mapping for Piston API
@@ -24,7 +28,7 @@ const LANGUAGE_MAP = {
 
 export async function POST(request) {
   try {
-    const { language, code, testCases, problemId } = await request.json();
+    const { language, code, problemId } = await request.json();
 
     // Validation
     if (!code || !language) {
@@ -51,8 +55,26 @@ export async function POST(request) {
 
     const langConfig = LANGUAGE_MAP[language];
 
-    // If no test cases provided, just run the code
-    if (!testCases || testCases.length === 0) {
+    let testCases = [];
+
+    // Fetch test cases from DB if problemId is provided
+    if (problemId) {
+      try {
+        testCases = await prisma.testCase.findMany({
+          where: { problemId, isHidden: false }, // Only non-hidden test cases for running
+          select: { input: true, expectedOutput: true },
+        });
+      } catch (dbError) {
+        console.error("Database error fetching test cases:", dbError);
+        return Response.json(
+          { error: "Failed to fetch test cases" },
+          { status: 500 }
+        );
+      }
+    }
+
+    // If no test cases, just run the code without input
+    if (testCases.length === 0) {
       const result = await executePistonCode(langConfig, code, "");
       return Response.json({
         status: result.success ? "Success" : "Error",
@@ -108,6 +130,8 @@ export async function POST(request) {
       },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 

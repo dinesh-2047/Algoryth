@@ -1,10 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-generator client {
-  provider = "prisma-client-js"
-}
-
+datasource db {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -15,51 +9,55 @@ model Problem {
   slug        String   @unique
   title       String
   difficulty  String
-  tags        String[] // Array of strings
+  tags        String[]
   statement   String
-  constraints String[] // Array of strings
-  examples    Json[]   // Array of objects
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  submissions Submission[]
+  constraints String[]
+  examples    Json[]
   testCases   TestCase[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model TestCase {
-  id            String  @id @default(cuid())
-  input         String
+  id             String  @id @default(cuid())
+  problemId      String
+  problem        Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  input          String
   expectedOutput String
-  isHidden      Boolean @default(false)
-  problemId     String
-  createdAt     DateTime @default(now())
+  isHidden       Boolean @default(false)
 
-  problem       Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
-}
-
-model User {
-  id        String @id @default(cuid())
-  email     String @unique
-  name      String?
-  rating    Int @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  submissions Submission[]
-  accounts   Account[]
-  sessions   Session[]
 }
 
-model Submission {
-  id        String   @id @default(cuid())
-  code      String
-  language  String
-  result    String?  // Execution result
-  status    String   // e.g., "success", "error"
-  userId    String
-  problemId String
-  createdAt DateTime @default(now())
+model Problem {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  difficulty  String
+  tags        String[]
+  statement   String
+  constraints String[]
+  examples    Json[]
+  testCases   TestCase[]
 
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TestCase {
+  id             String  @id @default(cuid())
+  problemId      String
+  problem        Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  input          String
+  expectedOutput String
+  isHidden       Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+=======
+datasource db {
+  provider = "postgresql"
 }
