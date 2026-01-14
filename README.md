@@ -33,6 +33,7 @@ A modern, beautiful coding practice platform for competitive programming and alg
 - **User Statistics**: Track your rating and contributions
 - **Contest Information**: Stay updated with ongoing contests
 - **Recommended Problems**: Get started with curated problem recommendations
+ - **Visual Playground**: Build inputs interactively (arrays, matrices, graphs), sample example cases, and visualize inputs/outputs alongside the editor
 
 ## 🛠️ Tech Stack
 
@@ -81,6 +82,15 @@ A modern, beautiful coding practice platform for competitive programming and alg
    Navigate to [http://localhost:3000](http://localhost:3000) to see the application.
 
 ### Build for Production
+## 🧪 Visual Playground
+
+- Open any problem and use the right pane’s "Playground Input" section.
+- Modes:
+   - Array: enter comma-separated values (e.g., 1,2,3,4)
+   - Matrix: newline-separated rows, comma-separated columns
+   - Graph: comma-separated node labels and u-v edge pairs
+   - Raw: free-form text; JSON is auto-parsed when possible
+- Click "Run" to see Test Result plus two panels: "Input Preview" and "Output Visualization". The current backend returns a mock visualization based on the provided input.
 
 ```bash
 npm run build

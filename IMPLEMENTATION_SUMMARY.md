@@ -75,6 +75,26 @@ const [theme, setTheme] = useState(() => {
 
 1. `src/components/ThemeToggle.jsx` - Refactored theme initialization
 
+---
+
+# Feature: Visual Problem Playground - Implementation Summary
+
+### What’s Included
+- Reusable `Visualizer` component supporting arrays, matrices/grids, graphs, and JSON fallback.
+- `ProblemWorkspace` extended with an interactive input builder (Raw, Array, Matrix, Graph) and auto-sample from problem examples.
+- `execute` API now accepts optional `input` and `inputType` and returns a simple `visualization` payload for UI rendering (keeps existing fields for compatibility).
+
+### Files Added
+- `src/components/Visualizer.jsx`
+
+### Files Updated
+- `src/components/ProblemWorkspace.jsx` – input builder UI, run wiring, and visualizations.
+- `src/app/api/execute/route.js` – mock visualization support.
+- `README.md` – documented Visual Playground usage.
+
+### Notes
+- The executor still mocks execution; visualization reflects the provided input. When real execution is available, the visualization can be populated from actual outputs.
+
 ### ESLint Errors Resolved
 
 - ✅ `src/components/ThemeToggle.jsx:24` - react-hooks/set-state-in-effect

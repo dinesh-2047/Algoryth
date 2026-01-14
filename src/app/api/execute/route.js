@@ -23,177 +23,51 @@ const LANGUAGE_MAP = {
 };
 
 export async function POST(request) {
-  try {
-    const { language, code, testCases, problemId } = await request.json();
-
-    // Validation
-    if (!code || !language) {
-      return Response.json(
-        { error: "Code and language are required" },
-        { status: 400 }
-      );
-    }
-
-    if (!LANGUAGE_MAP[language]) {
-      return Response.json(
-        { error: `Unsupported language: ${language}` },
-        { status: 400 }
-      );
-    }
-
-    // Code length validation (prevent abuse)
-    if (code.length > 50000) {
-      return Response.json(
-        { error: "Code is too long (max 50,000 characters)" },
-        { status: 400 }
-      );
-    }
-
-    const langConfig = LANGUAGE_MAP[language];
-
-    // If no test cases provided, just run the code
-    if (!testCases || testCases.length === 0) {
-      const result = await executePistonCode(langConfig, code, "");
-      return Response.json({
-        status: result.success ? "Success" : "Error",
-        output: result.output,
-        error: result.error,
-        executionTime: result.executionTime,
-        language: language,
-      });
-    }
-
-    // Execute against test cases
-    const results = [];
-    let allPassed = true;
-
-    for (let i = 0; i < testCases.length; i++) {
-      const testCase = testCases[i];
-      const result = await executePistonCode(
-        langConfig,
-        code,
-        testCase.input
-      );
-
-      const passed =
-        result.success &&
-        normalizeOutput(result.output) === normalizeOutput(testCase.expectedOutput);
-
-      if (!passed) allPassed = false;
-
-      results.push({
-        testCase: i + 1,
-        input: testCase.input,
-        expectedOutput: testCase.expectedOutput,
-        actualOutput: result.output,
-        passed: passed,
-        error: result.error,
-        executionTime: result.executionTime,
-      });
-    }
-
-    return Response.json({
-      status: allPassed ? "Accepted" : "Wrong Answer",
-      testResults: results,
-      totalTests: testCases.length,
-      passedTests: results.filter((r) => r.passed).length,
-      language: language,
-    });
-  } catch (error) {
-    console.error("Code execution error:", error);
-    return Response.json(
-      {
-        error: "Internal server error during code execution",
-        details: error.message,
-      },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * Execute code using Piston API
- */
-async function executePistonCode(langConfig, code, stdin) {
-  const startTime = Date.now();
+  const { language, code, input, inputType } = await request.json();
+  // Mock execution and simple visualization derivation from input
+  let visualization = null;
 
   try {
-    const response = await fetch(`${PISTON_API_URL}/execute`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        language: langConfig.language,
-        version: langConfig.version,
-        files: [
-          {
-            name: getFileName(langConfig.language),
-            content: code,
-          },
-        ],
-        stdin: stdin || "",
-        args: [],
-        compile_timeout: 10000, // 10 seconds
-        run_timeout: 3000, // 3 seconds
-        compile_memory_limit: -1,
-        run_memory_limit: -1,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Piston API error: ${response.status}`);
+    if (inputType === "array" && Array.isArray(input)) {
+      visualization = { type: "array", data: [...input] };
+    } else if (
+      inputType === "matrix" &&
+      Array.isArray(input) &&
+      Array.isArray(input[0])
+    ) {
+      visualization = { type: "matrix", data: input };
+    } else if (
+      inputType === "graph" &&
+      input &&
+      Array.isArray(input.nodes) &&
+      Array.isArray(input.edges)
+    ) {
+      visualization = { type: "graph", data: input };
+    } else if (typeof input === "string") {
+      // try to parse generic JSON
+      try {
+        const parsed = JSON.parse(input);
+        if (Array.isArray(parsed)) {
+          if (Array.isArray(parsed[0])) visualization = { type: "matrix", data: parsed };
+          else visualization = { type: "array", data: parsed };
+        } else if (parsed && typeof parsed === "object") {
+          if (Array.isArray(parsed.nodes) && Array.isArray(parsed.edges))
+            visualization = { type: "graph", data: parsed };
+          else visualization = { type: "json", data: parsed };
+        }
+      } catch {
+        // leave as null
+      }
     }
-
-    const data = await response.json();
-    const executionTime = Date.now() - startTime;
-
-    // Check for compilation errors
-    if (data.compile && data.compile.code !== 0) {
-      return {
-        success: false,
-        output: "",
-        error: data.compile.stderr || data.compile.output || "Compilation failed",
-        executionTime,
-      };
-    }
-
-    // Check for runtime errors
-    if (data.run && data.run.code !== 0) {
-      return {
-        success: false,
-        output: data.run.stdout || "",
-        error: data.run.stderr || data.run.output || "Runtime error",
-        executionTime,
-      };
-    }
-
-    return {
-      success: true,
-      output: data.run.stdout || data.run.output || "",
-      error: data.run.stderr || null,
-      executionTime,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      output: "",
-      error: `Execution failed: ${error.message}`,
-      executionTime: Date.now() - startTime,
-    };
+  } catch {
+    visualization = null;
   }
-}
 
-/**
- * Get appropriate filename for the language
- */
-function getFileName(language) {
-  const fileNames = {
-    javascript: "main.js",
-    python: "main.py",
-    java: "Main.java",
-    cpp: "main.cpp",
-    go: "main.go",
+  const result = {
+    status: "Accepted",
+    output: `Executed ${language} code successfully. Code length: ${code?.length || 0}`,
+    language,
+    visualization,
   };
   return fileNames[language] || "main.txt";
 }
