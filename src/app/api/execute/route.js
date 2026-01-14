@@ -24,7 +24,7 @@ const LANGUAGE_MAP = {
 
 export async function POST(request) {
   try {
-    const { language, code, testCases, problemId } = await request.json();
+    const { language, code, testCases } = await request.json();
 
     // Validation
     if (!code || !language) {

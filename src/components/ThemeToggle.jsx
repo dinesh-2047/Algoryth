@@ -1,30 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 
 export default function ThemeToggle() {
-  // Initialize theme from localStorage/system preference using lazy initialization
-  // This avoids unnecessary setState calls in useEffect
-  const [theme, setTheme] = useState(() => {
-    // During SSR, return default theme
-    if (typeof window === "undefined") return "light";
-
-    // On client, read from localStorage or system preference
-    const storedTheme = localStorage.getItem("theme");
-    if (storedTheme) return storedTheme;
-
-    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    return systemPrefersDark ? "dark" : "light";
-  });
-
   const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState("light");
 
   // Mark component as mounted to prevent hydration mismatch
   // This is a standard Next.js pattern for client-only features
   // The setState here is intentional and necessary for SSR/CSR synchronization
-  useEffect(() => {
+  useLayoutEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Apply theme changes to the DOM

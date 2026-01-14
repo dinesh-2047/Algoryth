@@ -1,5 +1,8 @@
+
+
 "use client";
-import { useEffect, useState, Suspense, useMemo } from "react";
+
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import ProblemCard from "../../components/ProblemCard";
 
@@ -99,6 +102,8 @@ function ProblemsPageContent() {
   const handleSort = (value) => {
     updateURL(urlSearch, urlDifficulty, urlTags, value);
   };
+
+
 
   const handleBookmark = (problemId) => {
     const newBookmarks = bookmarkedProblems.includes(problemId)
@@ -312,16 +317,7 @@ const displayProblems = useMemo(() => {
         </div>
       )}
 
-      {!loading && displayProblems.length === 0 && (
-        <div className="flex flex-col items-center justify-center text-center py-16 rounded-xl bg-[#f7f0e0] dark:bg-[#292331]">
-          <h3 className="text-xl font-semibold text-[#2b2116] dark:text-[#f6ede0]">
-            No Problems Found
-          </h3>
-          <p className="mt-2 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
-            Try adjusting your search or filter criteria.
-          </p>
-        </div>
-      )}
+
     </section>
   );
 }

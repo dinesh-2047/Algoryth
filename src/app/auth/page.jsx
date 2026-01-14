@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -10,18 +10,13 @@ import ToastNotification from '../../components/ToastNotification';
 export default function AuthPage() {
   const router = useRouter();
   const { login, signup } = useAuth();
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
-
-  // Check URL hash to determine initial view
-  useEffect(() => {
+  const [isFlipped, setIsFlipped] = useState(() => {
     if (typeof window !== 'undefined') {
-      const hash = window.location.hash;
-      if (hash === '#signup') {
-        setIsFlipped(true);
-      }
+      return window.location.hash === '#signup';
     }
-  }, []);
+    return false;
+  });
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
 
   const handleSubmit = async (e, formType) => {
     e.preventDefault();
@@ -194,7 +189,7 @@ export default function AuthPage() {
                       onClick={() => setIsFlipped(true)}
                       className="text-sm text-[#8a7a67] hover:text-[#d69a44] dark:text-[#b5a59c] dark:hover:text-[#f2c66f] font-medium underline decoration-transparent hover:decoration-[#d69a44] dark:hover:decoration-[#f2c66f] transition-all duration-200 cursor-pointer"
                     >
-                      Don't have an account? <span className="hover:text-[#d69a44] dark:hover:text-[#f2c66f]">Sign up</span>
+                      Don&apos;t have an account? <span className="hover:text-[#d69a44] dark:hover:text-[#f2c66f]">Sign up</span>
                     </button>
                   </div>
                 </div>

@@ -15,8 +15,6 @@ export default function CodeEditor({
   onRun,
   onSubmit,
   onReset,
-  isRunning,
-  isSubmitting,
 }) {
   const [code, setCode] = useState(initialCode || "");
   const [language, setLanguage] = useState(initialLanguage);
