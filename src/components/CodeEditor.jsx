@@ -8,18 +8,12 @@ import parserBabel from "prettier/plugins/babel";
 const Monaco = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
 export default function CodeEditor({
-  initialCode,
-  initialLanguage = "javascript",
-  onChange,
+  code,
+  language = "javascript",
+  onCodeChange,
   onLanguageChange,
   onRun,
-  onSubmit,
-  onReset,
-  isRunning,
-  isSubmitting,
 }) {
-  const [code, setCode] = useState(initialCode || "");
-  const [language, setLanguage] = useState(initialLanguage);
   const [theme, setTheme] = useState("vs-dark");
   const [isFormatting, setIsFormatting] = useState(false);
 
@@ -141,8 +135,8 @@ export default function CodeEditor({
               className="h-9 rounded-full border border-[#deceb7] bg-[#fff8ed] px-3 text-xs font-semibold text-[#5d5245] outline-none dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe]"
               value={language}
               onChange={(e) => {
-                setLanguage(e.target.value);
-                onLanguageChange?.(e.target.value);
+                const newLanguage = e.target.value;
+                if (onLanguageChange) onLanguageChange(newLanguage);
               }}
             >
               <option value="javascript">JavaScript</option>

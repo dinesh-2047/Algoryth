@@ -42,89 +42,25 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
     setExecutionResult(null);
 
     try {
-      // Parse test cases from problem examples
-      const testCases = problem.examples.map((ex) => ({
-        input: ex.input,
-        expectedOutput: ex.output,
-      }));
-
-      const response = await fetch("/api/execute", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           code,
           language,
-          testCases,
           problemId: problem.id,
         }),
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        setExecutionResult({
-          status: "Error",
-          error: result.error || "Execution failed",
-        });
-      } else {
-        setExecutionResult(result);
-      }
+      const data = await response.json();
+      setExecutionResults(data);
     } catch (error) {
-      setExecutionResult({
-        status: "Error",
-        error: "Network error: Could not connect to execution server",
-      });
+      setExecutionResults({ error: 'Failed to execute code. Please try again.' });
+    } finally {
+      setIsRunning(false);
     }
-
-    setIsRunning(false);
-  };
-
-  const handleSubmit = async () => {
-    if (!validateBeforeRun()) return;
-
-    setTimerRunning(false);
-    setIsSubmitting(true);
-    setExecutionResult(null);
-
-    try {
-      // Parse test cases from problem examples
-      const testCases = problem.examples.map((ex) => ({
-        input: ex.input,
-        expectedOutput: ex.output,
-      }));
-
-      const response = await fetch("/api/execute", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          code,
-          language,
-          testCases,
-          problemId: problem.id,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        setExecutionResult({
-          status: "Error",
-          error: result.error || "Submission failed",
-        });
-      } else {
-        setExecutionResult({
-          ...result,
-          isSubmission: true,
-        });
-      }
-    } catch (error) {
-      setExecutionResult({
-        status: "Error",
-        error: "Network error: Could not connect to submission server",
-      });
-    }
-
-    setIsSubmitting(false);
   };
 
 
@@ -254,139 +190,38 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-4 py-2 text-xs font-semibold dark:border-[#3c3347] dark:bg-[#292331]">
             Test Results
           </div>
-
-          <div className="flex-1 overflow-auto px-4 py-4">
-            {inputError && (
-              <div className="mb-3 rounded-lg bg-red-100 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">
-                {inputError}
-              </div>
-            )}
-
-            {!executionResult && !inputError && (
-              <div className="text-center text-sm text-[#8a7a67] dark:text-[#b5a59c]">
-                Run your code to see test results
-              </div>
-            )}
-
-            {executionResult && executionResult.status === "Error" && (
-              <div className="rounded-lg bg-red-100 px-3 py-3 dark:bg-red-900/30">
-                <div className="text-sm font-semibold text-red-700 dark:text-red-300">
-                  ❌ Execution Error
-                </div>
-                <pre className="mt-2 whitespace-pre-wrap text-xs text-red-600 dark:text-red-400">
-                  {executionResult.error}
-                </pre>
-              </div>
-            )}
-
-            {executionResult && executionResult.status !== "Error" && (
+          <div className="min-h-0 flex-1 overflow-auto px-4 pb-5 pt-3">
+            {executionResults ? (
               <div className="space-y-3">
-                {/* Overall Status */}
-                <div
-                  className={`rounded-lg px-3 py-2 ${executionResult.status === "Accepted"
-                      ? "bg-green-100 dark:bg-green-900/30"
-                      : "bg-yellow-100 dark:bg-yellow-900/30"
-                    }`}
-                >
-                  <div
-                    className={`text-sm font-semibold ${executionResult.status === "Accepted"
-                        ? "text-green-700 dark:text-green-300"
-                        : "text-yellow-700 dark:text-yellow-300"
-                      }`}
-                  >
-                    {executionResult.status === "Accepted" ? "✅" : "⚠️"}{" "}
-                    {executionResult.status}
-                  </div>
-                  {executionResult.testResults && (
-                    <div className="mt-1 text-xs text-[#5d5245] dark:text-[#d7ccbe]">
-                      {executionResult.passedTests} / {executionResult.totalTests} test cases passed
+                {executionResults.results?.map((result, index) => (
+                  <div key={index} className="rounded-lg border border-black/10 bg-zinc-50 p-3 dark:border-white/10 dark:bg-zinc-950">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                        result.passed ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                      }`}>
+                        {result.passed ? 'PASS' : 'FAIL'}
+                      </span>
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                        {result.time}ms • {result.memory}KB
+                      </span>
                     </div>
-                  )}
-                </div>
-
-                {/* Individual Test Results */}
-                {executionResult.testResults && executionResult.testResults.map((test, idx) => (
-                  <div
-                    key={idx}
-                    className={`rounded-lg border px-3 py-2 ${test.passed
-                        ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20"
-                        : "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20"
-                      }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div
-                        className={`text-xs font-semibold ${test.passed
-                            ? "text-green-700 dark:text-green-300"
-                            : "text-red-700 dark:text-red-300"
-                          }`}
-                      >
-                        {test.passed ? "✓" : "✗"} Test Case {test.testCase}
-                      </div>
-                      {test.executionTime && (
-                        <div className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">
-                          {test.executionTime}ms
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-2 space-y-1 text-xs">
-                      <div>
-                        <span className="font-medium text-[#5d5245] dark:text-[#d7ccbe]">
-                          Input:
-                        </span>
-                        <pre className="mt-1 whitespace-pre-wrap text-[#8a7a67] dark:text-[#b5a59c]">
-                          {test.input}
-                        </pre>
-                      </div>
-
-                      <div>
-                        <span className="font-medium text-[#5d5245] dark:text-[#d7ccbe]">
-                          Expected:
-                        </span>
-                        <pre className="mt-1 whitespace-pre-wrap text-[#8a7a67] dark:text-[#b5a59c]">
-                          {test.expectedOutput}
-                        </pre>
-                      </div>
-
-                      <div>
-                        <span className="font-medium text-[#5d5245] dark:text-[#d7ccbe]">
-                          Your Output:
-                        </span>
-                        <pre
-                          className={`mt-1 whitespace-pre-wrap ${test.passed
-                              ? "text-green-600 dark:text-green-400"
-                              : "text-red-600 dark:text-red-400"
-                            }`}
-                        >
-                          {test.actualOutput || "(no output)"}
-                        </pre>
-                      </div>
-
-                      {test.error && (
-                        <div>
-                          <span className="font-medium text-red-600 dark:text-red-400">
-                            Error:
-                          </span>
-                          <pre className="mt-1 whitespace-pre-wrap text-xs text-red-600 dark:text-red-400">
-                            {test.error}
-                          </pre>
-                        </div>
-                      )}
+                    <div className="text-xs text-zinc-700 dark:text-zinc-300">
+                      <div><strong>Input:</strong> {result.input}</div>
+                      <div><strong>Expected:</strong> {result.expected}</div>
+                      <div><strong>Output:</strong> {result.output}</div>
+                      {!result.passed && <div className="text-red-600 dark:text-red-400 mt-1">{result.error}</div>}
                     </div>
                   </div>
                 ))}
-
-                {/* Success message for submission */}
-                {executionResult.isSubmission && executionResult.status === "Accepted" && (
-                  <div className="mt-3 rounded-lg bg-green-100 px-3 py-2 text-center dark:bg-green-900/30">
-                    <div className="text-sm font-semibold text-green-700 dark:text-green-300">
-                      🎉 Submission Accepted!
-                    </div>
-                    <div className="mt-1 text-xs text-green-600 dark:text-green-400">
-                      All test cases passed successfully
-                    </div>
+                {executionResults.error && (
+                  <div className="text-center text-sm text-red-600 dark:text-red-400">
+                    {executionResults.error}
                   </div>
                 )}
+              </div>
+            ) : (
+              <div className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+                You must run your code first.
               </div>
             )}
           </div>
@@ -414,10 +249,10 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={handleRun}
-            disabled={isRunning || isSubmitting}
-            title="Run (Ctrl + Enter)"
-            className="inline-flex h-9 items-center justify-center rounded-full border border-[#deceb7] bg-white px-4 text-xs font-semibold text-[#5d5245] hover:bg-[#f6e9d2] disabled:opacity-50 cursor-pointer dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+            type="button"
+            onClick={() => handleRun({ code, language })}
+            disabled={isRunning}
+            className="inline-flex h-9 items-center justify-center rounded-full border border-black/10 bg-white px-4 text-sm font-medium text-zinc-700 hover:bg-black/3 disabled:opacity-50 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
           >
             {isRunning ? "Running..." : "Run"}
           </button>

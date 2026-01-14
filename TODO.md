@@ -1,14 +1,20 @@
-# TODO for Adding Keyboard Shortcuts and Buttons to CodeEditor.jsx
+# TODO: Implement Secure Code Execution Environment
 
-- [x] Add imports for KeyMod and KeyCode from 'monaco-editor'
-- [x] Add resetCode function to reset code to initialCode
-- [x] Add handleEditorDidMount function with keybindings for Run, Submit, and Reset
-- [x] Add onMount prop to Monaco component
-- [x] Test the implementation (Critical-path: shortcuts work; Thorough: full component interaction)
-- [x] Add Reset button next to Run and Submit buttons
-- [x] Add cursor: pointer to all buttons (Run, Submit, Reset, Auto)
-- [x] Update button labels to show shortcuts (Ctrl+Enter, Ctrl+Shift+Enter, Ctrl+B)
-- [x] Add title attributes for tooltips on shortcut buttons
-- [x] Enhance Run/Submit buttons in ProblemWorkspace.jsx with proper styling, hover effects, and tooltips
-- [x] Restore Reset button in CodeEditor.jsx toolbar with tooltip
-- [x] Fix Reset button functionality to use onReset prop when provided
+## 1. Update Database Schema
+- [x] Add TestCase model to prisma/schema.prisma linked to Problem
+
+## 2. Create Execution API
+- [x] Create src/app/api/execute/route.js using Judge0 API for secure code execution
+
+## 3. Update CodeEditor Component
+- [x] Add "Run" button to src/components/CodeEditor.jsx that sends code and language to /api/execute
+
+## 4. Update ProblemWorkspace Component
+- [x] Enable Run button in src/components/ProblemWorkspace.jsx
+- [x] Add state for execution results
+- [x] Display pass/fail, execution time, and memory usage in test panel
+
+## 5. Followup Steps
+- [ ] Run Prisma migration
+- [ ] Install axios for API calls if needed
+- [ ] Test execution flow
