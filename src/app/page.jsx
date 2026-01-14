@@ -1,7 +1,24 @@
-import Link from "next/link";
+'use client';
 
+import Link from "next/link";
+import { useAuth } from "../context/AuthContext";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const { user } = useAuth();
+  const [stats, setStats] = useState({ total: 0, rating: 910 });
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('algoryth_submissions');
+      const parsed = raw ? JSON.parse(raw) : [];
+      const uniqueSolved = new Set(parsed.filter(s => s.status === 'Accepted').map(s => s.problemId));
+      setStats(prev => ({ ...prev, total: uniqueSolved.size }));
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
   return (
     <section className="grid gap-6 lg:grid-cols-[1fr_340px]">
       <div className="grid gap-4">
@@ -57,38 +74,34 @@ export default function Home() {
           </div>
         </div>
 
-        {/* DSA Topic-wise Learning Section */}
-        {/* Learn DSA – Home Entry Point */}
-<div className="overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
-  <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-6 py-4 dark:border-[#3c3347] dark:bg-[#292331]">
-    <div className="text-xs font-semibold uppercase tracking-wide text-[#8a7a67] dark:text-[#b5a59c]">
-      Learn
-    </div>
-    <h2 className="mt-2 text-lg font-semibold text-[#2b2116] dark:text-[#f6ede0]">
-      Learn Data Structures & Algorithms
-    </h2>
-    <p className="mt-1 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
-      A structured, topic-wise roadmap to master DSA from basics to advanced.
-    </p>
-  </div>
+        <div className="overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
+          <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-6 py-4 dark:border-[#3c3347] dark:bg-[#292331]">
+            <div className="text-xs font-semibold uppercase tracking-wide text-[#8a7a67] dark:text-[#b5a59c]">
+              Learn
+            </div>
+            <h2 className="mt-2 text-lg font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+              Learn Data Structures & Algorithms
+            </h2>
+            <p className="mt-1 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
+              A structured, topic-wise roadmap to master DSA from basics to advanced.
+            </p>
+          </div>
 
-  <div className="px-6 py-5">
-    <ul className="mb-4 space-y-2 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
-      <li>• Topic-wise learning paths</li>
-      <li>• Curated problems by difficulty</li>
-      <li>• Interview-focused preparation</li>
-    </ul>
+          <div className="px-6 py-5">
+            <ul className="mb-4 space-y-2 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
+              <li>• Topic-wise learning paths</li>
+              <li>• Curated problems by difficulty</li>
+              <li>• Interview-focused preparation</li>
+            </ul>
 
-    <Link
-      href="/topics"
-      className="inline-flex h-10 items-center justify-center rounded-full bg-[#d69a44] px-6 text-sm font-medium text-[#2b1a09] hover:bg-[#c4852c] dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#e4b857]"
-    >
-      View full roadmap →
-    </Link>
-  </div>
-</div>
-
-
+            <Link
+              href="/topics"
+              className="inline-flex h-10 items-center justify-center rounded-full bg-[#d69a44] px-6 text-sm font-medium text-[#2b1a09] hover:bg-[#c4852c] dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#e4b857]"
+            >
+              View full roadmap →
+            </Link>
+          </div>
+        </div>
       </div>
 
       <aside className="grid gap-4">
@@ -112,33 +125,34 @@ export default function Home() {
 
         <div className="overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
           <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-5 py-4 dark:border-[#3c3347] dark:bg-[#292331]">
-            <div className="text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">Guest</div>
+            <div className="text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+              {user ? user.name : "Guest"}
+            </div>
           </div>
           <div className="px-5 py-5 text-sm">
             <div className="flex items-center justify-between">
               <div className="text-[#5d5245] dark:text-[#d7ccbe]">Rating</div>
-              <div className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">910</div>
+              <div className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">{stats.rating}</div>
             </div>
             <div className="mt-2 flex items-center justify-between">
-              <div className="text-[#5d5245] dark:text-[#d7ccbe]">Contribution</div>
-              <div className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">0</div>
+              <div className="text-[#5d5245] dark:text-[#d7ccbe]">Solved</div>
+              <div className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">{stats.total}</div>
             </div>
 
             <div className="mt-4 grid gap-2 text-sm">
-            <Link href="/settings" className="text-zinc-500 hover:underline">
-  Settings
-</Link>
-
-<Link href="/submissions" className="text-zinc-500 hover:underline">
-  Submissions
-</Link>
-
-<Link href="/contests" className="text-zinc-500 hover:underline">
-  Contests
-</Link>
-
+              <Link href="/dashboard" className="text-zinc-500 hover:underline font-medium text-[#d69a44] dark:text-[#f2c66f]">
+                My Dashboard
+              </Link>
+              <Link href="/bookmarks" className="text-zinc-500 hover:underline">
+                Bookmarks
+              </Link>
+              <Link href="/settings" className="text-zinc-500 hover:underline">
+                Settings
+              </Link>
+              <Link href="/submissions" className="text-zinc-500 hover:underline">
+                Submissions
+              </Link>
             </div>
-
           </div>
         </div>
       </aside>
