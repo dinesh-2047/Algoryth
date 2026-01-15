@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import CodeEditor from "./CodeEditor";
 import SplitPane from "./SplitPane";
@@ -12,13 +12,20 @@ export default function ProblemWorkspace({ problem }) {
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [timerRunning, setTimerRunning] = useState(false);
+  const [code, setCode] = useState('');
+  const [language, setLanguage] = useState('javascript');
 
   const starterCode = useMemo(
     () => `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
     [problem.title]
   );
 
-  const handleRun = async ({ code, language }) => {
+  useEffect(() => {
+    setCode(starterCode);
+  }, [starterCode]);
+
+  const handleRun = async () => {
+    setIsRunning(true);
     try {
       const response = await fetch('/api/execute', {
         method: 'POST',
@@ -36,6 +43,33 @@ export default function ProblemWorkspace({ problem }) {
       setExecutionResults(data);
     } catch (error) {
       setExecutionResults({ error: 'Failed to execute code. Please try again.' });
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code,
+          language,
+          problemId: problem.id,
+        }),
+      });
+
+      const data = await response.json();
+      // Handle submit response, perhaps redirect or show message
+      console.log('Submit response:', data);
+    } catch (error) {
+      console.error('Failed to submit code:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -142,7 +176,7 @@ export default function ProblemWorkspace({ problem }) {
       minSecondary={220}
       storageKey={`algoryth.split.editor.${problem.slug}`}
       className="h-215 lg:h-full"
-      primary={<CodeEditor initialLanguage="javascript" initialCode={starterCode} onRun={handleRun} />}
+      primary={<CodeEditor initialCode={code} initialLanguage={language} onChange={setCode} onLanguageChange={setLanguage} onRun={handleRun} onSubmit={handleSubmit} isRunning={isRunning} />}
       secondary={
         <div className="flex h-full flex-col rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
           <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-4 py-2 text-xs font-semibold dark:border-[#3c3347] dark:bg-[#292331]">

@@ -11,11 +11,12 @@ export default function CodeEditor({
   initialCode,
   initialLanguage = "javascript",
   onRun,
+  onSubmit,
+  isRunning,
 }) {
   const [code, setCode] = useState(initialCode || "");
   const [language, setLanguage] = useState(initialLanguage);
   const [theme, setTheme] = useState("vs-dark");
-  const [isRunning, setIsRunning] = useState(false);
 
   /* ---------------- Sync initial code ---------------- */
   useEffect(() => {
