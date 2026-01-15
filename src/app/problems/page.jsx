@@ -6,6 +6,7 @@ import ProblemCard from "../../components/ProblemCard";
 function ProblemsPageContent() {
   const [problems, setProblems] = useState([]);
   const [bookmarkedProblems, setBookmarkedProblems] = useState([]);
+  const [highlightedId, setHighlightedId] = useState(null);
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -110,6 +111,21 @@ function ProblemsPageContent() {
       localStorage.setItem("bookmarkedProblems", JSON.stringify(newBookmarks));
     }
   };
+  const handleMoveToTop = (problemId) => {
+    const problemToMove = problems.find((p) => p.id === problemId);
+    if (!problemToMove) return;
+
+    const remainingProblems = problems.filter((p) => p.id !== problemId);
+    setProblems([problemToMove, ...remainingProblems]);
+    
+    // Smooth scroll to top
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    
+    // Visual feedback highlight
+    setHighlightedId(problemId);
+    setTimeout(() => setHighlightedId(null), 2000);
+  };
+
 
   const allTags = [
     "daily",
@@ -281,6 +297,7 @@ const displayProblems = useMemo(() => {
               index={0}
               onBookmark={handleBookmark}
               isBookmarked={bookmarkedProblems.includes(dailyProblem.id)}
+              onMoveToTop={handleMoveToTop}
             />
           </div>
         </div>
@@ -307,6 +324,8 @@ const displayProblems = useMemo(() => {
               index={index}
               onBookmark={handleBookmark}
               isBookmarked={bookmarkedProblems.includes(problem.id)}
+              onMoveToTop={handleMoveToTop}
+              isHighlighted={highlightedId === problem.id}
             />
           ))}
         </div>
