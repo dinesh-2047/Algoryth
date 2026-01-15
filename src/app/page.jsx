@@ -1,7 +1,22 @@
+'use client'
+
 import Link from "next/link";
+import { useSession, signIn, signOut } from 'next-auth/react'
+import { useEffect, useState } from 'react'
 
 
 export default function Home() {
+  const { data: session } = useSession()
+  const [userData, setUserData] = useState(null)
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetch(`/api/user/${session.user.id}`)
+        .then(res => res.json())
+        .then(setUserData)
+    }
+  }, [session])
+
   return (
     <section className="grid gap-6 lg:grid-cols-[1fr_340px]">
       <div className="grid gap-4">
