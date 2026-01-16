@@ -28,6 +28,7 @@ export default function RootLayout({ children }) {
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-[#f8f3e6] text-[#2b2116] antialiased transition-colors duration-300 dark:bg-[#18131f] dark:text-[#f6ede0]`}
       >
+
         <AuthProvider>
         <script
           dangerouslySetInnerHTML={{
@@ -48,6 +49,7 @@ export default function RootLayout({ children }) {
           }}
         />
         <Navbar />
+
         <main className="mx-auto w-full max-w-7xl px-6 py-8">{children}</main>
 
         <Footer />
