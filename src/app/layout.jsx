@@ -61,8 +61,11 @@ export default function RootLayout({ children }) {
               >
                 Problems
               </Link>
-              <span className="rounded-full px-3 py-2 text-zinc-400 dark:text-zinc-600">
-                Contests
+              <span className="flex items-center gap-2 rounded-full px-3 py-2 text-zinc-400 dark:text-zinc-600 cursor-not-allowed">
+                <span>Contests</span>
+                <span className="rounded-full bg-zinc-200 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-400">
+                  Coming Soon
+                </span>
               </span>
               <span className="rounded-full px-3 py-2 text-zinc-400 dark:text-zinc-600">
                 Rating
