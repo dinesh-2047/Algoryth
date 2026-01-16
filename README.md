@@ -16,6 +16,19 @@ A modern, beautiful coding practice platform for competitive programming and alg
 - **Modern Design**: Clean, minimalist interface with warm cream tones in light mode and sleek black/grey in dark mode
 - **Responsive Layout**: Fully responsive design that works perfectly on all devices
 
+---
+
+## 📸 UI Preview
+
+| Home (Light) | Home (Dark) |
+|------------|-------------|
+| ![Home Light](./assets/screenshots/home-page-light.png) | ![Home Dark](./assets/screenshots/home-page-dark.png) |
+
+| Problems List | Workspace / Code Editor |
+|-------------|--------------------------|
+| ![Problems List](./assets/screenshots/problem-list.png) | ![Workspace](./assets/screenshots/work-space-editor.png) |
+
+
 ### 💻 Code Editor
 - **Monaco Editor Integration**: Full-featured code editor powered by Monaco (VS Code editor)
 - **Syntax Highlighting**: Support for multiple programming languages (JavaScript, TypeScript, C++, Python - coming soon)
