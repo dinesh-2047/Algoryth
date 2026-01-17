@@ -27,6 +27,14 @@ export async function POST(request) {
       );
     }
 
+    // Check if account is active
+    if (!user.isActive) {
+      return NextResponse.json(
+        { error: 'Account is deactivated. Please contact support.' },
+        { status: 403 }
+      );
+    }
+
     // Compare password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
@@ -36,9 +44,16 @@ export async function POST(request) {
       );
     }
 
-    // Create JWT token (you'll need to set a secret in your environment variables)
+    // Update last login
+    user.updateLastLogin();
+
+    // Create JWT token
     const token = jwt.sign(
-      { userId: user._id, email: user.email },
+      { 
+        userId: user._id, 
+        email: user.email,
+        role: user.role 
+      },
       process.env.JWT_SECRET || 'fallback_secret_key',
       { expiresIn: '7d' } // Token expires in 7 days
     );
@@ -48,6 +63,7 @@ export async function POST(request) {
       id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role,
       createdAt: user.createdAt,
     };
 
