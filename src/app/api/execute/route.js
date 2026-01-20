@@ -30,10 +30,9 @@ export async function POST(request) {
   try {
     const { language, code, problemId } = await request.json();
 
-    // Validation
-    if (!code || !language) {
-      return Response.json(
-        { error: "Code and language are required" },
+    if (!code || code.trim().length === 0) {
+      return NextResponse.json(
+        { error: "No code provided" },
         { status: 400 }
       );
     }
@@ -103,134 +102,24 @@ export async function POST(request) {
 
       if (!passed) allPassed = false;
 
-      results.push({
-        testCase: i + 1,
-        input: testCase.input,
-        expectedOutput: testCase.expectedOutput,
-        actualOutput: result.output,
-        passed: passed,
-        error: result.error,
-        executionTime: result.executionTime,
-      });
+    try {
+      // User must define solve(input)
+      const solve = new Function(`${code}; return solve;`)();
+      output = solve(input ? JSON.parse(input) : undefined);
+    } catch (err) {
+      error = err.toString();
     }
 
-    return Response.json({
-      status: allPassed ? "Accepted" : "Wrong Answer",
-      testResults: results,
-      totalTests: testCases.length,
-      passedTests: results.filter((r) => r.passed).length,
-      language: language,
+    return NextResponse.json({
+      output,
+      error,
     });
-  } catch (error) {
-    console.error("Code execution error:", error);
-    return Response.json(
-      {
-        error: "Internal server error during code execution",
-        details: error.message,
-      },
-      { status: 500 }
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid request" },
+      { status: 400 }
     );
   } finally {
     await prisma.$disconnect();
   }
-}
-
-/**
- * Execute code using Piston API
- */
-async function executePistonCode(langConfig, code, stdin) {
-  const startTime = Date.now();
-
-  try {
-    const response = await fetch(`${PISTON_API_URL}/execute`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        language: langConfig.language,
-        version: langConfig.version,
-        files: [
-          {
-            name: getFileName(langConfig.language),
-            content: code,
-          },
-        ],
-        stdin: stdin || "",
-        args: [],
-        compile_timeout: 10000, // 10 seconds
-        run_timeout: 3000, // 3 seconds
-        compile_memory_limit: -1,
-        run_memory_limit: -1,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Piston API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const executionTime = Date.now() - startTime;
-
-    // Check for compilation errors
-    if (data.compile && data.compile.code !== 0) {
-      return {
-        success: false,
-        output: "",
-        error: data.compile.stderr || data.compile.output || "Compilation failed",
-        executionTime,
-      };
-    }
-
-    // Check for runtime errors
-    if (data.run && data.run.code !== 0) {
-      return {
-        success: false,
-        output: data.run.stdout || "",
-        error: data.run.stderr || data.run.output || "Runtime error",
-        executionTime,
-      };
-    }
-
-    return {
-      success: true,
-      output: data.run.stdout || data.run.output || "",
-      error: data.run.stderr || null,
-      executionTime,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      output: "",
-      error: `Execution failed: ${error.message}`,
-      executionTime: Date.now() - startTime,
-    };
-  }
-}
-
-/**
- * Get appropriate filename for the language
- */
-function getFileName(language) {
-  const fileNames = {
-    javascript: "main.js",
-    python: "main.py",
-    java: "Main.java",
-    cpp: "main.cpp",
-    go: "main.go",
-  };
-  return fileNames[language] || "main.txt";
-}
-
-/**
- * Normalize output for comparison
- * Removes extra whitespace and newlines
- */
-function normalizeOutput(output) {
-  if (!output) return "";
-  return output
-    .toString()
-    .trim()
-    .replace(/\r\n/g, "\n")
-    .replace(/\s+$/gm, "");
 }
