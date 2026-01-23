@@ -1,21 +1,7 @@
 "use client";
-
 import { useEffect, useState, Suspense, useMemo } from "react";
-import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-
-function difficultyClasses(difficulty) {
-  switch (difficulty) {
-    case "Easy":
-      return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
-    case "Medium":
-      return "bg-amber-500/10 text-amber-700 dark:text-amber-300";
-    case "Hard":
-      return "bg-rose-500/10 text-rose-700 dark:text-rose-300";
-    default:
-      return "bg-zinc-500/10 text-zinc-700 dark:text-zinc-300";
-  }
-}
+import ProblemCard from "../../components/ProblemCard";
 
 function statusClasses(status) {
   switch (status) {
@@ -37,14 +23,15 @@ export default function ProblemsPage() {
   };
 
   return (
-    <section className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <section className="flex flex-col gap-8">
+      {/* Header Section */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-[#2b2116] dark:text-[#f6ede0]">
+          <h1 className="text-3xl font-bold tracking-tight text-[#2b2116] dark:text-[#f6ede0]">
             Problems
           </h1>
-          <p className="mt-1 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
-            Browse problems. This uses mock data + API routes.
+          <p className="mt-2 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
+            Master data structures & algorithms with curated problems
           </p>
           <Link href="/submissions" className="mt-2 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400">
             View Submissions
@@ -53,7 +40,6 @@ export default function ProblemsPage() {
             View Progress
           </Link>
         </div>
-
         <div className="w-full sm:w-80">
           <div className="relative">
             <input
@@ -65,12 +51,22 @@ export default function ProblemsPage() {
             />
             {urlSearch && (
               <button
-                onClick={() => handleSearch('')}
+                onClick={() => handleSearch("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b5a08a] hover:text-[#6f6251] dark:text-[#7f748a] dark:hover:text-[#d7ccbe]"
                 aria-label="Clear search"
               >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             )}
@@ -105,16 +101,26 @@ export default function ProblemsPage() {
                   {p.id}
                 </div>
               </div>
+              <p className="mt-1 text-sm text-[#6b5d4a] dark:text-[#bfb4c6]">
+                {new Date().toLocaleDateString(undefined, {
+                  weekday: "long",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </p>
+            </div>
+          </div>
 
-              <div className="flex items-center">
-                <span
-                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${difficultyClasses(
-                    p.difficulty
-                  )}`}
-                >
-                  {p.difficulty}
-                </span>
-              </div>
+          <div className="mt-5">
+            <ProblemCard
+              problem={{ ...dailyProblem, tags: [...(dailyProblem.tags || []), "daily"] }}
+              index={0}
+              onBookmark={handleBookmark}
+              isBookmarked={bookmarkedProblems.includes(dailyProblem.id)}
+            />
+          </div>
+        </div>
+      )}
 
               <div className="flex items-center">
                 <span
@@ -126,28 +132,59 @@ export default function ProblemsPage() {
                 </span>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                {p.tags.map((t) => (
-                  <span
-                    key={`${p.id}-${t}`}
-                    className="inline-flex items-center rounded-full border border-[#deceb7] bg-[#f2e3cc] px-2.5 py-1 text-xs text-[#5d5245] dark:border-[#40364f] dark:bg-[#2d2535] dark:text-[#d7ccbe]"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </Link>
+
+      {/* Problems Grid */}
+      {loading ? (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[...Array(6)].map((_, i) => (
+            <div
+              key={i}
+              className="h-[380px] rounded-xl bg-gray-200 dark:bg-gray-800 animate-pulse"
+            ></div>
           ))}
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {displayProblems.map((problem, index) => (
+            <ProblemCard
+              key={problem.id}
+              problem={problem}
+              index={index}
+              onBookmark={handleBookmark}
+              isBookmarked={bookmarkedProblems.includes(problem.id)}
+            />
+          ))}
+        </div>
+      )}
 
+      {!loading && displayProblems.length === 0 && (
+        <div className="flex flex-col items-center justify-center text-center py-16 rounded-xl bg-[#f7f0e0] dark:bg-[#292331]">
+          <h3 className="text-xl font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+            No Problems Found
+          </h3>
+          <p className="mt-2 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
+            Try adjusting your search or filter criteria.
+          </p>
+        </div>
+      )}
     </section>
   );
 }
 
 export default function ProblemsPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[...Array(6)].map((_, i) => (
+            <div
+              key={i}
+              className="h-[380px] rounded-xl bg-gray-200 dark:bg-gray-800 animate-pulse"
+            ></div>
+          ))}
+        </div>
+      }
+    >
       <ProblemsPageContent />
     </Suspense>
   );

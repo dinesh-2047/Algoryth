@@ -178,6 +178,12 @@ export default function ProblemWorkspace({ problem }) {
     }
   };
 
+  const toggleHint = (i) => {
+    setOpenHints((prev) =>
+      prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]
+    );
+  };
+
   const leftPanel = (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900">
       <div className="border-b border-black/10 bg-zinc-50 px-5 py-4 dark:border-white/10 dark:bg-zinc-950">
@@ -314,26 +320,27 @@ export default function ProblemWorkspace({ problem }) {
               "Submit"
             )}
           </button>
+          <ProblemTimer running={timerRunning} />
+        </div>
+
+        <div className="flex gap-2">
+          <button onClick={handleRun} disabled={isRunning || isSubmitting}>
+            {isRunning ? "Running..." : "Run"}
+          </button>
+          <button onClick={handleSubmit} disabled={isRunning || isSubmitting}>
+            {isSubmitting ? "Submitting..." : "Submit"}
+          </button>
         </div>
       </div>
 
-      <div className="hidden lg:block h-225">
-        <SplitPane
-          direction="horizontal"
-          initialPrimary={760}
-          minPrimary={420}
-          minSecondary={420}
-          storageKey={`algoryth.split.problem.${problem.slug}`}
-          primary={leftPanel}
-          secondary={rightPanel}
-          className="h-full"
-        />
-      </div>
-
-      <div className="grid gap-4 lg:hidden">
-        {leftPanel}
-        {rightPanel}
-      </div>
+      <SplitPane
+        direction="horizontal"
+        initialPrimary={760}
+        minPrimary={420}
+        minSecondary={420}
+        primary={leftPanel}
+        secondary={rightPanel}
+      />
     </section>
   );
 }

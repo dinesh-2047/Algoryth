@@ -69,6 +69,7 @@ export default function CodeEditor({
         <div className="flex items-center justify-between gap-3">
           <div className="text-sm font-semibold">Code</div>
           <div className="flex items-center gap-2">
+            {/* Language */}
             <select
               className="h-9 rounded-full border border-black/10 bg-white px-3 text-xs font-semibold text-zinc-700 outline-none dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200"
               value={language}
@@ -88,6 +89,8 @@ export default function CodeEditor({
                 C++
               </option>
             </select>
+
+            {/* Auto format */}
             <button
               type="button"
               className="inline-flex h-9 items-center justify-center rounded-full border border-black/10 bg-white px-4 text-xs font-semibold text-zinc-700 hover:bg-black/3 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"
@@ -98,6 +101,7 @@ export default function CodeEditor({
         </div>
       </div>
 
+      {/* Editor */}
       <div className="min-h-72 flex-1 min-w-0">
         <Monaco
           height="100%"
