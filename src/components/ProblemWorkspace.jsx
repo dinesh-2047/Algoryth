@@ -8,7 +8,6 @@ import ProblemTimer from "./ProblemTimer";
 
 export default function ProblemWorkspace({ problem, onNext, onPrev }) {
   const [code, setCode] = useState("");
-  const [language, setLanguage] = useState("javascript");
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastSubmissionStatus, setLastSubmissionStatus] = useState(null);
@@ -23,10 +22,32 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
     setTimerRunning(true);
   }, [problem.id]);
 
+  // Generate starter code based on language
+  const generateStarterCode = (lang) => {
+    const title = problem.title;
+    switch (lang) {
+      case "python":
+        return `# ${title}\n\ndef solve(input):\n    # TODO\n    pass\n`;
+      case "java":
+        return `// ${title}\n\npublic class Solution {\n    public static void main(String[] args) {\n        // TODO\n    }\n}\n`;
+      case "javascript":
+      default:
+        return `// ${title}\n\nfunction solve(input) {\n  // TODO\n}\n`;
+    }
+  };
+
+  const [currentLanguage, setCurrentLanguage] = useState("javascript");
   const starterCode = useMemo(
-    () => `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
-    [problem.title]
+    () => generateStarterCode(currentLanguage),
+    [problem.title, currentLanguage]
   );
+
+  // Handle language change - reset code to new starter code
+  const handleLanguageChange = (newLanguage) => {
+    const newStarterCode = generateStarterCode(newLanguage);
+    setCurrentLanguage(newLanguage);
+    setCode(newStarterCode);
+  };
 
   const isCodeEmpty =
     !code || code.trim().length === 0 || code.trim() === starterCode.trim();
@@ -160,13 +181,13 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       minSecondary={220}
       primary={
         <CodeEditor
-          initialLanguage={language}
+          initialLanguage={currentLanguage}
           initialCode={code || starterCode}
           onChange={(val) => {
             setCode(val);
             setInputError(null);
           }}
-          onLanguageChange={setLanguage}
+          onLanguageChange={handleLanguageChange}
           onRun={handleRun}
           onSubmit={handleSubmit}
           isRunning={isRunning}
