@@ -5,6 +5,7 @@ import Link from "next/link";
 import CodeEditor from "./CodeEditor";
 import SplitPane from "./SplitPane";
 import ProblemTimer from "./ProblemTimer";
+import Spinner from "./Spinner";
 
 export default function ProblemWorkspace({ problem, onNext, onPrev }) {
   const [code, setCode] = useState("");
@@ -207,10 +208,24 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
 
         <div className="flex gap-2">
           <button onClick={handleRun} disabled={isRunning || isSubmitting}>
-            {isRunning ? "Running..." : "Run"}
+            {isRunning ? (
+              <>
+                <Spinner className="mr-2 h-4 w-4" />
+                Running...
+              </>
+            ) : (
+              "Run"
+            )}
           </button>
           <button onClick={handleSubmit} disabled={isRunning || isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Submit"}
+            {isSubmitting ? (
+              <>
+                <Spinner className="mr-2 h-4 w-4" />
+                Submitting...
+              </>
+            ) : (
+              "Submit"
+            )}
           </button>
         </div>
       </div>

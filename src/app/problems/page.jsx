@@ -2,6 +2,7 @@
 import { useEffect, useState, Suspense, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import ProblemCard from "../../components/ProblemCard";
+import ProblemCardSkeleton from "../../components/ProblemCardSkeleton";
 
 function ProblemsPageContent() {
   const [problems, setProblems] = useState([]);
@@ -292,10 +293,7 @@ const displayProblems = useMemo(() => {
       {loading ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="h-[380px] rounded-xl bg-gray-200 dark:bg-gray-800 animate-pulse"
-            ></div>
+            <ProblemCardSkeleton key={i} />
           ))}
         </div>
       ) : (
@@ -332,10 +330,7 @@ export default function ProblemsPage() {
       fallback={
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="h-[380px] rounded-xl bg-gray-200 dark:bg-gray-800 animate-pulse"
-            ></div>
+            <ProblemCardSkeleton key={i} />
           ))}
         </div>
       }
