@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
+import { createSuccessResponse, logApiRequest } from "../../../lib/api-utils";
 
 export function GET() {
-  return NextResponse.json({ ok: true, service: "algoryth", timestamp: Date.now() });
+  logApiRequest('GET', '/api/health');
+  return createSuccessResponse({
+    ok: true,
+    service: "algoryth",
+    timestamp: Date.now()
+  });
 }

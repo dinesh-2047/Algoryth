@@ -3,37 +3,50 @@ import User from '../../../../lib/db/models/User.js';
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { createErrorResponse, createSuccessResponse, validateRequiredFields, logApiRequest, logApiError } from '../../../../lib/api-utils';
 
 export async function POST(request) {
   try {
-    await connectToDatabase();
+    logApiRequest('POST', '/api/auth/login');
 
-    const { email, password } = await request.json();
-
-    // Validate input
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
-      );
+    let body;
+    try {
+      body = await request.json();
+    } catch (error) {
+      return createErrorResponse('Invalid JSON in request body', 400, 'INVALID_JSON');
     }
+
+    // Validate required fields
+    const validationError = validateRequiredFields(body, ['email', 'password']);
+    if (validationError) {
+      return createErrorResponse(validationError, 400, 'MISSING_REQUIRED_FIELDS');
+    }
+
+    const { email, password } = body;
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return createErrorResponse('Invalid email format', 400, 'INVALID_EMAIL');
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return createErrorResponse('Password must be at least 6 characters long', 400, 'INVALID_PASSWORD');
+    }
+
+    await connectToDatabase();
 
     // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      );
+      return createErrorResponse('Invalid email or password', 401, 'INVALID_CREDENTIALS');
     }
 
     // Compare password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      );
+      return createErrorResponse('Invalid email or password', 401, 'INVALID_CREDENTIALS');
     }
 
     // Create JWT token (you'll need to set a secret in your environment variables)
@@ -51,19 +64,15 @@ export async function POST(request) {
       createdAt: user.createdAt,
     };
 
-    return NextResponse.json(
-      { 
-        message: 'Login successful', 
+    return createSuccessResponse(
+      {
+        message: 'Login successful',
         user: userResponse,
-        token: token 
-      },
-      { status: 200 }
+        token: token
+      }
     );
   } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    logApiError('POST', '/api/auth/login', error);
+    return createErrorResponse('Internal server error', 500, 'LOGIN_ERROR');
   }
 }
