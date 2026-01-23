@@ -39,15 +39,17 @@ export default function ProblemsPage() {
     setSearchTerm("");
   };
   return (
-    <section className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <section className="flex flex-col gap-8">
+      {/* Header Section */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Problems</h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Browse problems. This uses mock data + API routes.
+          <h1 className="text-3xl font-bold tracking-tight text-[#2b2116] dark:text-[#f6ede0]">
+            Problems
+          </h1>
+          <p className="mt-2 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
+            Master data structures & algorithms with curated problems
           </p>
         </div>
-
         <div className="w-full sm:w-80">
           <div className="relative">
             <input
@@ -55,7 +57,7 @@ export default function ProblemsPage() {
               placeholder="Search problems..."
               value={searchTerm}
               onChange={(e) => handleSearch(e.target.value)}
-              className="h-10 w-full rounded-xl border border-black/10 bg-white px-4 pr-10 text-sm text-zinc-900 outline-none placeholder:text-zinc-500 focus:ring-2 focus:ring-black/10 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-50 dark:placeholder:text-zinc-400 dark:focus:ring-white/10"
+              className="h-10 w-full rounded-xl border border-[#deceb7] bg-white px-4 pr-10 text-sm text-[#2b2116] outline-none placeholder:text-[#8a7a67] focus:ring-2 focus:ring-[#c99a4c]/30 dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#f6ede0] dark:placeholder:text-[#a89cae] dark:focus:ring-[#f2c66f]/30"
             />
             {searchTerm && (
               <button
@@ -63,8 +65,18 @@ export default function ProblemsPage() {
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
                 aria-label="Clear search"
               >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             )}
@@ -98,16 +110,26 @@ export default function ProblemsPage() {
                   {p.id}
                 </div>
               </div>
+              <p className="mt-1 text-sm text-[#6b5d4a] dark:text-[#bfb4c6]">
+                {new Date().toLocaleDateString(undefined, {
+                  weekday: "long",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </p>
+            </div>
+          </div>
 
-              <div className="flex items-center">
-                <span
-                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${difficultyClasses(
-                    p.difficulty
-                  )}`}
-                >
-                  {p.difficulty}
-                </span>
-              </div>
+          <div className="mt-5">
+            <ProblemCard
+              problem={{ ...dailyProblem, tags: [...(dailyProblem.tags || []), "daily"] }}
+              index={0}
+              onBookmark={handleBookmark}
+              isBookmarked={bookmarkedProblems.includes(dailyProblem.id)}
+            />
+          </div>
+        </div>
+      )}
 
               <div className="flex flex-wrap items-center gap-2">
                 {p.tags.map((t) => (
@@ -122,8 +144,30 @@ export default function ProblemsPage() {
             </Link>
           ))}
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {displayProblems.map((problem, index) => (
+            <ProblemCard
+              key={problem.id}
+              problem={problem}
+              index={index}
+              onBookmark={handleBookmark}
+              isBookmarked={bookmarkedProblems.includes(problem.id)}
+            />
+          ))}
+        </div>
+      )}
 
+      {!loading && displayProblems.length === 0 && (
+        <div className="flex flex-col items-center justify-center text-center py-16 rounded-xl bg-[#f7f0e0] dark:bg-[#292331]">
+          <h3 className="text-xl font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+            No Problems Found
+          </h3>
+          <p className="mt-2 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
+            Try adjusting your search or filter criteria.
+          </p>
+        </div>
+      )}
     </section>
   );
 }
