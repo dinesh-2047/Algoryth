@@ -118,6 +118,28 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       if (result.success === false) {
         verdict = result.error?.message || "Internal Error";
       } else {
+        const submissionResult = {
+          ...result,
+          isSubmission: true,
+        };
+        setExecutionResult(submissionResult);
+
+        // Save to localStorage for dashboard tracking
+        try {
+          const raw = localStorage.getItem("algoryth_submissions");
+          const submissions = raw ? JSON.parse(raw) : [];
+          const newEntry = {
+            problemId: problem.id,
+            problemTitle: problem.title,
+            difficulty: problem.difficulty,
+            status: result.status,
+            language: language,
+            timestamp: new Date().toISOString(),
+          };
+          localStorage.setItem("algoryth_submissions", JSON.stringify([newEntry, ...submissions]));
+        } catch (e) {
+          console.error("Error saving submission to localStorage:", e);
+        }
         verdict = result.data?.verdict || result.verdict || "Unknown";
       }
 
