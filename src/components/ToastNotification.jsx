@@ -7,13 +7,16 @@ const ToastNotification = ({ message, type = 'success', isVisible, onClose }) =>
 
   useEffect(() => {
     if (isVisible) {
-      setShow(true);
+      const showId = setTimeout(() => setShow(true), 0);
       const timer = setTimeout(() => {
         setShow(false);
         if (onClose) onClose();
       }, 3000); // Auto-hide after 3 seconds
 
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(showId);
+        clearTimeout(timer);
+      };
     }
   }, [isVisible, onClose]);
 
