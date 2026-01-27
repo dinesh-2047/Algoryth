@@ -11,8 +11,7 @@ export default function AuthButton() {
 
   // Ensure we're running on the client side
   useEffect(() => {
-    const id = setTimeout(() => setMounted(true), 0);
-    return () => clearTimeout(id);
+    setMounted(true);
   }, []);
 
   if (loading || !mounted) {

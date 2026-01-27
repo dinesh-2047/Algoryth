@@ -18,18 +18,13 @@ export function AuthProvider({ children }) {
     const storedUser = localStorage.getItem('algoryth_user');
     
     if (token && storedUser) {
-      const id = setTimeout(() => {
-        try {
-          setUser(JSON.parse(storedUser));
-        } catch (error) {
-          console.error('Error parsing stored user:', error);
-        }
-      }, 0);
-      // Cleanup for the deferred setUser
-      return () => clearTimeout(id);
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+      }
     }
-    const loadId = setTimeout(() => setLoading(false), 0);
-    return () => clearTimeout(loadId);
+    setLoading(false);
   }, []);
 
   const login = async (credentials) => {
