@@ -49,10 +49,6 @@ export default function RootLayout({ children }) {
           }}
         />
         <Navbar />
-        <nav>
-          <Link href="/">Home</Link>
-          <Link href="/heatmap">Heatmap</Link>
-        </nav>
 
         <main className="mx-auto w-full max-w-7xl px-6 py-8">{children}</main>
 
