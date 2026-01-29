@@ -20,6 +20,9 @@ const LANGUAGE_MAP = {
   java: { language: "java", version: "15.0.2" },
   cpp: { language: "cpp", version: "10.2.0" },
   go: { language: "go", version: "1.16.2" },
+  rust: { language: "rust", version: "1.68.2" },
+  ruby: { language: "ruby", version: "3.2.2" },
+  php: { language: "php", version: "8.2.3" },
 };
 
 export async function POST(request) {
@@ -59,7 +62,11 @@ export async function POST(request) {
         output: result.output,
         error: result.error,
         executionTime: result.executionTime,
+        memoryUsed: result.memoryUsed,
         language: language,
+        input: "",
+        outputVisualization: visualizeIO("", result.output),
+        errorDetails: result.errorDetails || null,
       });
     }
 
@@ -88,7 +95,10 @@ export async function POST(request) {
         actualOutput: result.output,
         passed: passed,
         error: result.error,
+        errorDetails: result.errorDetails || null,
         executionTime: result.executionTime,
+        memoryUsed: result.memoryUsed,
+        outputVisualization: visualizeIO(testCase.input, result.output),
       });
     }
 
@@ -98,6 +108,7 @@ export async function POST(request) {
       totalTests: testCases.length,
       passedTests: results.filter((r) => r.passed).length,
       language: language,
+      inputOutputVisualization: results.map(r => r.outputVisualization),
     });
   } catch (error) {
     console.error("Code execution error:", error);
@@ -116,7 +127,6 @@ export async function POST(request) {
  */
 async function executePistonCode(langConfig, code, stdin) {
   const startTime = Date.now();
-
   try {
     const response = await fetch(`${PISTON_API_URL}/execute`, {
       method: "POST",
@@ -135,9 +145,9 @@ async function executePistonCode(langConfig, code, stdin) {
         stdin: stdin || "",
         args: [],
         compile_timeout: 10000, // 10 seconds
-        run_timeout: 3000, // 3 seconds
+        run_timeout: 5000, // 5 seconds for more languages
         compile_memory_limit: -1,
-        run_memory_limit: -1,
+        run_memory_limit: 256 * 1024 * 1024, // 256MB
       }),
     });
 
@@ -147,6 +157,16 @@ async function executePistonCode(langConfig, code, stdin) {
 
     const data = await response.json();
     const executionTime = Date.now() - startTime;
+    // Try to get memory usage if available
+    const memoryUsed = data.run?.memory || null;
+
+    // Helper to extract line number from error
+    function extractLineNumber(errorMsg) {
+      if (!errorMsg) return null;
+      // Try to match "at line X" or similar patterns
+      const match = errorMsg.match(/line (\d+)/i) || errorMsg.match(/:(\d+):/);
+      return match ? parseInt(match[1], 10) : null;
+    }
 
     // Check for compilation errors
     if (data.compile && data.compile.code !== 0) {
@@ -154,7 +174,13 @@ async function executePistonCode(langConfig, code, stdin) {
         success: false,
         output: "",
         error: data.compile.stderr || data.compile.output || "Compilation failed",
+        errorDetails: {
+          type: "compilation",
+          message: data.compile.stderr || data.compile.output,
+          line: extractLineNumber(data.compile.stderr || data.compile.output),
+        },
         executionTime,
+        memoryUsed,
       };
     }
 
@@ -164,7 +190,13 @@ async function executePistonCode(langConfig, code, stdin) {
         success: false,
         output: data.run.stdout || "",
         error: data.run.stderr || data.run.output || "Runtime error",
+        errorDetails: {
+          type: "runtime",
+          message: data.run.stderr || data.run.output,
+          line: extractLineNumber(data.run.stderr || data.run.output),
+        },
         executionTime,
+        memoryUsed,
       };
     }
 
@@ -173,13 +205,20 @@ async function executePistonCode(langConfig, code, stdin) {
       output: data.run.stdout || data.run.output || "",
       error: data.run.stderr || null,
       executionTime,
+      memoryUsed,
     };
   } catch (error) {
     return {
       success: false,
       output: "",
       error: `Execution failed: ${error.message}`,
+      errorDetails: {
+        type: "internal",
+        message: error.message,
+        line: null,
+      },
       executionTime: Date.now() - startTime,
+      memoryUsed: null,
     };
   }
 }
@@ -194,8 +233,21 @@ function getFileName(language) {
     java: "Main.java",
     cpp: "main.cpp",
     go: "main.go",
+    rust: "main.rs",
+    ruby: "main.rb",
+    php: "main.php",
   };
   return fileNames[language] || "main.txt";
+}
+/**
+ * Visualize input/output for UI
+ */
+function visualizeIO(input, output) {
+  return {
+    input: input,
+    output: output,
+    preview: `Input:\n${input}\n\nOutput:\n${output}`,
+  };
 }
 
 /**
