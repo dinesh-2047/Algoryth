@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /**
  * Code Execution API Route
  * 
@@ -24,26 +25,33 @@ const LANGUAGE_MAP = {
   ruby: { language: "ruby", version: "3.2.2" },
   php: { language: "php", version: "8.2.3" },
 };
+=======
+import { NextResponse } from "next/server";
+>>>>>>> e646bff45bd2211ced9178ab56f556257f21ae4b
 
 export async function POST(request) {
   try {
-    const { language, code, testCases, problemId } = await request.json();
+    const { code, input } = await request.json();
 
-    // Validation
-    if (!code || !language) {
-      return Response.json(
-        { error: "Code and language are required" },
+    if (!code || code.trim().length === 0) {
+      return NextResponse.json(
+        { error: "No code provided" },
         { status: 400 }
       );
     }
 
-    if (!LANGUAGE_MAP[language]) {
-      return Response.json(
-        { error: `Unsupported language: ${language}` },
-        { status: 400 }
-      );
+    let output = null;
+    let error = null;
+
+    try {
+      // User must define solve(input)
+      const solve = new Function(`${code}; return solve;`)();
+      output = solve(input ? JSON.parse(input) : undefined);
+    } catch (err) {
+      error = err.toString();
     }
 
+<<<<<<< HEAD
     // Code length validation (prevent abuse)
     if (code.length > 50000) {
       return Response.json(
@@ -109,18 +117,20 @@ export async function POST(request) {
       passedTests: results.filter((r) => r.passed).length,
       language: language,
       inputOutputVisualization: results.map(r => r.outputVisualization),
+=======
+    return NextResponse.json({
+      output,
+      error,
+>>>>>>> e646bff45bd2211ced9178ab56f556257f21ae4b
     });
-  } catch (error) {
-    console.error("Code execution error:", error);
-    return Response.json(
-      {
-        error: "Internal server error during code execution",
-        details: error.message,
-      },
-      { status: 500 }
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid request" },
+      { status: 400 }
     );
   }
 }
+<<<<<<< HEAD
 
 /**
  * Execute code using Piston API
@@ -262,3 +272,5 @@ function normalizeOutput(output) {
     .replace(/\r\n/g, "\n")
     .replace(/\s+$/gm, "");
 }
+=======
+>>>>>>> e646bff45bd2211ced9178ab56f556257f21ae4b
