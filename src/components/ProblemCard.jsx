@@ -66,6 +66,11 @@ export default function ProblemCard({
             <CheckCircle2 className="h-4 w-4" />
           </div>
         )}
+        {problem.status === "Attempted" && (
+          <div className="flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+            <div className="h-4 w-4 rounded-full bg-amber-500" />
+          </div>
+        )}
       </div>
 
       {/* Problem title */}
@@ -144,8 +149,8 @@ export default function ProblemCard({
         </Link>
         <button
           className={`rounded-lg border-2 p-2.5 transition-all ${isBookmarked
-              ? "border-[#d69a44] bg-[#d69a44]/10 text-[#d69a44] dark:border-[#f2c66f] dark:bg-[#f2c66f]/10 dark:text-[#f2c66f]"
-              : "border-[#deceb7] text-[#5d5245] hover:bg-[#f6e9d2] dark:border-[#40364f] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+            ? "border-[#d69a44] bg-[#d69a44]/10 text-[#d69a44] dark:border-[#f2c66f] dark:bg-[#f2c66f]/10 dark:text-[#f2c66f]"
+            : "border-[#deceb7] text-[#5d5245] hover:bg-[#f6e9d2] dark:border-[#40364f] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
             }`}
           onClick={(e) => {
             e.preventDefault();
