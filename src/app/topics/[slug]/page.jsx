@@ -20,14 +20,20 @@ const TOPIC_PROBLEMS = {
 };
 
 // Dynamic route page
-export default function TopicPage({ params }) {
+export default async function TopicPage({ params }) {
   // Safety check: params exists
-  if (!params || !params.slug) {
+  if (!params) {
     notFound();
   }
 
-  const slug = params.slug.toLowerCase(); // ensure lowercase match
-  const topic = TOPIC_PROBLEMS[slug];
+  const { slug } = await params;
+
+  if (!slug) {
+    notFound();
+  }
+
+  const topicSlug = slug.toLowerCase(); // ensure lowercase match
+  const topic = TOPIC_PROBLEMS[topicSlug];
 
   if (!topic) notFound();
 
