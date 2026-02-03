@@ -108,14 +108,14 @@ export default function AuthPage() {
           </Link>
         </div>
 
-        {/* Auth Content */}
-        <div className="w-full">
-          <div className={`transition-all duration-700 preserve-3d ${isFlipped ? 'rotate-y-180' : ''}`} style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
+        {/* Auth Content Card */}
+        <div className="w-full perspective-1000 min-h-[500px]">
+          <div className={`relative w-full h-full transition-all duration-700 preserve-3d ${isFlipped ? 'rotate-y-180' : ''}`} style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
             
-            {/* Login Section */}
-            <div className="backface-hidden w-full">
+            {/* Login Face */}
+            <div className="backface-hidden absolute inset-0 w-full h-fit bg-[#fff8ed]/80 dark:bg-[#1c1822]/90 backdrop-blur-2xl border border-[#e0d5c2] dark:border-[#3c3347] rounded-[2.5rem] shadow-2xl p-10">
               <div className="mb-8 text-center">
-                <h2 className="text-3xl font-extrabold text-[#2b2116] dark:text-[#f6ede0] tracking-tighter sm:text-4xl">
+                <h2 className="text-3xl font-black text-[#2b2116] dark:text-[#f6ede0] tracking-tighter sm:text-4xl">
                   Welcome back
                 </h2>
                 <p className="text-[#8a7a67] dark:text-[#b5a59c] mt-2 font-semibold text-base">
@@ -123,7 +123,7 @@ export default function AuthPage() {
                 </p>
               </div>
 
-              <form onSubmit={(e) => handleSubmit(e, 'login')} className="space-y-6 max-w-sm mx-auto">
+              <form onSubmit={(e) => handleSubmit(e, 'login')} className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-[#5d5245] dark:text-[#d7ccbe] flex items-center gap-2 uppercase tracking-widest opacity-70">
                     <Mail className="w-3.5 h-3.5" /> Email Address
@@ -185,8 +185,8 @@ export default function AuthPage() {
               </form>
             </div>
 
-            {/* Signup Section (Back) */}
-            <div className="card-back absolute inset-0 backface-hidden rotate-y-180 w-full h-fit">
+            {/* Signup Face */}
+            <div className="card-back backface-hidden absolute inset-0 rotate-y-180 w-full h-fit bg-[#fff8ed]/80 dark:bg-[#1c1822]/90 backdrop-blur-2xl border border-[#e0d5c2] dark:border-[#3c3347] rounded-[2.5rem] shadow-2xl p-10">
               <div className="mb-6 text-center">
                 <h2 className="text-3xl font-extrabold text-[#2b2116] dark:text-[#f6ede0] tracking-tighter sm:text-4xl">
                   Join Algoryth
@@ -196,7 +196,7 @@ export default function AuthPage() {
                 </p>
               </div>
 
-              <form onSubmit={(e) => handleSubmit(e, 'signup')} className="space-y-4 max-w-sm mx-auto">
+              <form onSubmit={(e) => handleSubmit(e, 'signup')} className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-[#5d5245] dark:text-[#d7ccbe] flex items-center gap-2 uppercase tracking-widest opacity-70">
                     <User className="w-3.5 h-3.5" /> Full Name
