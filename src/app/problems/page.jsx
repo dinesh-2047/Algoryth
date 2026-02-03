@@ -26,7 +26,6 @@ function ProblemsPageContent() {
 
   const [problemStatuses, setProblemStatuses] = useState({});
 
-  // Fetch problems from API
   useEffect(() => {
     const fetchProblems = async () => {
       try {
@@ -57,10 +56,8 @@ function ProblemsPageContent() {
     fetchProblems();
   }, [urlSearch, urlDifficulty, urlTags, urlSort]);
 
-  // Load bookmarked problems and compute statuses from localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // Bookmarks
       const savedBookmarks = localStorage.getItem("bookmarkedProblems");
       if (savedBookmarks) {
         try {
@@ -70,7 +67,6 @@ function ProblemsPageContent() {
         }
       }
 
-      // Submissions / Statuses
       const savedSubmissions = localStorage.getItem("algoryth_submissions");
       if (savedSubmissions) {
         try {
@@ -145,10 +141,7 @@ function ProblemsPageContent() {
     const remainingProblems = problems.filter((p) => p.id !== problemId);
     setProblems([problemToMove, ...remainingProblems]);
 
-    // Smooth scroll to top
     window.scrollTo({ top: 0, behavior: "smooth" });
-
-    // Visual feedback highlight
     setHighlightedId(problemId);
     setTimeout(() => setHighlightedId(null), 2000);
   };
@@ -166,7 +159,6 @@ function ProblemsPageContent() {
     "trees",
   ];
 
-  // Base list (only API + sorting, no daily logic)
   const baseProblems = useMemo(() => {
     let list = [...problems];
 
@@ -178,7 +170,6 @@ function ProblemsPageContent() {
     return list;
   }, [problems, urlSort]);
 
-  // Daily problem (static per day)
   const dailyProblem = useMemo(() => {
     if (!baseProblems.length) return null;
 
@@ -194,7 +185,6 @@ function ProblemsPageContent() {
     return { ...problem, status: problemStatuses[problem.id] || null };
   }, [baseProblems, problemStatuses]);
 
-  // Final display list
   const displayProblems = useMemo(() => {
     const list = (urlTags.includes("daily") && dailyProblem)
       ? [dailyProblem]
@@ -205,7 +195,6 @@ function ProblemsPageContent() {
 
   return (
     <section className="flex flex-col gap-8">
-      {/* Header Section */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-[#2b2116] dark:text-[#f6ede0]">
@@ -249,7 +238,6 @@ function ProblemsPageContent() {
         </div>
       </div>
 
-      {/* Filters Section */}
       <div className="flex flex-wrap items-center gap-4 rounded-xl bg-[#f7f0e0] p-4 dark:bg-[#292331]">
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-[#5d5245] dark:text-[#d7ccbe]">
@@ -282,7 +270,6 @@ function ProblemsPageContent() {
         </div>
       </div>
 
-      {/* Tags Quick Filter */}
       <div className="flex flex-wrap items-center gap-2">
         {allTags.map((tag) => (
           <button
@@ -333,7 +320,6 @@ function ProblemsPageContent() {
 
 
 
-      {/* Problems Grid */}
       {loading ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (

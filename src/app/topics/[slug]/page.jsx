@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 
-// Data
 const TOPIC_PROBLEMS = {
   arrays: {
     title: "Arrays",
@@ -22,7 +21,6 @@ const TOPIC_PROBLEMS = {
   },
 };
 
-// Dynamic route page
 export default function TopicPage({ params: paramsPromise }) {
   const [params, setParams] = useState(null);
   const [problemStatuses, setProblemStatuses] = useState({});
@@ -62,7 +60,7 @@ export default function TopicPage({ params: paramsPromise }) {
     notFound();
   }
 
-  const topicSlug = slug.toLowerCase(); // ensure lowercase match
+  const topicSlug = slug.toLowerCase();
   const topic = TOPIC_PROBLEMS[topicSlug];
 
   if (!topic) notFound();

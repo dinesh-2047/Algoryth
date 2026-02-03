@@ -56,7 +56,6 @@ export default function ProblemCard({
 
   return (
     <div className={`group relative h-full rounded-xl border-2 bg-white p-6 transition-all duration-300 hover:shadow-lg hover:border-[#d69a44] dark:bg-[#211d27] dark:hover:border-[#f2c66f] ${isHighlighted ? "ring-4 ring-[#d69a44]/50 scale-[1.02] border-[#d69a44] dark:ring-[#f2c66f]/50 dark:border-[#f2c66f]" : "border-[#e0d5c2] dark:border-[#3c3347]"}`}>
-      {/* Header with number and solved indicator */}
       <div className="mb-4 flex items-start justify-between">
         <span className="text-3xl font-bold text-[#c99a4c] dark:text-[#f2c66f]">
           #{String(index + 1).padStart(2, "0")}
@@ -73,7 +72,6 @@ export default function ProblemCard({
         )}
       </div>
 
-      {/* Problem title */}
       <h3 className="mb-2 line-clamp-2 text-lg font-bold text-[#2b2116] transition-colors dark:text-[#f6ede0] group-hover:text-[#c99a4c] dark:group-hover:text-[#f2c66f]">
         <Link href={`/problems/${problem.slug}`} className="focus:outline-none">
           <span className="absolute inset-0" aria-hidden="true" />
@@ -81,12 +79,10 @@ export default function ProblemCard({
         </Link>
       </h3>
 
-      {/* Problem ID / Slug */}
       <p className="mb-4 text-xs font-medium text-[#8a7a67] dark:text-[#b5a59c] uppercase tracking-wide">
         {problem.id}
       </p>
 
-      {/* Difficulty badge */}
       <div className="mb-4">
         <span
           className={`inline-flex items-center rounded-full border-2 px-4 py-1.5 text-xs font-semibold ${difficultyColor.text} ${difficultyColor.bg} ${difficultyColor.border}`}
@@ -95,7 +91,6 @@ export default function ProblemCard({
         </span>
       </div>
 
-      {/* Category/Topic badges */}
       {problem.tags && problem.tags.length > 0 && (
         <div className="mb-4 flex flex-wrap gap-2 relative z-10">
           {problem.tags.slice(0, 3).map((tag, idx) => (
@@ -116,7 +111,6 @@ export default function ProblemCard({
         </div>
       )}
 
-      {/* Stats section with dividers */}
       <div className="mb-4 grid grid-cols-3 gap-2 rounded-lg bg-[#f7f0e0] p-3 dark:bg-[#2d2535] relative z-10">
         <div className="text-center">
           <div className="text-sm font-bold text-[#2b2116] dark:text-[#f6ede0]">
@@ -137,7 +131,6 @@ export default function ProblemCard({
         </div>
       </div>
 
-      {/* Quick action buttons - visible on hover */}
       <div className="flex gap-2 opacity-0 transition-all duration-200 group-hover:opacity-100 relative z-20">
         <Link
           href={`/problems/${problem.slug}`}
@@ -196,7 +189,6 @@ export default function ProblemCard({
         </button>
       </div>
 
-      {/* Status indicator at bottom */}
       {problem.status && (
         <div className="mt-4 pt-4 border-t border-[#e0d5c2] dark:border-[#3c3347]">
           <span className="inline-flex items-center rounded-full border border-[#deceb7] bg-[#d69a441a] px-3 py-1 text-xs font-medium text-[#5d5245] dark:border-[#40364f] dark:bg-[#f6ede01a] dark:text-[#d7ccbe]">
