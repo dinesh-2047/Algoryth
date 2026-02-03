@@ -9,7 +9,7 @@ const DSA_TOPICS = [
   { title: "2 Pointers", slug: "two-pointers", description: "Two-pointer techniques" },
   { title: "Prefix Sums", slug: "prefix-sums", description: "Efficient range queries" },
   { title: "Sliding Window", slug: "sliding-window", description: "Efficient window-based algorithms" },
-  { title: "Kadene's Algorithm", slug: "kadenes-algorithm", description: "Maximum subarray problems" },
+  { title: "Kadane's Algorithm", slug: "kadanes-algorithm", description: "Maximum subarray problems" },
   { title: "Matrix", slug: "matrix", description: "2D array operations" },
   { title: "Linked List", slug: "linked-list", description: "Dynamic linear structures" },
   { title: "Stacks & Queues", slug: "stacks-queues", description: "LIFO and FIFO structures" },

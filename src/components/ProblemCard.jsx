@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle2, FileText } from "lucide-react";
+import { CheckCircle2, FileText, ArrowUpFromLine } from "lucide-react";
 
 function getDifficultyColor(difficulty) {
   switch (difficulty) {
@@ -49,11 +49,13 @@ export default function ProblemCard({
   index,
   onBookmark,
   isBookmarked,
+  onMoveToTop,
+  isHighlighted,
 }) {
   const difficultyColor = getDifficultyColor(problem.difficulty);
 
   return (
-    <div className="group relative h-full rounded-xl border-2 border-[#e0d5c2] bg-white p-6 transition-all duration-200 hover:shadow-lg hover:border-[#d69a44] dark:border-[#3c3347] dark:bg-[#211d27] dark:hover:border-[#f2c66f]">
+    <div className={`group relative h-full rounded-xl border-2 bg-white p-6 transition-all duration-300 hover:shadow-lg hover:border-[#d69a44] dark:bg-[#211d27] dark:hover:border-[#f2c66f] ${isHighlighted ? "ring-4 ring-[#d69a44]/50 scale-[1.02] border-[#d69a44] dark:ring-[#f2c66f]/50 dark:border-[#f2c66f]" : "border-[#e0d5c2] dark:border-[#3c3347]"}`}>
       {/* Header with number and solved indicator */}
       <div className="mb-4 flex items-start justify-between">
         <span className="text-3xl font-bold text-[#c99a4c] dark:text-[#f2c66f]">
@@ -175,6 +177,17 @@ export default function ProblemCard({
           title="View editorial (coming soon)"
         >
           <FileText className="h-4 w-4" />
+        </button>
+        <button
+          className="rounded-lg border-2 border-[#deceb7] p-2.5 text-[#5d5245] transition-all hover:bg-[#f6e9d2] dark:border-[#40364f] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onMoveToTop?.(problem.id);
+          }}
+          title="Move this problem to the top"
+        >
+          <ArrowUpFromLine className="h-4 w-4" />
         </button>
       </div>
 

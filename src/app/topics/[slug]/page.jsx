@@ -21,12 +21,8 @@ const TOPIC_PROBLEMS = {
 
 // Dynamic route page
 export default async function TopicPage({ params }) {
-  // Safety check: params exists
-  if (!params) {
-    notFound();
-  }
-
-  const { slug } = await params;
+  const resolvedParams = await params;
+  const slug = resolvedParams?.slug;
 
   if (!slug) {
     notFound();

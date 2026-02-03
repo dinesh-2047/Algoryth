@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
     const token = localStorage.getItem('algoryth_token');
     const storedUser = localStorage.getItem('algoryth_user');
 
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       if (token && storedUser) {
         try {
           setUser(JSON.parse(storedUser));
@@ -27,6 +27,8 @@ export function AuthProvider({ children }) {
       }
       setLoading(false);
     }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const login = async (credentials) => {

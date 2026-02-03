@@ -6,18 +6,23 @@ const ToastNotification = ({ message, type = 'success', isVisible, onClose }) =>
   const [show, setShow] = useState(false);
 
   useEffect(() => {
+    let timer;
+    let hideTimer;
+
     if (isVisible) {
-      const timer = setTimeout(() => setShow(true), 0);
-      const hideTimer = setTimeout(() => {
+      timer = setTimeout(() => setShow(true), 0);
+      hideTimer = setTimeout(() => {
         setShow(false);
         if (onClose) onClose();
-      }, 3000); // Auto-hide after 3 seconds
-
-      return () => {
-        clearTimeout(timer);
-        clearTimeout(hideTimer);
-      };
+      }, 3000);
+    } else {
+      setTimeout(() => setShow(false), 0);
     }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      if (hideTimer) clearTimeout(hideTimer);
+    };
   }, [isVisible, onClose]);
 
   if (!show) return null;

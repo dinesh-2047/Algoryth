@@ -23,7 +23,8 @@ export default function ThemeToggle() {
   // This is a standard Next.js pattern for client-only features
   // The setState here is intentional and necessary for SSR/CSR synchronization
   useEffect(() => {
-    setTimeout(() => setMounted(true), 0);
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   // Apply theme changes to the DOM
