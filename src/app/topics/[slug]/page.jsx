@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 
 const TOPIC_PROBLEMS = {
@@ -15,19 +15,15 @@ const TOPIC_PROBLEMS = {
   trees: {
     title: "Trees",
     problems: [
-      { id: "binary-tree-inorder-traversal", title: "Inorder Traversal", slug: "binary-tree-inorder-traversal", diff: "Easy" },
-      { id: "validate-bst", title: "Validate BST", slug: "validate-bst", diff: "Medium" },
+      { id: "p-1010", title: "Inorder Traversal", slug: "binary-tree-inorder-traversal", diff: "Easy" },
+      { id: "p-2010", title: "Validate BST", slug: "validate-bst", diff: "Medium" },
     ],
   },
 };
 
 export default function TopicPage({ params: paramsPromise }) {
-  const [params, setParams] = useState(null);
+  const params = use(paramsPromise);
   const [problemStatuses, setProblemStatuses] = useState({});
-
-  useEffect(() => {
-    paramsPromise.then(setParams);
-  }, [paramsPromise]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
