@@ -17,25 +17,29 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
   const [timerRunning, setTimerRunning] = useState(true);
   const [inputError, setInputError] = useState(null);
   const [openHints, setOpenHints] = useState([]);
-  
+
   // Tabs State
   const [activeTab, setActiveTab] = useState("Description");
   const [submissions, setSubmissions] = useState([]);
 
   useEffect(() => {
-    setLastSubmissionStatus(null);
-    setInputError(null);
-    setCode("");
-    setTimerRunning(true);
-    setActiveTab("Description");
-    setOpenHints([]);
-    
+    setTimeout(() => {
+      setLastSubmissionStatus(null);
+      setInputError(null);
+      setCode("");
+      setTimerRunning(true);
+      setActiveTab("Description");
+      setOpenHints([]);
+    }, 0);
+
     // Load local submissions for this problem
     try {
       const allSubmissions = JSON.parse(localStorage.getItem("algoryth_submissions") || "[]");
       const validSubmissions = allSubmissions.filter(s => s.problemId === problem.id || s.slug === problem.slug);
       // Sort by newest first
-      setSubmissions(validSubmissions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
+      setTimeout(() => {
+        setSubmissions(validSubmissions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
+      }, 0);
     } catch (e) {
       console.error("Failed to load submissions", e);
     }
@@ -81,9 +85,9 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       } else {
         const { output, error } = result.data || result;
         if (error) {
-           setLastSubmissionStatus(`Error:\n${error}`);
+          setLastSubmissionStatus(`Error:\n${error}`);
         } else {
-           setLastSubmissionStatus(`Output:\n${JSON.stringify(output, null, 2) ?? "No output"}`);
+          setLastSubmissionStatus(`Output:\n${JSON.stringify(output, null, 2) ?? "No output"}`);
         }
       }
     } catch (err) {
@@ -114,20 +118,14 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       });
 
       const result = await response.json();
-      
+
       if (result.success === false) {
         verdict = result.error?.message || "Internal Error";
       } else {
-        const submissionResult = {
-          ...result,
-          isSubmission: true,
-        };
-        setExecutionResult(submissionResult);
-
         // Save to localStorage for dashboard tracking
         try {
           const raw = localStorage.getItem("algoryth_submissions");
-          const submissions = raw ? JSON.parse(raw) : [];
+          const submissionsList = raw ? JSON.parse(raw) : [];
           const newEntry = {
             problemId: problem.id,
             problemTitle: problem.title,
@@ -136,15 +134,15 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
             language: language,
             timestamp: new Date().toISOString(),
           };
-          localStorage.setItem("algoryth_submissions", JSON.stringify([newEntry, ...submissions]));
+          localStorage.setItem("algoryth_submissions", JSON.stringify([newEntry, ...submissionsList]));
         } catch (e) {
           console.error("Error saving submission to localStorage:", e);
         }
         verdict = result.data?.verdict || result.verdict || "Unknown";
       }
-
       setLastSubmissionStatus(verdict);
-    } catch (err) {
+    } catch (error) {
+      console.error("Submission failed:", error);
       verdict = "Network Error";
       setLastSubmissionStatus(verdict);
     }
@@ -159,9 +157,9 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       code, // Optional: save code if we want to restore history
       timestamp: new Date().toISOString()
     };
-    
+
     setSubmissions(prev => [newSubmission, ...prev]);
-    
+
     try {
       const allSubmissions = JSON.parse(localStorage.getItem("algoryth_submissions") || "[]");
       allSubmissions.push(newSubmission);
@@ -178,6 +176,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
   const toggleHint = (i) => {
     setOpenHints((prev) =>
       prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]
+
     );
   };
 
@@ -216,10 +215,10 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
                   <pre className="mt-1 overflow-x-auto rounded bg-[#f7f0e0] p-2 font-mono text-xs dark:bg-[#2d2535] dark:text-[#d7ccbe]">
                     {ex.output}
                   </pre>
-                  {ex.explaination && (
+                  {ex.explanation && (
                     <>
                       <div className="mt-2 font-medium text-[#2b2116] dark:text-[#f6ede0]">Explanation</div>
-                      <p className="text-xs text-[#5d5245] dark:text-[#d7ccbe] mt-1">{ex.explaination}</p>
+                      <p className="text-xs text-[#5d5245] dark:text-[#d7ccbe] mt-1">{ex.explanation}</p>
                     </>
                   )}
                 </div>
@@ -247,7 +246,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
             )}
           </div>
         );
-      
+
       case "Editorial":
         return (
           <div className="flex flex-col items-center justify-center py-10 text-center">
@@ -264,27 +263,27 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       case "Solutions":
         return (
           <div className="space-y-4">
-             <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">Community Solutions</h3>
-                <span className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">Top Rated</span>
-             </div>
-             {/* Mock Solutions */}
-             {[1, 2, 3].map((i) => (
-               <div key={i} className="cursor-pointer rounded-lg border border-[#e0d5c2] bg-white p-4 transition-all hover:shadow-sm dark:border-[#3c3347] dark:bg-[#211d27]">
-                 <div className="flex items-center gap-3">
-                   <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500" />
-                   <div>
-                     <div className="text-sm font-medium text-[#2b2116] dark:text-[#f6ede0]">User_{100+i}</div>
-                     <div className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">JavaScript • 2ms • 45MB</div>
-                   </div>
-                 </div>
-                 <h4 className="mt-3 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">My O(n) Approach with HashMap</h4>
-                 <div className="mt-2 flex gap-2">
-                   <span className="rounded bg-[#f7f0e0] px-2 py-0.5 text-xs text-[#5d5245] dark:bg-[#2d2535] dark:text-[#d7ccbe]">Easy to understand</span>
-                   <span className="rounded bg-[#f7f0e0] px-2 py-0.5 text-xs text-[#5d5245] dark:bg-[#2d2535] dark:text-[#d7ccbe]">Clean code</span>
-                 </div>
-               </div>
-             ))}
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">Community Solutions</h3>
+              <span className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">Top Rated</span>
+            </div>
+            {/* Mock Solutions */}
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="cursor-pointer rounded-lg border border-[#e0d5c2] bg-white p-4 transition-all hover:shadow-sm dark:border-[#3c3347] dark:bg-[#211d27]">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500" />
+                  <div>
+                    <div className="text-sm font-medium text-[#2b2116] dark:text-[#f6ede0]">User_{100 + i}</div>
+                    <div className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">JavaScript • 2ms • 45MB</div>
+                  </div>
+                </div>
+                <h4 className="mt-3 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">My O(n) Approach with HashMap</h4>
+                <div className="mt-2 flex gap-2">
+                  <span className="rounded bg-[#f7f0e0] px-2 py-0.5 text-xs text-[#5d5245] dark:bg-[#2d2535] dark:text-[#d7ccbe]">Easy to understand</span>
+                  <span className="rounded bg-[#f7f0e0] px-2 py-0.5 text-xs text-[#5d5245] dark:bg-[#2d2535] dark:text-[#d7ccbe]">Clean code</span>
+                </div>
+              </div>
+            ))}
           </div>
         );
 
@@ -293,16 +292,16 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           <div className="space-y-4">
             <h3 className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">Your Submissions</h3>
             {submissions.length === 0 ? (
-               <div className="flex flex-col items-center justify-center py-10 text-center rounded-lg border border-dashed border-[#e0d5c2] dark:border-[#3c3347]">
-                 <History className="h-8 w-8 text-[#b5a08a] dark:text-[#7f748a] mb-2" />
-                 <p className="text-sm text-[#5d5245] dark:text-[#d7ccbe]">No submissions yet</p>
-                 <button 
-                   onClick={() => setActiveTab("Description")}
-                   className="mt-2 text-xs font-semibold text-[#d69a44] hover:underline dark:text-[#f2c66f]"
-                 >
-                   Start solving
-                 </button>
-               </div>
+              <div className="flex flex-col items-center justify-center py-10 text-center rounded-lg border border-dashed border-[#e0d5c2] dark:border-[#3c3347]">
+                <History className="h-8 w-8 text-[#b5a08a] dark:text-[#7f748a] mb-2" />
+                <p className="text-sm text-[#5d5245] dark:text-[#d7ccbe]">No submissions yet</p>
+                <button
+                  onClick={() => setActiveTab("Description")}
+                  className="mt-2 text-xs font-semibold text-[#d69a44] hover:underline dark:text-[#f2c66f]"
+                >
+                  Start solving
+                </button>
+              </div>
             ) : (
               <div className="space-y-2">
                 {submissions.map((sub, idx) => (
@@ -316,11 +315,10 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
                         <XCircle className="h-5 w-5 text-rose-500" />
                       )}
                       <div>
-                        <div className={`font-semibold ${
-                          sub.status === "Accepted" ? "text-emerald-700 dark:text-emerald-400" :
+                        <div className={`font-semibold ${sub.status === "Accepted" ? "text-emerald-700 dark:text-emerald-400" :
                           sub.status?.includes("Error") ? "text-amber-700 dark:text-amber-400" :
-                          "text-rose-700 dark:text-rose-400"
-                        }`}>
+                            "text-rose-700 dark:text-rose-400"
+                          }`}>
                           {sub.status}
                         </div>
                         <div className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">
@@ -338,7 +336,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
             )}
           </div>
         );
-        
+
       default:
         return null;
     }
@@ -350,18 +348,17 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       <div className="border-b border-[#e0d5c2] bg-[#f2e3cc]/30 px-5 py-4 dark:border-[#3c3347] dark:bg-[#292331]/30">
         <div className="flex items-center justify-between">
           <div>
-             <div className="text-xs font-medium text-[#8a7a67] dark:text-[#b5a59c]">{problem.id}</div>
-             <h1 className="text-xl font-bold text-[#2b2116] dark:text-[#f6ede0]">{problem.title}</h1>
+            <div className="text-xs font-medium text-[#8a7a67] dark:text-[#b5a59c]">{problem.id}</div>
+            <h1 className="text-xl font-bold text-[#2b2116] dark:text-[#f6ede0]">{problem.title}</h1>
           </div>
-          <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-            problem.difficulty === "Easy" ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" :
+          <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${problem.difficulty === "Easy" ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" :
             problem.difficulty === "Medium" ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400" :
-            "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-900/30 dark:text-rose-400"
-          }`}>
+              "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-900/30 dark:text-rose-400"
+            }`}>
             {problem.difficulty}
           </span>
         </div>
-        
+
         {/* Tabs */}
         <div className="mt-6 flex space-x-1 rounded-lg bg-[#e0d5c2]/50 p-1 dark:bg-[#3c3347]/50">
           {tabs.map((tab) => {
@@ -371,11 +368,10 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-md py-1.5 text-xs font-semibold transition-all ${
-                  isActive
-                    ? "bg-white text-[#2b2116] shadow-sm dark:bg-[#211d27] dark:text-[#f6ede0]"
-                    : "text-[#5d5245] hover:bg-white/50 dark:text-[#b5a59c] dark:hover:bg-[#211d27]/50"
-                }`}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-md py-1.5 text-xs font-semibold transition-all ${isActive
+                  ? "bg-white text-[#2b2116] shadow-sm dark:bg-[#211d27] dark:text-[#f6ede0]"
+                  : "text-[#5d5245] hover:bg-white/50 dark:text-[#b5a59c] dark:hover:bg-[#211d27]/50"
+                  }`}
               >
                 <Icon className="h-3.5 w-3.5" />
                 {tab.label}
@@ -424,11 +420,12 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
                 {inputError}
               </div>
             )}
-            {lastSubmissionStatus ? (
+            {lastSubmissionStatus && (
               <pre className="whitespace-pre-wrap text-[#2b2116] dark:text-[#f6ede0]">
                 {lastSubmissionStatus}
               </pre>
-            ) : (
+            )}
+            {!lastSubmissionStatus && !inputError && (
               <div className="text-[#8a7a67] dark:text-[#b5a59c] italic">
                 Run your code to see results here...
               </div>
@@ -443,7 +440,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
     <section className="flex flex-col gap-4 min-h-0 flex-1">
       <div className="flex items-center justify-between rounded-2xl border border-[#e0d5c2] bg-white px-4 py-3 dark:border-[#3c3347] dark:bg-[#211d27]">
         <div className="flex items-center gap-2">
-          <Link 
+          <Link
             href="/problems"
             className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-[#5d5245] hover:bg-[#f7f0e0] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
           >
@@ -451,16 +448,16 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           </Link>
           <div className="h-4 w-px bg-[#e0d5c2] dark:bg-[#3c3347]" />
           <div className="flex gap-1">
-            <button 
-              onClick={onPrev} 
+            <button
+              onClick={onPrev}
               disabled={!onPrev}
               className="rounded-lg p-1.5 text-[#5d5245] hover:bg-[#f7f0e0] disabled:opacity-30 dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
               title="Previous Problem"
             >
               &lt;
             </button>
-            <button 
-              onClick={onNext} 
+            <button
+              onClick={onNext}
               disabled={!onNext}
               className="rounded-lg p-1.5 text-[#5d5245] hover:bg-[#f7f0e0] disabled:opacity-30 dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
               title="Next Problem"
@@ -473,21 +470,21 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
         </div>
 
         <div className="flex gap-2">
-          <button 
-            onClick={handleRun} 
+          <button
+            onClick={handleRun}
             disabled={isRunning || isSubmitting}
             className="flex items-center gap-2 rounded-lg bg-[#f7f0e0] px-4 py-2 text-sm font-semibold text-[#5d5245] hover:bg-[#f2e3cc] disabled:opacity-50 dark:bg-[#2d2535] dark:text-[#d7ccbe] dark:hover:bg-[#3c3347]"
           >
-             {isRunning && <Spinner className="h-4 w-4" />}
-             {isRunning ? "Running..." : "Run Code"}
+            {isRunning && <Spinner className="h-4 w-4" />}
+            {isRunning ? "Running..." : "Run Code"}
           </button>
-          <button 
-            onClick={handleSubmit} 
+          <button
+            onClick={handleSubmit}
             disabled={isRunning || isSubmitting}
             className="flex items-center gap-2 rounded-lg bg-[#d69a44] px-4 py-2 text-sm font-semibold text-white hover:bg-[#c99a4c] disabled:opacity-50 dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#f2d580]"
           >
-             {isSubmitting && <Spinner className="h-4 w-4" />}
-             {isSubmitting ? "Submitting..." : "Submit"}
+            {isSubmitting && <Spinner className="h-4 w-4" />}
+            {isSubmitting ? "Submitting..." : "Submit"}
           </button>
         </div>
       </div>

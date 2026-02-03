@@ -13,7 +13,9 @@ export default function Home() {
       const raw = localStorage.getItem('algoryth_submissions');
       const parsed = raw ? JSON.parse(raw) : [];
       const uniqueSolved = new Set(parsed.filter(s => s.status === 'Accepted').map(s => s.problemId));
-      setStats(prev => ({ ...prev, total: uniqueSolved.size }));
+      setTimeout(() => {
+        setStats(prev => ({ ...prev, total: uniqueSolved.size }));
+      }, 0);
     } catch (e) {
       console.error(e);
     }
@@ -70,7 +72,7 @@ export default function Home() {
                 <div className="font-medium text-[#2b2116] dark:text-[#f6ede0]">{p.title}</div>
                 <div className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">{p.diff}</div>
               </Link>
-            ))} 
+            ))}
           </div>
         </div>
 

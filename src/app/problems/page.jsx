@@ -24,7 +24,8 @@ function ProblemsPageContent() {
     };
   }, [searchParams]);
 
-  // Fetch problems from API
+  const [problemStatuses, setProblemStatuses] = useState({});
+
   useEffect(() => {
     const fetchProblems = async () => {
       try {
@@ -55,15 +56,37 @@ function ProblemsPageContent() {
     fetchProblems();
   }, [urlSearch, urlDifficulty, urlTags, urlSort]);
 
-  // Load bookmarked problems from localStorage (runs once on mount)
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("bookmarkedProblems");
-      if (saved) {
+      const savedBookmarks = localStorage.getItem("bookmarkedProblems");
+      if (savedBookmarks) {
         try {
-          setBookmarkedProblems(JSON.parse(saved));
+          setBookmarkedProblems(JSON.parse(savedBookmarks));
         } catch (error) {
           console.error("Failed to parse bookmarks:", error);
+        }
+      }
+
+      const savedSubmissions = localStorage.getItem("algoryth_submissions");
+      if (savedSubmissions) {
+        try {
+          const submissions = JSON.parse(savedSubmissions);
+          const statuses = {};
+
+          submissions.forEach(sub => {
+            const pid = sub.problemId;
+            if (!pid) return;
+
+            if (sub.status === "Accepted") {
+              statuses[pid] = "Solved";
+            } else if (statuses[pid] !== "Solved") {
+              statuses[pid] = "Attempted";
+            }
+          });
+
+          setProblemStatuses(statuses);
+        } catch (error) {
+          console.error("Failed to parse submissions:", error);
         }
       }
     }
@@ -117,11 +140,8 @@ function ProblemsPageContent() {
 
     const remainingProblems = problems.filter((p) => p.id !== problemId);
     setProblems([problemToMove, ...remainingProblems]);
-    
-    // Smooth scroll to top
+
     window.scrollTo({ top: 0, behavior: "smooth" });
-    
-    // Visual feedback highlight
     setHighlightedId(problemId);
     setTimeout(() => setHighlightedId(null), 2000);
   };
@@ -139,44 +159,42 @@ function ProblemsPageContent() {
     "trees",
   ];
 
-// Base list (only API + sorting, no daily logic)
-const baseProblems = useMemo(() => {
-  let list = [...problems];
+  const baseProblems = useMemo(() => {
+    let list = [...problems];
 
-  if (urlSort === "difficulty") {
-    const order = { Easy: 1, Medium: 2, Hard: 3 };
-    list.sort((a, b) => order[a.difficulty] - order[b.difficulty]);
-  }
+    if (urlSort === "difficulty") {
+      const order = { Easy: 1, Medium: 2, Hard: 3 };
+      list.sort((a, b) => order[a.difficulty] - order[b.difficulty]);
+    }
 
-  return list;
-}, [problems, urlSort]);
+    return list;
+  }, [problems, urlSort]);
 
-// Daily problem (static per day)
-const dailyProblem = useMemo(() => {
-  if (!baseProblems.length) return null;
+  const dailyProblem = useMemo(() => {
+    if (!baseProblems.length) return null;
 
-  const today = new Date();
-  const seed =
-    today.getFullYear() * 10000 +
-    (today.getMonth() + 1) * 100 +
-    today.getDate();
+    const today = new Date();
+    const seed =
+      today.getFullYear() * 10000 +
+      (today.getMonth() + 1) * 100 +
+      today.getDate();
 
-  const index = seed % baseProblems.length;
-  return baseProblems[index];
-}, [baseProblems]);
+    const index = seed % baseProblems.length;
+    const problem = baseProblems[index];
+    if (!problem) return null;
+    return { ...problem, status: problemStatuses[problem.id] || null };
+  }, [baseProblems, problemStatuses]);
 
-// Final display list
-const displayProblems = useMemo(() => {
-  if (urlTags.includes("daily") && dailyProblem) {
-    return [dailyProblem];
-  }
+  const displayProblems = useMemo(() => {
+    const list = (urlTags.includes("daily") && dailyProblem)
+      ? [dailyProblem]
+      : baseProblems;
 
-  return baseProblems;
-}, [baseProblems, urlTags, dailyProblem]);
+    return list.map(p => ({ ...p, status: problemStatuses[p.id] || null }));
+  }, [baseProblems, urlTags, dailyProblem, problemStatuses]);
 
   return (
     <section className="flex flex-col gap-8">
-      {/* Header Section */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-[#2b2116] dark:text-[#f6ede0]">
@@ -220,7 +238,6 @@ const displayProblems = useMemo(() => {
         </div>
       </div>
 
-      {/* Filters Section */}
       <div className="flex flex-wrap items-center gap-4 rounded-xl bg-[#f7f0e0] p-4 dark:bg-[#292331]">
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-[#5d5245] dark:text-[#d7ccbe]">
@@ -253,17 +270,15 @@ const displayProblems = useMemo(() => {
         </div>
       </div>
 
-      {/* Tags Quick Filter */}
       <div className="flex flex-wrap items-center gap-2">
         {allTags.map((tag) => (
           <button
             key={tag}
             onClick={() => handleTag(tag)}
-            className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-semibold transition-all ${
-              urlTags.includes(tag)
-                ? "bg-[#d69a44] text-white shadow-md dark:bg-[#f2c66f] dark:text-[#231406]"
-                : "border border-[#deceb7] bg-white text-[#5d5245] hover:bg-[#f6e9d2] dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
-            }`}
+            className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-semibold transition-all ${urlTags.includes(tag)
+              ? "bg-[#d69a44] text-white shadow-md dark:bg-[#f2c66f] dark:text-[#231406]"
+              : "border border-[#deceb7] bg-white text-[#5d5245] hover:bg-[#f6e9d2] dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+              }`}
           >
             {tag}
           </button>
@@ -305,7 +320,6 @@ const displayProblems = useMemo(() => {
 
 
 
-      {/* Problems Grid */}
       {loading ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (

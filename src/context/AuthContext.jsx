@@ -16,15 +16,19 @@ export function AuthProvider({ children }) {
     // Check if user is logged in from localStorage or session storage
     const token = localStorage.getItem('algoryth_token');
     const storedUser = localStorage.getItem('algoryth_user');
-    
-    if (token && storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
+
+    const timer = setTimeout(() => {
+      if (token && storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch (error) {
+          console.error('Error parsing stored user:', error);
+        }
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const login = async (credentials) => {

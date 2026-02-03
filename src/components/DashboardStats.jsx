@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle, Code, Trophy, Zap } from 'lucide-react';
+import { Code, Trophy } from 'lucide-react';
 
 export default function DashboardStats({ submissions }) {
   const solvedProblems = submissions.filter(s => s.status === 'Accepted');
-  
+
   // Calculate unique solved problems by difficulty
   const uniqueSolved = {};
   solvedProblems.forEach(s => {
@@ -24,13 +24,13 @@ export default function DashboardStats({ submissions }) {
   solvedProblems.forEach(s => {
     languages[s.language] = (languages[s.language] || 0) + 1;
   });
-  
+
   const sortedLanguages = Object.entries(languages)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
   const totalPossible = 100; // Placeholder for total problems in system
-  
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {/* Overview Card */}
@@ -45,8 +45,8 @@ export default function DashboardStats({ submissions }) {
         </div>
         <div className="mt-4 flex gap-2">
           <div className="h-2 flex-1 rounded-full bg-[#f2e3cc] dark:bg-[#2d2535] overflow-hidden">
-            <div 
-              className="h-full bg-[#d69a44] dark:bg-[#f2c66f]" 
+            <div
+              className="h-full bg-[#d69a44] dark:bg-[#f2c66f]"
               style={{ width: `${Math.min(100, (stats.total / totalPossible) * 100)}%` }}
             />
           </div>
