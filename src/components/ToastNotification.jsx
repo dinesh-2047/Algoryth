@@ -7,25 +7,28 @@ const ToastNotification = ({ message, type = 'success', isVisible, onClose }) =>
 
   useEffect(() => {
     if (isVisible) {
-      setShow(true);
-      const timer = setTimeout(() => {
+      const timer = setTimeout(() => setShow(true), 0);
+      const hideTimer = setTimeout(() => {
         setShow(false);
         if (onClose) onClose();
       }, 3000); // Auto-hide after 3 seconds
 
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(hideTimer);
+      };
     }
   }, [isVisible, onClose]);
 
   if (!show) return null;
 
   const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-500';
-  
+
   return (
     <div className="fixed top-4 right-4 z-50">
       <div className={`${bgColor} text-white px-4 py-2 rounded-md shadow-lg flex items-center min-w-max`}>
         <span>{message}</span>
-        <button 
+        <button
           onClick={() => {
             setShow(false);
             if (onClose) onClose();

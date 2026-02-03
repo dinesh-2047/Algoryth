@@ -1,6 +1,4 @@
 import { Geist, Geist_Mono } from "next/font/google";
-import Link from "next/link";
-import Image from "next/image";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { AuthProvider } from "../context/AuthContext";
@@ -29,9 +27,9 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-[#f8f3e6] text-[#2b2116] antialiased transition-colors duration-300 dark:bg-[#18131f] dark:text-[#f6ede0]`}
       >
         <AuthProvider>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
               (function() {
                 const storedTheme = localStorage.getItem('theme');
                 const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -45,12 +43,12 @@ export default function RootLayout({ children }) {
                 }
               })();
             `,
-          }}
-        />
-        <Navbar />
-        <main className="mx-auto w-full max-w-7xl px-6 py-8">{children}</main>
+            }}
+          />
+          <Navbar />
+          <main className="mx-auto w-full max-w-7xl px-6 py-8">{children}</main>
 
-        <Footer />
+          <Footer />
         </AuthProvider>
       </body>
     </html>

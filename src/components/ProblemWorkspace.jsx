@@ -69,7 +69,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       } else {
         setExecutionResult(result);
       }
-    } catch (error) {
+    } catch {
       setExecutionResult({
         status: "Error",
         error: "Network error: Could not connect to execution server",
@@ -117,7 +117,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           isSubmission: true,
         });
       }
-    } catch (error) {
+    } catch {
       setExecutionResult({
         status: "Error",
         error: "Network error: Could not connect to submission server",
@@ -129,8 +129,8 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
 
 
   const toggleHint = (i) => {
-    setOpenHints((prev) => 
-      prev.includes(i) ? prev.filter((x) => x!=i) : [...prev, i]
+    setOpenHints((prev) =>
+      prev.includes(i) ? prev.filter((x) => x != i) : [...prev, i]
     );
   };
 
@@ -207,16 +207,16 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           <div className="mt-2 grid gap-3">
             {problem.hints.map((hint, i) => (
               <div key={i} className="rounded-lg border p-3  border-[#e0d5c2]  text-sm" onClick={() => toggleHint(i)}>
-                  <span>
-                    Hint {i+1}
-                  </span>
+                <span>
+                  Hint {i + 1}
+                </span>
 
                 {openHints.includes(i) && (
                   <p className="mt-1 overflow-auto whitespace-pre-wrap text-[#5d5245] dark:text-[#d7ccbe]">{hint}</p>
                 )}
               </div>
             ))}
-            </div>
+          </div>
         </div>
       </article>
     </div>
@@ -284,14 +284,14 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
                 {/* Overall Status */}
                 <div
                   className={`rounded-lg px-3 py-2 ${executionResult.status === "Accepted"
-                      ? "bg-green-100 dark:bg-green-900/30"
-                      : "bg-yellow-100 dark:bg-yellow-900/30"
+                    ? "bg-green-100 dark:bg-green-900/30"
+                    : "bg-yellow-100 dark:bg-yellow-900/30"
                     }`}
                 >
                   <div
                     className={`text-sm font-semibold ${executionResult.status === "Accepted"
-                        ? "text-green-700 dark:text-green-300"
-                        : "text-yellow-700 dark:text-yellow-300"
+                      ? "text-green-700 dark:text-green-300"
+                      : "text-yellow-700 dark:text-yellow-300"
                       }`}
                   >
                     {executionResult.status === "Accepted" ? "✅" : "⚠️"}{" "}
@@ -309,15 +309,15 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
                   <div
                     key={idx}
                     className={`rounded-lg border px-3 py-2 ${test.passed
-                        ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20"
-                        : "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20"
+                      ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20"
+                      : "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20"
                       }`}
                   >
                     <div className="flex items-center justify-between">
                       <div
                         className={`text-xs font-semibold ${test.passed
-                            ? "text-green-700 dark:text-green-300"
-                            : "text-red-700 dark:text-red-300"
+                          ? "text-green-700 dark:text-green-300"
+                          : "text-red-700 dark:text-red-300"
                           }`}
                       >
                         {test.passed ? "✓" : "✗"} Test Case {test.testCase}
@@ -354,8 +354,8 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
                         </span>
                         <pre
                           className={`mt-1 whitespace-pre-wrap ${test.passed
-                              ? "text-green-600 dark:text-green-400"
-                              : "text-red-600 dark:text-red-400"
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-red-600 dark:text-red-400"
                             }`}
                         >
                           {test.actualOutput || "(no output)"}
