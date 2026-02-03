@@ -8,8 +8,8 @@ const TOPIC_PROBLEMS = {
   arrays: {
     title: "Arrays",
     problems: [
-      { id: "two-sum", title: "Two Sum", slug: "two-sum", diff: "Easy" },
-      { id: "max-subarray", title: "Maximum Subarray", slug: "max-subarray", diff: "Medium" },
+      { id: "p-1000", title: "Two Sum", slug: "two-sum", diff: "Easy" },
+      { id: "p-2000", title: "Maximum Subarray", slug: "max-subarray", diff: "Medium" },
     ],
   },
   trees: {

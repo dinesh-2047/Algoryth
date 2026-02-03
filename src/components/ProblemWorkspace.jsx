@@ -141,7 +141,8 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
         verdict = result.data?.verdict || result.verdict || "Unknown";
       }
       setLastSubmissionStatus(verdict);
-    } catch {
+    } catch (error) {
+      console.error("Submission failed:", error);
       verdict = "Network Error";
       setLastSubmissionStatus(verdict);
     }
@@ -214,10 +215,10 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
                   <pre className="mt-1 overflow-x-auto rounded bg-[#f7f0e0] p-2 font-mono text-xs dark:bg-[#2d2535] dark:text-[#d7ccbe]">
                     {ex.output}
                   </pre>
-                  {ex.explaination && (
+                  {ex.explanation && (
                     <>
                       <div className="mt-2 font-medium text-[#2b2116] dark:text-[#f6ede0]">Explanation</div>
-                      <p className="text-xs text-[#5d5245] dark:text-[#d7ccbe] mt-1">{ex.explaination}</p>
+                      <p className="text-xs text-[#5d5245] dark:text-[#d7ccbe] mt-1">{ex.explanation}</p>
                     </>
                   )}
                 </div>
