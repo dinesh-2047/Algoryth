@@ -16,7 +16,7 @@ const ToastNotification = ({ message, type = 'success', isVisible, onClose }) =>
         if (onClose) onClose();
       }, 3000);
     } else {
-      setTimeout(() => setShow(false), 0);
+      timer = setTimeout(() => setShow(false), 0);
     }
 
     return () => {

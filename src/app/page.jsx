@@ -9,16 +9,21 @@ export default function Home() {
   const [stats, setStats] = useState({ total: 0, rating: 910 });
 
   useEffect(() => {
+    let timer;
     try {
       const raw = localStorage.getItem('algoryth_submissions');
       const parsed = raw ? JSON.parse(raw) : [];
       const uniqueSolved = new Set(parsed.filter(s => s.status === 'Accepted').map(s => s.problemId));
-      setTimeout(() => {
+
+      timer = setTimeout(() => {
         setStats(prev => ({ ...prev, total: uniqueSolved.size }));
       }, 0);
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error('Failed to load home page stats:', error);
     }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   return (
