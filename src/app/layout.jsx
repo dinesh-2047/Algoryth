@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import Link from "next/link";
+import Image from "next/image";
+import LayoutWrapper from "../components/LayoutWrapper";
 import { AuthProvider } from "../context/AuthContext";
 import "./globals.css";
 
@@ -46,11 +47,9 @@ export default function RootLayout({ children }) {
             `,
             }}
           />
-          <Navbar />
-
-          <main className="mx-auto w-full max-w-7xl px-6 py-8">{children}</main>
-
-          <Footer />
+          <LayoutWrapper>
+            {children}
+          </LayoutWrapper>
         </AuthProvider>
       </body>
     </html>
