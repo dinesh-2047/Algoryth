@@ -23,7 +23,8 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
   const [submissions, setSubmissions] = useState([]);
 
   useEffect(() => {
-    setTimeout(() => {
+    // Reset state when problem changes
+    const resetTimer = setTimeout(() => {
       setLastSubmissionStatus(null);
       setInputError(null);
       setCode("");
@@ -32,17 +33,24 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       setOpenHints([]);
     }, 0);
 
+    let loadSubmissionsTimer;
+
     // Load local submissions for this problem
     try {
       const allSubmissions = JSON.parse(localStorage.getItem("algoryth_submissions") || "[]");
       const validSubmissions = allSubmissions.filter(s => s.problemId === problem.id || s.slug === problem.slug);
       // Sort by newest first
-      setTimeout(() => {
+      loadSubmissionsTimer = setTimeout(() => {
         setSubmissions(validSubmissions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
       }, 0);
     } catch (e) {
       console.error("Failed to load submissions", e);
     }
+
+    return () => {
+      clearTimeout(resetTimer);
+      if (loadSubmissionsTimer) clearTimeout(loadSubmissionsTimer);
+    };
   }, [problem.id, problem.slug]);
 
   const starterCode = useMemo(

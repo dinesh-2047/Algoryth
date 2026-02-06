@@ -14,14 +14,16 @@ const ToastNotification = ({ message, type = 'success', isVisible, onClose }) =>
       hideTimer = setTimeout(() => {
         setShow(false);
         if (onClose) onClose();
-      }, 3000);
+      }, 3000); // Auto-hide after 3 seconds
     } else {
+      // Use setTimeout to avoid synchronous state update in effect (linter warning)
       timer = setTimeout(() => setShow(false), 0);
+      clearTimeout(hideTimer);
     }
 
     return () => {
-      if (timer) clearTimeout(timer);
-      if (hideTimer) clearTimeout(hideTimer);
+      clearTimeout(timer);
+      clearTimeout(hideTimer);
     };
   }, [isVisible, onClose]);
 

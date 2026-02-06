@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { problems } from "@/lib/problems";
+import { DSA_TOPICS } from "@/app/topics/page";
 
 // Dynamic route page
 export default async function TopicPage({ params }) {
@@ -21,7 +20,12 @@ export default async function TopicPage({ params }) {
   if (filteredProblems.length === 0) {
     // Check if the topic exists in the roadmap even if no problems are assigned yet
     // This prevents 404 for valid roadmap items
-    notFound();
+    const isValidTopic = DSA_TOPICS.some(t => t.slug === slug);
+    if (!isValidTopic) {
+      notFound();
+    }
+
+    // Fall through to render empty state
   }
 
   // Format title from slug (e.g., "bit-manipulation" -> "Bit Manipulation")
@@ -38,16 +42,23 @@ export default async function TopicPage({ params }) {
 
       <div className="overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
         <div className="divide-y divide-[#e0d5c2] dark:divide-[#3c3347]">
-          {filteredProblems.map((p) => (
-            <Link
-              key={p.slug}
-              href={`/problems/${p.slug}`}
-              className="flex items-center justify-between px-6 py-4 text-sm hover:bg-[#f2e3cc] dark:hover:bg-[#2d2535]"
-            >
-              <span className="text-[#2b2116] dark:text-[#f6ede0]">{p.title}</span>
-              <span className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">{p.difficulty}</span>
-            </Link>
-          ))}
+          {filteredProblems.length > 0 ? (
+            filteredProblems.map((p) => (
+              <Link
+                key={p.slug}
+                href={`/problems/${p.slug}`}
+                className="flex items-center justify-between px-6 py-4 text-sm hover:bg-[#f2e3cc] dark:hover:bg-[#2d2535]"
+              >
+                <span className="text-[#2b2116] dark:text-[#f6ede0]">{p.title}</span>
+                <span className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">{p.difficulty}</span>
+              </Link>
+            ))
+          ) : (
+            <div className="p-8 text-center text-[#5d5245] dark:text-[#b5a59c]">
+              <p>No problems available for this topic yet.</p>
+              <p className="text-xs mt-1">Check back later!</p>
+            </div>
+          )}
         </div>
       </div>
     </section>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 
-const DSA_TOPICS = [
+export const DSA_TOPICS = [
   { title: "Arrays", slug: "arrays", description: "Sequential data structures" },
   { title: "Strings", slug: "strings", description: "Text processing techniques" },
   { title: "Sorting Algorithms", slug: "sorting-algorithms", description: "Data ordering techniques" },
