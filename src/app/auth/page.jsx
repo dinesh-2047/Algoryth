@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import ToastNotification from '../../components/ToastNotification';
-import { Mail, Lock, User, ArrowLeft, Chrome, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 
 export default function AuthPage() {
   const router = useRouter();
@@ -76,7 +76,7 @@ export default function AuthPage() {
           setNotification({ show: true, message: result.error || 'Login failed', type: 'error' });
         }
       }
-    } catch (error) {
+    } catch {
       setNotification({ show: true, message: 'An unexpected error occurred', type: 'error' });
     } finally {
       setIsLoading(false);

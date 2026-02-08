@@ -1,5 +1,7 @@
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { DSA_TOPICS } from "@/app/topics/page";
+import { problems } from "@/lib/problems";
 
 // Dynamic route page
 export default async function TopicPage({ params }) {
@@ -29,7 +31,7 @@ export default async function TopicPage({ params }) {
   }
 
   // Format title from slug (e.g., "bit-manipulation" -> "Bit Manipulation")
-  const title = slug
+  const title = DSA_TOPICS.find(t => t.slug === slug)?.title || slug
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
