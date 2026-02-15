@@ -1,24 +1,43 @@
 import { NextResponse } from "next/server";
 import { getProblemBySlug } from "../../../lib/problems";
+import { createErrorResponse, createSuccessResponse, validateRequiredFields, logApiRequest, logApiError } from "../../../lib/api-utils";
 
 export async function POST(request) {
   try {
-    const { slug, code } = await request.json();
+    logApiRequest('POST', '/api/submissions');
 
-    if (!code || code.trim().length === 0) {
-      return NextResponse.json(
-        { verdict: "Error", message: "Empty code" },
-        { status: 400 }
-      );
+    let body;
+    try {
+      body = await request.json();
+    } catch (error) {
+      return createErrorResponse('Invalid JSON in request body', 400, 'INVALID_JSON');
+    }
+
+    // Validate required fields
+    const validationError = validateRequiredFields(body, ['slug', 'code']);
+    if (validationError) {
+      return createErrorResponse(validationError, 400, 'MISSING_REQUIRED_FIELDS');
+    }
+
+    const { slug, code } = body;
+
+    // Validate inputs
+    if (typeof slug !== 'string' || slug.trim().length === 0) {
+      return createErrorResponse('Slug must be a non-empty string', 400, 'INVALID_SLUG');
+    }
+
+    if (typeof code !== 'string' || code.trim().length === 0) {
+      return createErrorResponse('Code must be a non-empty string', 400, 'INVALID_CODE');
     }
 
     const problem = getProblemBySlug(slug);
 
-    if (!problem || !problem.testCases) {
-      return NextResponse.json(
-        { verdict: "Error", message: "Problem or test cases not found" },
-        { status: 404 }
-      );
+    if (!problem) {
+      return createErrorResponse('Problem not found', 404, 'PROBLEM_NOT_FOUND');
+    }
+
+    if (!problem.testCases || !Array.isArray(problem.testCases)) {
+      return createErrorResponse('Problem test cases not available', 404, 'TEST_CASES_NOT_FOUND');
     }
 
     let userFunction;
@@ -29,7 +48,7 @@ export async function POST(request) {
         `${code}; return solve;`
       )();
     } catch (err) {
-      return NextResponse.json({
+      return createSuccessResponse({
         verdict: "Runtime Error",
         error: err.toString(),
       });
@@ -41,7 +60,7 @@ export async function POST(request) {
       try {
         userOutput = userFunction(JSON.parse(test.input));
       } catch (err) {
-        return NextResponse.json({
+        return createSuccessResponse({
           verdict: "Runtime Error",
           error: err.toString(),
         });
@@ -54,7 +73,7 @@ export async function POST(request) {
       const actual = JSON.stringify(userOutput);
 
       if (actual !== expected) {
-        return NextResponse.json({
+        return createSuccessResponse({
           verdict: "Wrong Answer",
           expected,
           actual,
@@ -62,11 +81,9 @@ export async function POST(request) {
       }
     }
 
-    return NextResponse.json({ verdict: "Accepted" });
-  } catch {
-    return NextResponse.json(
-      { verdict: "Error", message: "Invalid request" },
-      { status: 400 }
-    );
+    return createSuccessResponse({ verdict: "Accepted" });
+  } catch (error) {
+    logApiError('POST', '/api/submissions', error);
+    return createErrorResponse('Failed to process submission', 500, 'SUBMISSION_ERROR');
   }
 }
