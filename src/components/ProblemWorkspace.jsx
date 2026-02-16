@@ -7,13 +7,17 @@ import CodeEditor from "./CodeEditor";
 import SplitPane from "./SplitPane";
 import ProblemTimer from "./ProblemTimer";
 import Spinner from "./Spinner";
+import { useAuth } from "../context/AuthContext";
+import { fetchProblemStatuses, getProblemStatus } from "../lib/problemStatusApi";
 
-export default function ProblemWorkspace({ problem, onNext, onPrev }) {
+export default function ProblemWorkspace({ problem, onNext, onPrev, onSubmissionComplete }) {
+  const { user } = useAuth();
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("javascript");
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastSubmissionStatus, setLastSubmissionStatus] = useState(null);
+  const [problemStatus, setProblemStatus] = useState(null);
   const [timerRunning, setTimerRunning] = useState(true);
   const [inputError, setInputError] = useState(null);
   const [openHints, setOpenHints] = useState([]);
@@ -40,6 +44,27 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       console.error("Failed to load submissions", e);
     }
   }, [problem.id, problem.slug]);
+
+  // Fetch status for this problem when user or problem changes
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      if (user && typeof window !== "undefined") {
+        try {
+          const statuses = await fetchProblemStatuses();
+          if (!mounted) return;
+          const s = getProblemStatus(problem.id, problem.slug, statuses);
+          setProblemStatus(s);
+        } catch (err) {
+          console.error("Failed to load problem status:", err);
+        }
+      } else {
+        setProblemStatus(null);
+      }
+    };
+    load();
+    return () => { mounted = false; };
+  }, [user, problem.id, problem.slug]);
 
   const starterCode = useMemo(
     () => `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
@@ -104,48 +129,50 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
     let verdict = "Submission Error";
 
     try {
-      const response = await fetch("/api/submissions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          slug: problem.slug,
-          code,
-        }),
-      });
-
-      const result = await response.json();
-      
-      if (result.success === false) {
-        verdict = result.error?.message || "Internal Error";
-      } else {
-        const submissionResult = {
-          ...result,
-          isSubmission: true,
-        };
-        setExecutionResult(submissionResult);
-
-        // Save to localStorage for dashboard tracking
-        try {
-          const raw = localStorage.getItem("algoryth_submissions");
-          const submissions = raw ? JSON.parse(raw) : [];
-          const newEntry = {
-            problemId: problem.id,
-            problemTitle: problem.title,
-            difficulty: problem.difficulty,
-            status: result.status,
-            language: language,
-            timestamp: new Date().toISOString(),
-          };
-          localStorage.setItem("algoryth_submissions", JSON.stringify([newEntry, ...submissions]));
-        } catch (e) {
-          console.error("Error saving submission to localStorage:", e);
-        }
-        verdict = result.data?.verdict || result.verdict || "Unknown";
+      const headers = { "Content-Type": "application/json" };
+      if (user && typeof window !== "undefined") {
+        const token = localStorage.getItem("algoryth_token");
+        if (token) headers["Authorization"] = `Bearer ${token}`;
       }
 
-      setLastSubmissionStatus(verdict);
+      const response = await fetch("/api/submissions", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ slug: problem.slug, code }),
+      });
+
+      if (!response.ok) {
+        verdict = `Server Error ${response.status}`;
+        setLastSubmissionStatus(verdict);
+      } else {
+        const result = await response.json().catch(() => null);
+        if (!result) {
+          verdict = "Server Error: Invalid response";
+          setLastSubmissionStatus(verdict);
+        } else {
+          verdict = result.data?.verdict || result.verdict || result.status || "Unknown";
+
+          try {
+            const raw = localStorage.getItem("algoryth_submissions");
+            const saved = raw ? JSON.parse(raw) : [];
+            const newEntry = {
+              problemId: problem.id,
+              problemTitle: problem.title,
+              difficulty: problem.difficulty,
+              status: verdict,
+              language,
+              timestamp: new Date().toISOString(),
+            };
+            localStorage.setItem("algoryth_submissions", JSON.stringify([newEntry, ...saved]));
+          } catch (e) {
+            // ignore localStorage failures
+          }
+
+          setLastSubmissionStatus(verdict);
+        }
+      }
     } catch (err) {
-      verdict = "Network Error";
+      verdict = `Network Error`;
       setLastSubmissionStatus(verdict);
     }
 
@@ -161,6 +188,14 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
     };
     
     setSubmissions(prev => [newSubmission, ...prev]);
+    // Update local problem status quickly for immediate UI feedback
+    if (user) {
+      if (verdict === "Accepted" || verdict === "Solved") {
+        setProblemStatus("Solved");
+      } else if (verdict && verdict !== "Network Error") {
+        setProblemStatus("Attempted");
+      }
+    }
     
     try {
       const allSubmissions = JSON.parse(localStorage.getItem("algoryth_submissions") || "[]");
@@ -173,6 +208,11 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
     setIsSubmitting(false);
     // Switch to submissions tab to show result
     setActiveTab("Submissions");
+    
+    // Notify parent to refresh problem status indicators
+    if (onSubmissionComplete) {
+      onSubmissionComplete();
+    }
   };
 
   const toggleHint = (i) => {
@@ -351,7 +391,18 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
         <div className="flex items-center justify-between">
           <div>
              <div className="text-xs font-medium text-[#8a7a67] dark:text-[#b5a59c]">{problem.id}</div>
-             <h1 className="text-xl font-bold text-[#2b2116] dark:text-[#f6ede0]">{problem.title}</h1>
+             <div className="flex items-center gap-3">
+               <h1 className="text-xl font-bold text-[#2b2116] dark:text-[#f6ede0]">{problem.title}</h1>
+               {/* Status indicator for logged-in users */}
+               {problemStatus === "Solved" && (
+                 <div className="flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
+                   <CheckCircle2 className="h-4 w-4" />
+                 </div>
+               )}
+               {problemStatus === "Attempted" && (
+                 <span className="inline-block h-3 w-3 rounded-full bg-yellow-500 dark:bg-yellow-400" aria-label="Attempted" />
+               )}
+             </div>
           </div>
           <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${
             problem.difficulty === "Easy" ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" :
