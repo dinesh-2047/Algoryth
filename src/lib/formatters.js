@@ -46,8 +46,21 @@ export async function formatCode(code, language) {
 
       case "javascript": {
         const prettier = await import("prettier/standalone");
-        const parserBabel = await import("prettier/plugins/babel");
-        const estree = await import("prettier/plugins/estree");
+        
+        let parserBabel;
+        try {
+          parserBabel = await import("prettier/plugins/babel");
+        } catch {
+          parserBabel = await import("prettier/plugins/babel.js");
+        }
+        
+        let estree;
+        try {
+          estree = await import("prettier/plugins/estree");
+        } catch {
+          estree = await import("prettier/plugins/estree.js");
+        }
+        
         return prettier.format(code, {
           parser: "babel",
           plugins: [parserBabel, estree],
@@ -60,6 +73,7 @@ export async function formatCode(code, language) {
       case "go":
       default:
         console.warn('Could not format', language);
+        return code;
     }
   } catch (error) {
     console.warn('Could not format', language, error);

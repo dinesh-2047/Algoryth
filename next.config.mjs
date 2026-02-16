@@ -13,11 +13,8 @@ const nextConfig = {
       },
     ],
   },
-    webpack: (config) => {
-    config.experiments = {
-      ...config.experiments,
-      asyncWebAssembly: true,
-    };
+  webpack: (config, { isServer }) => {
+    config.experiments.asyncWebAssembly = true;
 
     // suppress the async/await WASM warning
     config.ignoreWarnings = [
@@ -27,6 +24,12 @@ const nextConfig = {
         message: /async\/await/,
       },
     ];
+
+    // configure WASM output for client builds
+    if (!isServer) {
+      config.output = config.output || {};
+      config.output.webassemblyModuleFilename = '../static/wasm/[name].[hash].wasm';
+    }
 
     return config;
   },
