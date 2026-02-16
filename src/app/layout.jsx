@@ -29,9 +29,9 @@ export default function RootLayout({ children }) {
       >
 
         <AuthProvider>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
               (function() {
                 const storedTheme = localStorage.getItem('theme');
                 const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -45,11 +45,11 @@ export default function RootLayout({ children }) {
                 }
               })();
             `,
-          }}
-        />
-        <LayoutWrapper>
-          {children}
-        </LayoutWrapper>
+            }}
+          />
+          <LayoutWrapper>
+            {children}
+          </LayoutWrapper>
         </AuthProvider>
       </body>
     </html>
