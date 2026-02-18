@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 
 export default function Home() {
   const { user } = useAuth();
@@ -12,7 +13,9 @@ export default function Home() {
     try {
       const raw = localStorage.getItem('algoryth_submissions');
       const parsed = raw ? JSON.parse(raw) : [];
-      const uniqueSolved = new Set(parsed.filter(s => s.status === 'Accepted').map(s => s.problemId));
+      const uniqueSolved = new Set(
+        parsed.filter(s => s.status === 'Accepted').map(s => s.problemId)
+      );
       setStats(prev => ({ ...prev, total: uniqueSolved.size }));
     } catch (e) {
       console.error(e);
@@ -20,142 +23,207 @@ export default function Home() {
   }, []);
 
   return (
-    <section className="grid gap-6 lg:grid-cols-[1fr_340px]">
-      <div className="grid gap-4">
-        <div className="overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
-          <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-6 py-4 dark:border-[#3c3347] dark:bg-[#292331]">
-            <div className="text-xs font-semibold uppercase tracking-wide text-[#8a7a67] dark:text-[#b5a59c]">
-              Announcement
-            </div>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[#2b2116] dark:text-[#f6ede0]">
-              Welcome to Algoryth
-            </h1>
-          </div>
+    <div className="space-y-16 pb-20">
 
-          <div className="px-6 py-5 text-sm leading-6 text-[#5d5245] dark:text-[#d7ccbe]">
-            Start with the problems and solve a few easy ones.
+      {/* ================= HERO ================= */}
+      <motion.section
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-700 via-purple-700 to-fuchsia-600 p-12 text-white shadow-[0_20px_60px_rgba(99,102,241,0.4)]"
+      >
+        <div className="relative z-10 max-w-2xl">
+          <h1 className="text-5xl font-extrabold leading-tight tracking-tight">
+            Master Data Structures <br /> & Algorithms
+          </h1>
 
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/problems"
-                className="inline-flex h-10 items-center justify-center rounded-full bg-[#d69a44] px-5 text-sm font-medium text-[#2b1a09] hover:bg-[#c4852c] dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#e4b857]"
-              >
-                Go to Problems
-              </Link>
-            </div>
-          </div>
-        </div>
+          <p className="mt-5 text-lg text-white/90">
+            Solve problems, boost your rating, and crack top tech interviews
+            with structured learning paths.
+          </p>
 
-        <div className="overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
-          <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-6 py-4 dark:border-[#3c3347] dark:bg-[#292331]">
-            <div className="text-xs font-semibold uppercase tracking-wide text-[#8a7a67] dark:text-[#b5a59c]">
-              Quick start
-            </div>
-            <div className="mt-2 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
-              Recommended problems
-            </div>
-          </div>
-
-          <div className="divide-y divide-[#e0d5c2] dark:divide-[#3c3347]">
-            {[
-              { title: "Two Sum", slug: "two-sum", diff: "Easy" },
-              { title: "Valid Parentheses", slug: "valid-parentheses", diff: "Easy" },
-              { title: "Maximum Subarray", slug: "max-subarray", diff: "Medium" },
-            ].map((p) => (
-              <Link
-                key={p.slug}
-                href={`/problems/${p.slug}`}
-                className="flex items-center justify-between px-6 py-4 text-sm hover:bg-[#f2e3cc] dark:hover:bg-[#2d2535]"
-              >
-                <div className="font-medium text-[#2b2116] dark:text-[#f6ede0]">{p.title}</div>
-                <div className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">{p.diff}</div>
-              </Link>
-            ))} 
-          </div>
-        </div>
-
-        <div className="overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
-          <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-6 py-4 dark:border-[#3c3347] dark:bg-[#292331]">
-            <div className="text-xs font-semibold uppercase tracking-wide text-[#8a7a67] dark:text-[#b5a59c]">
-              Learn
-            </div>
-            <h2 className="mt-2 text-lg font-semibold text-[#2b2116] dark:text-[#f6ede0]">
-              Learn Data Structures & Algorithms
-            </h2>
-            <p className="mt-1 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
-              A structured, topic-wise roadmap to master DSA from basics to advanced.
-            </p>
-          </div>
-
-          <div className="px-6 py-5">
-            <ul className="mb-4 space-y-2 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
-              <li>• Topic-wise learning paths</li>
-              <li>• Curated problems by difficulty</li>
-              <li>• Interview-focused preparation</li>
-            </ul>
+          <div className="mt-8 flex gap-5">
+            <Link
+              href="/problems"
+              className="group relative overflow-hidden rounded-full bg-white px-8 py-3 text-sm font-semibold text-indigo-700 shadow-lg transition-all duration-300 hover:scale-105"
+            >
+              <span className="relative z-10">Start Solving</span>
+              <span className="absolute inset-0 bg-indigo-100 opacity-0 group-hover:opacity-100 transition"></span>
+            </Link>
 
             <Link
               href="/topics"
-              className="inline-flex h-10 items-center justify-center rounded-full bg-[#d69a44] px-6 text-sm font-medium text-[#2b1a09] hover:bg-[#c4852c] dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#e4b857]"
+              className="rounded-full border border-white/60 px-8 py-3 text-sm font-semibold backdrop-blur-md transition-all duration-300 hover:bg-white hover:text-indigo-700 hover:scale-105"
             >
-              View full roadmap →
+              View Roadmap
             </Link>
           </div>
         </div>
-      </div>
 
-      <aside className="grid gap-4">
-        <div className="overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
-          <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-5 py-4 dark:border-[#3c3347] dark:bg-[#292331]">
-            <div className="text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">Pay attention</div>
-          </div>
-          <div className="px-5 py-5">
-            <div className="text-sm font-medium text-[#2b2116] dark:text-[#f6ede0]">Contest is running</div>
-            <div className="mt-1 text-sm text-[#6f6251] dark:text-[#b5a59c]">
-              Algoryth Weekly · Practice Round
+        {/* Glow Effects */}
+        <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-white/20 blur-3xl animate-pulse" />
+        <div className="absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-pink-400/30 blur-3xl animate-pulse" />
+      </motion.section>
+
+      {/* ================= MAIN GRID ================= */}
+      <section className="grid gap-10 lg:grid-cols-[1fr_340px]">
+
+        {/* LEFT SIDE */}
+        <div className="space-y-10">
+
+          {/* Announcement */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="rounded-3xl bg-white/80 dark:bg-[#1a1a1a] backdrop-blur-lg shadow-xl border border-gray-200 dark:border-gray-800 transition-all duration-300"
+          >
+            <div className="border-b px-8 py-5">
+              <div className="text-xs font-semibold uppercase tracking-widest text-indigo-500">
+                Announcement
+              </div>
+              <h2 className="mt-2 text-2xl font-bold">
+                Welcome to Algoryth 🚀
+              </h2>
             </div>
+
+            <div className="px-8 py-6 text-sm text-gray-600 dark:text-gray-300">
+              Start solving problems today and build consistency. Even 2
+              problems daily can change your career.
+            </div>
+          </motion.div>
+
+
+          {/* Quick Start */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="rounded-3xl bg-white dark:bg-[#1a1a1a] shadow-xl border border-gray-200 dark:border-gray-800"
+          >
+            <div className="border-b px-8 py-5">
+              <div className="text-xs font-semibold uppercase tracking-widest text-purple-500">
+                Quick Start
+              </div>
+              <div className="mt-1 text-sm text-gray-500">
+                Recommended problems
+              </div>
+            </div>
+
+            <div className="divide-y">
+              {[
+                { title: "Two Sum", slug: "two-sum", diff: "Easy" },
+                { title: "Valid Parentheses", slug: "valid-parentheses", diff: "Easy" },
+                { title: "Maximum Subarray", slug: "max-subarray", diff: "Medium" },
+              ].map((p) => (
+                <Link
+                  key={p.slug}
+                  href={`/problems/${p.slug}`}
+                  className="flex items-center justify-between px-8 py-5 transition-all duration-300 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-[#222] dark:hover:to-[#2b2b2b] hover:translate-x-1"
+                >
+                  <div className="font-semibold">{p.title}</div>
+                  <div className={`text-xs font-medium px-3 py-1 rounded-full ${
+                    p.diff === "Easy"
+                      ? "bg-green-100 text-green-600"
+                      : "bg-yellow-100 text-yellow-600"
+                  }`}>
+                    {p.diff}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+
+
+          {/* Learn Section */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="rounded-3xl bg-white dark:bg-[#1a1a1a] shadow-xl border border-gray-200 dark:border-gray-800"
+          >
+            <div className="border-b px-8 py-5">
+              <div className="text-xs font-semibold uppercase tracking-widest text-pink-500">
+                Learn
+              </div>
+              <h2 className="mt-2 text-xl font-bold">
+                Structured Learning Path
+              </h2>
+              <p className="mt-1 text-sm text-gray-500">
+                Topic-wise roadmap from beginner to advanced.
+              </p>
+            </div>
+
+            <div className="px-8 py-6">
+              <ul className="mb-6 space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                <li>✔ Topic-wise modules</li>
+                <li>✔ Curated difficulty progression</li>
+                <li>✔ Interview preparation focus</li>
+              </ul>
+
+              <Link
+                href="/topics"
+                className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-8 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:bg-indigo-700 hover:scale-105"
+              >
+                Explore Roadmap →
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+
+
+        {/* ================= RIGHT SIDEBAR ================= */}
+        <aside className="space-y-10">
+
+          {/* Contest Card */}
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className="rounded-3xl bg-gradient-to-br from-purple-600 to-indigo-700 p-8 text-white shadow-2xl transition"
+          >
+            <div className="text-xl font-bold">
+              Weekly Contest 🔥
+            </div>
+            <div className="mt-2 text-sm text-white/90">
+              Practice Round · Improve your speed
+            </div>
+
             <button
               type="button"
-              className="mt-4 inline-flex h-9 items-center justify-center rounded-full border border-[#deceb7] bg-[#fff8ed] px-4 text-sm font-medium text-[#5d5245] hover:bg-[#f2e3cc] dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+              className="mt-6 w-full rounded-full bg-white py-3 text-sm font-semibold text-indigo-700 shadow-md transition-all duration-300 hover:bg-gray-100 hover:scale-105"
             >
-              Register (soon)
+              Register Soon
             </button>
-          </div>
-        </div>
+          </motion.div>
 
-        <div className="overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
-          <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-5 py-4 dark:border-[#3c3347] dark:bg-[#292331]">
-            <div className="text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+
+          {/* Profile Card */}
+          <motion.div
+            whileHover={{ scale: 1.03 }}
+            className="rounded-3xl bg-white dark:bg-[#1a1a1a] shadow-xl border border-gray-200 dark:border-gray-800 p-8"
+          >
+            <div className="text-xl font-bold">
               {user ? user.name : "Guest"}
             </div>
-          </div>
-          <div className="px-5 py-5 text-sm">
-            <div className="flex items-center justify-between">
-              <div className="text-[#5d5245] dark:text-[#d7ccbe]">Rating</div>
-              <div className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">{stats.rating}</div>
-            </div>
-            <div className="mt-2 flex items-center justify-between">
-              <div className="text-[#5d5245] dark:text-[#d7ccbe]">Solved</div>
-              <div className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">{stats.total}</div>
+
+            <div className="mt-6 space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Rating</span>
+                <span className="font-bold text-indigo-600">{stats.rating}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Solved</span>
+                <span className="font-bold text-green-600">{stats.total}</span>
+              </div>
             </div>
 
-            <div className="mt-4 grid gap-2 text-sm">
-              <Link href="/dashboard" className="text-zinc-500 hover:underline font-medium text-[#d69a44] dark:text-[#f2c66f]">
-                My Dashboard
-              </Link>
-              <Link href="/bookmarks" className="text-zinc-500 hover:underline">
-                Bookmarks
-              </Link>
-              <Link href="/settings" className="text-zinc-500 hover:underline">
-                Settings
-              </Link>
-              <Link href="/submissions" className="text-zinc-500 hover:underline">
-                Submissions
-              </Link>
+            <div className="mt-6 space-y-3 text-sm">
+              {["Dashboard", "Bookmarks", "Settings", "Submissions"].map((item) => (
+                <Link
+                  key={item}
+                  href={`/${item.toLowerCase()}`}
+                  className="block font-medium transition-all duration-300 hover:text-indigo-600 hover:translate-x-1"
+                >
+                  {item}
+                </Link>
+              ))}
             </div>
-          </div>
-        </div>
-      </aside>
-    </section>
+          </motion.div>
+        </aside>
+      </section>
+    </div>
   );
 }
