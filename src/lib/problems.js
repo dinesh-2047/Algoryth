@@ -1,5 +1,3 @@
-import { title } from "node:process";
-
 export const problems = [
   {
     id: "p-1000",

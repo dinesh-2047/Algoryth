@@ -2,8 +2,6 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
-import prettier from "prettier/standalone";
-import parserBabel from "prettier/plugins/babel";
 
 const Monaco = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
@@ -96,17 +94,10 @@ export default function CodeEditor({
 
   /* ---------------- Auto format ---------------- */
   const handleAutoFormat = async () => {
-    if (language !== "javascript") return;
-
     setIsFormatting(true);
     try {
-      const formatted = await prettier.format(code, {
-        parser: "babel",
-        plugins: [parserBabel],
-        semi: true,
-        singleQuote: true,
-        trailingComma: "es5",
-      });
+      const { formatCode } = await import("@/lib/formatters");
+      const formatted = await formatCode(code, language);
       setCode(formatted);
       onChange?.(formatted);
     } catch (err) {

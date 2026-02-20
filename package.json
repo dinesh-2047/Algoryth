@@ -3,13 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
+    "@wasm-fmt/clang-format": "^21.1.8",
+    "@wasm-fmt/ruff_fmt": "^0.15.1",
     "bcryptjs": "^2.4.3",
     "framer-motion": "^12.34.0",
     "jsonwebtoken": "^9.0.3",
@@ -19,7 +21,8 @@
     "next": "16.1.1",
     "prettier": "^3.7.4",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "recharts": "^3.7.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
