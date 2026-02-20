@@ -13,6 +13,7 @@
     "@wasm-fmt/clang-format": "^21.1.8",
     "@wasm-fmt/ruff_fmt": "^0.15.1",
     "bcryptjs": "^2.4.3",
+    "framer-motion": "^12.34.1",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.562.0",
     "monaco-editor": "^0.55.1",
@@ -20,7 +21,8 @@
     "next": "16.1.1",
     "prettier": "^3.7.4",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "recharts": "^3.7.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
