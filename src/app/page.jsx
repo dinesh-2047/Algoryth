@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 
 export default function Home() {
   const { user } = useAuth();
-  const [stats, setStats] = useState({ total: 0, rating: 910 });
+  const [totalSolved, setTotalSolved] = useState(0);
 
+  // Calculate stats from localStorage — runs only on client after mount
   useEffect(() => {
     try {
       const raw = localStorage.getItem('algoryth_submissions');
@@ -17,6 +19,7 @@ export default function Home() {
         parsed.filter(s => s.status === 'Accepted').map(s => s.problemId)
       );
       setStats(prev => ({ ...prev, total: uniqueSolved.size }));
+      setTotalSolved(uniqueSolved.size); // eslint-disable-line react-hooks/set-state-in-effect
     } catch (e) {
       console.error(e);
     }
@@ -208,6 +211,15 @@ export default function Home() {
                 <span className="text-gray-500">Solved</span>
                 <span className="font-bold text-green-600">{stats.total}</span>
               </div>
+          </div>
+          <div className="px-5 py-5 text-sm">
+            <div className="flex items-center justify-between">
+              <div className="text-[#5d5245] dark:text-[#d7ccbe]">Rating</div>
+              <div className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">910</div>
+            </div>
+            <div className="mt-2 flex items-center justify-between">
+              <div className="text-[#5d5245] dark:text-[#d7ccbe]">Solved</div>
+              <div className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">{totalSolved}</div>
             </div>
 
             <div className="mt-6 space-y-3 text-sm">
