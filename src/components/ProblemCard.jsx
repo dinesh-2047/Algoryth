@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { CheckCircle2, FileText, ArrowUpFromLine } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { getProblemStatus } from "../lib/problemStatusApi";
 
 function getDifficultyColor(difficulty) {
   switch (difficulty) {
@@ -51,8 +53,13 @@ export default function ProblemCard({
   isBookmarked,
   onMoveToTop,
   isHighlighted,
+  statusMap,
 }) {
+  const { user } = useAuth();
   const difficultyColor = getDifficultyColor(problem.difficulty);
+
+  // Get problem status: "Solved", "Attempted", or null (Unsolved)
+  const status = user && statusMap ? getProblemStatus(problem.id, problem.slug, statusMap) : null;
 
   return (
     <div className={`group relative h-full rounded-xl border-2 bg-white p-6 transition-all duration-300 hover:shadow-lg hover:border-[#d69a44] dark:bg-[#211d27] dark:hover:border-[#f2c66f] ${isHighlighted ? "ring-4 ring-[#d69a44]/50 scale-[1.02] border-[#d69a44] dark:ring-[#f2c66f]/50 dark:border-[#f2c66f]" : "border-[#e0d5c2] dark:border-[#3c3347]"}`}>
@@ -61,11 +68,20 @@ export default function ProblemCard({
         <span className="text-3xl font-bold text-[#c99a4c] dark:text-[#f2c66f]">
           #{String(index + 1).padStart(2, "0")}
         </span>
-        {problem.status === "Solved" && (
-          <div className="flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
-            <CheckCircle2 className="h-4 w-4" />
+        
+        {/* Solved: Green tick */}
+        {status === "Solved" && (
+          <div className="flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1.5 dark:bg-emerald-900">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           </div>
         )}
+        
+        {/* Attempted: Yellow dot */}
+         {status === "Attempted" && (
+           <span className="inline-block h-3 w-3 rounded-full bg-yellow-500 dark:bg-yellow-400" aria-label="Attempted" />
+         )}
+        
+        {/* Unsolved: No indicator */}
       </div>
 
       {/* Problem title */}
