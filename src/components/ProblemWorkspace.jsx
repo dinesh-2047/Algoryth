@@ -155,6 +155,28 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       if (result.success === false) {
         verdict = result.error?.message || "Internal Error";
       } else {
+        const submissionResult = {
+          ...result,
+          isSubmission: true,
+        };
+        setExecutionResult(submissionResult);
+
+        // Save to localStorage for dashboard tracking
+        try {
+          const raw = localStorage.getItem("algoryth_submissions");
+          const submissions = raw ? JSON.parse(raw) : [];
+          const newEntry = {
+            problemId: problem.id,
+            problemTitle: problem.title,
+            rating: problem.rating,
+            status: result.status,
+            language: language,
+            timestamp: new Date().toISOString(),
+          };
+          localStorage.setItem("algoryth_submissions", JSON.stringify([newEntry, ...submissions]));
+        } catch (e) {
+          console.error("Error saving submission to localStorage:", e);
+        }
         verdict = result.data?.verdict || result.verdict || "Unknown";
       }
 
@@ -370,11 +392,11 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
              <h1 className="text-xl font-bold text-[#2b2116] dark:text-[#f6ede0]">{problem.title}</h1>
           </div>
           <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-            problem.difficulty === "Easy" ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" :
-            problem.difficulty === "Medium" ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400" :
+            problem.rating < 1300 ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" :
+            problem.rating < 1900 ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400" :
             "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-900/30 dark:text-rose-400"
           }`}>
-            {problem.difficulty}
+            {problem.rating}
           </span>
         </div>
         

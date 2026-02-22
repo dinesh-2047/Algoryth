@@ -3,7 +3,7 @@ export const problems = [
     id: "p-1000",
     slug: "two-sum",
     title: "Two Sum",
-    difficulty: "Easy",
+    rating: 800,
     tags: ["arrays", "hash-map"],
     statement:
       "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\n\nYou may assume that each input has exactly one solution, and you may not use the same element twice.",
@@ -24,7 +24,7 @@ export const problems = [
     id: "p-1001",
     slug: "valid-parentheses",
     title: "Valid Parentheses",
-    difficulty: "Easy",
+    rating: 900,
     tags: ["stack"],
     statement:
       "Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.\n\nAn input string is valid if open brackets are closed by the same type of brackets and in the correct order.",
@@ -40,7 +40,7 @@ export const problems = [
   id: "p-1002",
   slug: "max-consecutive-ones",
   title: "Max Consecutive Ones",
-  difficulty: "Easy",
+  rating: 1000,
   tags: ["Arrays"],
   statement:
     "Given a binary array nums, return the maximum number of consecutive 1s in the array.",
@@ -62,7 +62,7 @@ export const problems = [
   id: "p-1003",
   slug: "valid-anagram",
   title: "Valid Anagram",
-  difficulty: "Easy",
+  rating: 900,
   tags: ["Hashing", "Strings"],
   statement:
     "Given two strings s and t, return true if t is an anagram of s, and false otherwise.",
@@ -83,7 +83,7 @@ export const problems = [
   id: "p-1004",
   slug: "remove-duplicates-sorted-array",
   title: "Remove Duplicates from Sorted Array",
-  difficulty: "Easy",
+  rating: 1100,
   tags: ["Two Pointers", "Arrays"],
   statement:
     "Given an integer array nums sorted in non-decreasing order, remove the duplicates in-place such that each element appears only once.",
@@ -104,7 +104,7 @@ export const problems = [
   id: "p-1005",
   slug: "first-unique-character",
   title: "First Unique Character in a String",
-  difficulty: "Easy",
+  rating: 1000,
   tags: ["Hashing", "Strings"],
   statement:
     "Given a string s, find the first non-repeating character and return its index.",
@@ -126,7 +126,7 @@ export const problems = [
   id: "p-1006",
   slug: "valid-palindrome",
   title: "Valid Palindrome",
-  difficulty: "Easy",
+  rating: 800,
   tags: ["Two Pointers", "Strings"],
   statement:
     "Given a string s, determine if it is a palindrome, considering only alphanumeric characters and ignoring cases.",
@@ -147,7 +147,7 @@ export const problems = [
   id: "p-1007",
   slug: "move-zeroes",
   title: "Move Zeroes",
-  difficulty: "Easy",
+  rating: 1100,
   tags: ["Arrays", "Two Pointers"],
   statement:
     "Given an integer array nums, move all 0's to the end while maintaining the relative order of the non-zero elements.",
@@ -168,7 +168,7 @@ export const problems = [
   id: "p-1008",
   slug: "implement-stack-using-array",
   title: "Implement Stack using Array",
-  difficulty: "Easy",
+  rating: 1200,
   tags: ["Stack"],
   statement:
     "Implement a stack using an array. Support push, pop, top, and isEmpty operations.",
@@ -189,7 +189,7 @@ export const problems = [
   id: "p-1009",
   slug: "fibonacci-number",
   title: "Fibonacci Number",
-  difficulty: "Easy",
+  rating: 1200,
   tags: ["Recursion", "DP"],
   statement:
     "Given n, calculate the nth Fibonacci number.",
@@ -210,7 +210,7 @@ export const problems = [
     id: "p-2000",
     slug: "max-subarray",
     title: "Maximum Subarray",
-    difficulty: "Medium",
+    rating: 1300,
     tags: ["dp", "arrays"],
     statement:
       "Given an integer array nums, find the contiguous subarray (containing at least one number) which has the largest sum and return its sum.",
@@ -224,7 +224,7 @@ export const problems = [
   id: "p-2001",
   slug: "subarray-sum-equals-k",
   title: "Subarray Sum Equals K",
-  difficulty: "Medium",
+  rating: 1400,
   tags: ["Hashing", "Prefix Sum"],
   statement:
     "Given an array of integers nums and an integer k, return the total number of subarrays whose sum equals k.",
@@ -245,7 +245,7 @@ export const problems = [
   id: "p-2002",
   slug: "longest-palindromic-substring",
   title: "Longest Palindromic Substring",
-  difficulty: "Medium",
+  rating: 1500,
   tags: ["Strings", "Two Pointers"],
   statement:
     "Given a string s, return the longest palindromic substring in s.",
@@ -266,7 +266,7 @@ export const problems = [
   id: "p-2003",
   slug: "daily-temperatures",
   title: "Daily Temperatures",
-  difficulty: "Medium",
+  rating: 1400,
   tags: ["Stack"],
   statement:
     "Given an array of integers temperatures, return an array such that for each day tells how many days you would have to wait until a warmer temperature.",
@@ -287,7 +287,7 @@ export const problems = [
   id: "p-2004",
   slug: "product-of-array-except-self",
   title: "Product of Array Except Self",
-  difficulty: "Medium",
+  rating: 1500,
   tags: ["Arrays"],
   statement:
     "Given an integer array nums, return an array answer such that answer[i] is the product of all elements except nums[i].",
@@ -308,7 +308,7 @@ export const problems = [
   id: "p-2005",
   slug: "generate-parentheses",
   title: "Generate Parentheses",
-  difficulty: "Medium",
+  rating: 1600,
   tags: ["Recursion", "Backtracking"],
   statement:
     "Given n pairs of parentheses, write a function to generate all combinations of well-formed parentheses.",
@@ -328,7 +328,7 @@ export const problems = [
   id: "p-2006",
   slug: "container-with-most-water",
   title: "Container With Most Water",
-  difficulty: "Medium",
+  rating: 1600,
   tags: ["Two Pointers"],
   statement:
     "Given n non-negative integers representing height, find two lines that together with the x-axis form a container that holds the most water.",
@@ -349,7 +349,7 @@ export const problems = [
   id: "p-2007",
   slug: "decode-string",
   title: "Decode String",
-  difficulty: "Medium",
+  rating: 1700,
   tags: ["Stack", "Strings"],
   statement:
     "Given an encoded string, return its decoded string.",
@@ -370,7 +370,7 @@ export const problems = [
   id: "p-2008",
   slug: "search-in-rotated-sorted-array",
   title: "Search in Rotated Sorted Array",
-  difficulty: "Medium",
+  rating: 1800,
   tags: ["Binary Search"],
   statement:
     "Given a rotated sorted array nums and a target value, return its index or -1 if not found.",
@@ -391,7 +391,7 @@ export const problems = [
   id: "p-3000",
   slug: "sliding-window-maximum",
   title: "Sliding Window Maximum",
-  difficulty: "Hard",
+  rating: 1900,
   tags: ["Sliding Window", "Deque"],
   statement:
     "Given an array nums and an integer k, return the maximum value in each sliding window.",
@@ -412,7 +412,7 @@ export const problems = [
   id: "p-3001",
   slug: "minimum-window-substring",
   title: "Minimum Window Substring",
-  difficulty: "Hard",
+  rating: 2000,
   tags: ["Sliding Window", "Hashing"],
   statement:
     "Given two strings s and t, return the minimum window substring of s such that every character in t is included.",
@@ -433,7 +433,7 @@ export const problems = [
   id: "p-3002",
   slug: "largest-rectangle-histogram",
   title: "Largest Rectangle in Histogram",
-  difficulty: "Hard",
+  rating: 2100,
   tags: ["Stack"],
   statement:
     "Given an array of integers heights representing the histogram's bar height, return the area of the largest rectangle.",
@@ -454,7 +454,7 @@ export const problems = [
   id: "p-3003",
   slug: "word-search",
   title: "Word Search",
-  difficulty: "Hard",
+  rating: 2000,
   tags: ["Backtracking"],
   statement:
     "Given an m x n grid of characters and a word, return true if the word exists in the grid.",
@@ -475,7 +475,7 @@ export const problems = [
   id: "p-3004",
   slug: "merge-k-sorted-lists",
   title: "Merge K Sorted Lists",
-  difficulty: "Hard",
+  rating: 2200,
   tags: ["Divide and Conquer", "Heap"],
   statement:
     "You are given an array of k linked-lists, each sorted in ascending order. Merge all lists into one sorted list.",
@@ -496,7 +496,7 @@ export const problems = [
   id: "p-3005",
   slug: "regular-expression-matching",
   title: "Regular Expression Matching",
-  difficulty: "Hard",
+  rating: 2300,
   tags: ["DP", "Strings", "Recursion"],
   statement:
     "Given an input string s and a pattern p, implement regular expression matching with support for '.' and '*'.\n\n" +
@@ -521,7 +521,7 @@ export const problems = [
   id: "p-3006",
   slug: "trapping-rain-water",
   title: "Trapping Rain Water",
-  difficulty: "Hard",
+  rating: 2200,
   tags: ["Two Pointers", "Stack"],
   statement:
     "Given n non-negative integers representing an elevation map, compute how much water it can trap after raining.",
@@ -542,7 +542,7 @@ export const problems = [
   id: "p-3007",
   slug: "longest-valid-parentheses",
   title: "Longest Valid Parentheses",
-  difficulty: "Hard",
+  rating: 2400,
   tags: ["Stack", "DP"],
   statement:
     "Given a string containing '(' and ')', find the length of the longest valid parentheses substring.",
@@ -563,7 +563,7 @@ export const problems = [
   id: "p-3008",
   slug: "edit-distance",
   title: "Edit Distance",
-  difficulty: "Hard",
+  rating: 2500,
   tags: ["DP", "Strings"],
   statement:
     "Given two strings word1 and word2, return the minimum number of operations required to convert word1 to word2.",
