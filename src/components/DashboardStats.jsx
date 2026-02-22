@@ -1,28 +1,47 @@
 'use client';
 
-import React from 'react';
-import { CheckCircle, Code, Trophy, Zap } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { CheckCircle, Code, Trophy, Zap, Award, BarChart3 } from 'lucide-react';
 
-export default function DashboardStats({ submissions }) {
-  const solvedProblems = submissions.filter(s => s.status === 'Accepted');
-  
-  // Calculate unique solved problems by difficulty
-  const uniqueSolved = {};
-  solvedProblems.forEach(s => {
-    uniqueSolved[s.problemId] = s.difficulty;
-  });
+export default function DashboardStats({ submissions = [], stats = null }) {
+  // Use provided stats if available, otherwise calculate from submissions
+  let displayStats = stats;
 
-  const stats = {
-    total: Object.keys(uniqueSolved).length,
-    easy: Object.values(uniqueSolved).filter(d => d === 'Easy').length,
-    medium: Object.values(uniqueSolved).filter(d => d === 'Medium').length,
-    hard: Object.values(uniqueSolved).filter(d => d === 'Hard').length,
-  };
+  // Animated counter for total
+  const totalRef = useRef(null);
+  const [displayTotal, setDisplayTotal] = React.useState(0);
+  const total = Object.keys(uniqueSolved).length;
+  const easy = Object.values(uniqueSolved).filter(d => d === 'Easy').length;
+  const medium = Object.values(uniqueSolved).filter(d => d === 'Medium').length;
+  const hard = Object.values(uniqueSolved).filter(d => d === 'Hard').length;
+
+  useEffect(() => {
+    let start = 0;
+    if (total === 0) {
+      setDisplayTotal(0);
+      return;
+    }
+    const duration = 700;
+    const step = Math.ceil(total / 30) || 1;
+    let current = 0;
+    const increment = () => {
+      current += step;
+      if (current >= total) {
+        setDisplayTotal(total);
+      } else {
+        setDisplayTotal(current);
+        requestAnimationFrame(increment);
+      }
+    };
+    increment();
+    // eslint-disable-next-line
+  }, [total]);
 
   // Language frequency
   const languages = {};
-  solvedProblems.forEach(s => {
-    languages[s.language] = (languages[s.language] || 0) + 1;
+  submissions.forEach(s => {
+    const lang = s.language || 'unknown';
+    languages[lang] = (languages[lang] || 0) + 1;
   });
   
   const sortedLanguages = Object.entries(languages)
@@ -34,44 +53,51 @@ export default function DashboardStats({ submissions }) {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {/* Overview Card */}
-      <div className="rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] p-6 dark:border-[#3c3347] dark:bg-[#211d27]">
+      <div className="rounded-2xl border border-[#e0d5c2] bg-gradient-to-br from-[#fff8ed] to-[#f7e6ff] p-6 dark:border-[#3c3347] dark:bg-gradient-to-br dark:from-[#211d27] dark:to-[#2a2137] shadow-xl hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-[#8a7a67] dark:text-[#b5a59c]">Overview</h3>
-          <Trophy className="h-5 w-5 text-[#d69a44] dark:text-[#f2c66f]" />
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-[#8a7a67] dark:text-[#b5a59c] flex items-center gap-2">
+            <Award className="h-4 w-4 text-[#d69a44] dark:text-[#f2c66f]" /> Overview
+          </h3>
+          <Trophy className="h-5 w-5 text-[#d69a44] dark:text-[#f2c66f] animate-bounce" />
         </div>
         <div className="flex items-baseline gap-2">
-          <span className="text-4xl font-bold text-[#2b2116] dark:text-[#f6ede0]">{stats.total}</span>
+          <span ref={totalRef} className="text-4xl font-extrabold text-[#2b2116] dark:text-[#f6ede0] drop-shadow-lg">{displayTotal}</span>
           <span className="text-sm text-[#5d5245] dark:text-[#d7ccbe]">problems solved</span>
         </div>
         <div className="mt-4 flex gap-2">
           <div className="h-2 flex-1 rounded-full bg-[#f2e3cc] dark:bg-[#2d2535] overflow-hidden">
             <div 
-              className="h-full bg-[#d69a44] dark:bg-[#f2c66f]" 
-              style={{ width: `${Math.min(100, (stats.total / totalPossible) * 100)}%` }}
+              className="h-full bg-gradient-to-r from-[#d69a44] via-[#f2c66f] to-[#f7e6ff] dark:from-[#f2c66f] dark:to-[#a78bfa] transition-all duration-700"
+              style={{ width: `${Math.min(100, (total / totalPossible) * 100)}%` }}
             />
           </div>
         </div>
+        <div className="absolute right-0 bottom-0 w-24 h-24 bg-[#f2c66f]/20 dark:bg-[#f2c66f]/10 rounded-tl-3xl blur-2xl animate-pulse" />
       </div>
 
       {/* Difficulty Breakdown */}
-      <div className="rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] p-6 dark:border-[#3c3347] dark:bg-[#211d27]">
-        <h3 className="text-sm font-semibold uppercase tracking-wider text-[#8a7a67] dark:text-[#b5a59c] mb-6">Difficulty</h3>
+      <div className="rounded-2xl border border-[#e0d5c2] bg-gradient-to-br from-[#fff8ed] to-[#e6e6ff] p-6 dark:border-[#3c3347] dark:bg-gradient-to-br dark:from-[#211d27] dark:to-[#23233a] shadow-xl hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-[#8a7a67] dark:text-[#b5a59c] mb-6 flex items-center gap-2">
+          <BarChart3 className="h-4 w-4 text-[#a78bfa]" /> Difficulty
+        </h3>
         <div className="space-y-4">
-          <DifficultyRow label="Easy" count={stats.easy} color="text-green-600 dark:text-green-400" />
-          <DifficultyRow label="Medium" count={stats.medium} color="text-yellow-600 dark:text-yellow-400" />
-          <DifficultyRow label="Hard" count={stats.hard} color="text-red-600 dark:text-red-400" />
+          <DifficultyRow label="Easy" count={easy} color="text-green-600 dark:text-green-400" />
+          <DifficultyRow label="Medium" count={medium} color="text-yellow-600 dark:text-yellow-400" />
+          <DifficultyRow label="Hard" count={hard} color="text-red-600 dark:text-red-400" />
         </div>
+        <div className="absolute left-0 top-0 w-16 h-16 bg-[#a78bfa]/20 dark:bg-[#a78bfa]/10 rounded-br-3xl blur-2xl animate-pulse" />
       </div>
 
       {/* Languages */}
-      <div className="rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] p-6 dark:border-[#3c3347] dark:bg-[#211d27]">
+      <div className="rounded-2xl border border-[#e0d5c2] bg-gradient-to-br from-[#fff8ed] to-[#e6f7ff] p-6 dark:border-[#3c3347] dark:bg-gradient-to-br dark:from-[#211d27] dark:to-[#1d2732] shadow-xl hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-[#8a7a67] dark:text-[#b5a59c]">Languages</h3>
-          <Code className="h-5 w-5 text-[#8a7a67] dark:text-[#b5a59c]" />
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-[#8a7a67] dark:text-[#b5a59c] flex items-center gap-2">
+            <Code className="h-4 w-4 text-[#8a7a67] dark:text-[#b5a59c]" /> Languages
+          </h3>
         </div>
-        {sortedLanguages.length > 0 ? (
+        {displayStats?.languageUsage && Object.keys(displayStats.languageUsage).length > 0 ? (
           <div className="space-y-3">
-            {sortedLanguages.map(([lang, count]) => (
+            {Object.entries(displayStats.languageUsage).map(([lang, count]) => (
               <div key={lang} className="flex items-center justify-between group">
                 <span className="text-sm font-medium text-[#5d5245] dark:text-[#d7ccbe] capitalize">{lang}</span>
                 <span className="text-xs font-mono bg-[#f2e3cc] dark:bg-[#2d2535] px-2 py-0.5 rounded text-[#2b2116] dark:text-[#f6ede0]">
@@ -80,11 +106,26 @@ export default function DashboardStats({ submissions }) {
               </div>
             ))}
           </div>
+        ) : sortedLanguages.length > 0 ? (
+          <div className="space-y-3">
+            {sortedLanguages.map(([lang, count]) => (
+              <div key={lang} className="flex items-center justify-between group">
+                <span className="text-sm font-medium text-[#5d5245] dark:text-[#d7ccbe] capitalize flex items-center gap-2">
+                  <CheckCircle className="h-3 w-3 text-emerald-400 group-hover:scale-125 transition" /> {lang}
+                </span>
+                <span className="text-xs font-mono bg-[#f2e3cc] dark:bg-[#2d2535] px-2 py-0.5 rounded text-[#2b2116] dark:text-[#f6ede0]">
+                  {count}
+                </span>
+              </div>
+            ))}
+          </div>
         ) : (
-          <div className="text-center py-4 text-xs text-[#8a7a67] dark:text-[#b5a59c]">
+          <div className="flex flex-col items-center justify-center py-6 text-xs text-[#8a7a67] dark:text-[#b5a59c] opacity-80">
+            <Code className="h-8 w-8 mb-2 text-[#b5a59c] opacity-40" />
             No language data yet
           </div>
         )}
+        <div className="absolute right-0 top-0 w-16 h-16 bg-[#38bdf8]/10 dark:bg-[#38bdf8]/10 rounded-bl-3xl blur-2xl animate-pulse" />
       </div>
     </div>
   );

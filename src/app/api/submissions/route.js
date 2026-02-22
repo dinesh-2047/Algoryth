@@ -85,6 +85,8 @@ export async function POST(request) {
       return NextResponse.json({
         verdict,
         error,
+        verdict: "Compilation Error",
+        error: err.toString(),
       });
     }
 
@@ -100,6 +102,7 @@ export async function POST(request) {
         error = err.toString();
         
         // Save runtime error submission
+        // Save Runtime Error to database
         if (userId) {
           try {
             await connectToDatabase();
@@ -114,6 +117,8 @@ export async function POST(request) {
               verdict,
               difficulty: problem.difficulty,
               executionTime: Date.now() - testStartTime,
+              verdict: "Runtime Error",
+              difficulty: problem.difficulty,
               submittedAt: new Date(),
             });
             
@@ -124,6 +129,7 @@ export async function POST(request) {
           }
         }
 
+        
         return NextResponse.json({
           verdict,
           error,
@@ -141,6 +147,7 @@ export async function POST(request) {
         executionTime = Date.now() - testStartTime;
 
         // Save wrong answer submission
+        // Save Wrong Answer to database
         if (userId) {
           try {
             await connectToDatabase();
@@ -155,6 +162,8 @@ export async function POST(request) {
               verdict,
               difficulty: problem.difficulty,
               executionTime,
+              verdict: "Wrong Answer",
+              difficulty: problem.difficulty,
               submittedAt: new Date(),
             });
             
@@ -165,6 +174,7 @@ export async function POST(request) {
           }
         }
 
+        
         return NextResponse.json({
           verdict,
           expected,
@@ -180,6 +190,7 @@ export async function POST(request) {
     // Save accepted submission to database and check badges
     const badgeResult = { newBadges: [] };
     
+    // Save submission to database if user is authenticated
     if (userId) {
       try {
         await connectToDatabase();
@@ -194,6 +205,8 @@ export async function POST(request) {
           verdict,
           difficulty: problem.difficulty,
           executionTime,
+          verdict: "Accepted",
+          difficulty: problem.difficulty,
           submittedAt: new Date(),
         });
         
@@ -215,6 +228,14 @@ export async function POST(request) {
     });
   } catch (err) {
     console.error('Submission error:', err);
+      } catch (dbError) {
+        console.error('Error saving submission to database:', dbError);
+        // Continue even if database save fails - submission execution is more important
+      }
+    }
+
+    return NextResponse.json({ verdict: "Accepted" });
+  } catch {
     return NextResponse.json(
       { verdict: "Error", message: "Invalid request" },
       { status: 400 }

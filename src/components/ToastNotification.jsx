@@ -7,7 +7,7 @@ const ToastNotification = ({ message, type = 'success', isVisible, onClose }) =>
 
   useEffect(() => {
     if (isVisible) {
-      setShow(true);
+      setShow(true); // eslint-disable-line react-hooks/set-state-in-effect
       const timer = setTimeout(() => {
         setShow(false);
         if (onClose) onClose();

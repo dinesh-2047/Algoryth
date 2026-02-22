@@ -24,6 +24,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
   const [activeTab, setActiveTab] = useState("Description");
   const [submissions, setSubmissions] = useState([]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setLastSubmissionStatus(null);
     setInputError(null);
@@ -32,16 +33,45 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
     setActiveTab("Description");
     setOpenHints([]);
     
-    // Load local submissions for this problem
-    try {
-      const allSubmissions = JSON.parse(localStorage.getItem("algoryth_submissions") || "[]");
-      const validSubmissions = allSubmissions.filter(s => s.problemId === problem.id || s.slug === problem.slug);
-      // Sort by newest first
-      setSubmissions(validSubmissions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
-    } catch (e) {
-      console.error("Failed to load submissions", e);
-    }
+    // Load submissions for this problem
+    const loadSubmissions = async () => {
+      try {
+        const token = localStorage.getItem("algoryth_token");
+        if (token) {
+          // Try to load from server
+          const response = await fetch(`/api/submissions/history?problemSlug=${problem.slug}&limit=10`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.submissions) {
+              // Normalize data from server to match localStorage format
+              const normalized = data.submissions.map(s => ({
+                problemId: problem.id,
+                slug: problem.slug,
+                problemTitle: s.problemTitle,
+                status: s.verdict,
+                language: s.language,
+                timestamp: s.submittedAt || new Date().toISOString()
+              }));
+              setSubmissions(normalized);
+              return;
+            }
+          }
+        }
+
+        // Fallback to local submissions
+        const allSubmissions = JSON.parse(localStorage.getItem("algoryth_submissions") || "[]");
+        const validSubmissions = allSubmissions.filter(s => s.problemId === problem.id || s.slug === problem.slug);
+        setSubmissions(validSubmissions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
+      } catch (e) {
+        console.error("Failed to load submissions", e);
+      }
+    };
+
+    loadSubmissions();
   }, [problem.id, problem.slug]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const starterCode = useMemo(
     () => `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
@@ -108,12 +138,19 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
     let earnedBadges = [];
 
     try {
+      // Get token for authentication
+      const token = localStorage.getItem('algoryth_token');
+
       const response = await fetch("/api/submissions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token && { "Authorization": `Bearer ${token}` }),
+        },
         body: JSON.stringify({
           slug: problem.slug,
           code,
+          language,
         }),
       });
 
@@ -148,30 +185,31 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       }
 
       setLastSubmissionStatus(verdict);
-    } catch (err) {
+    } catch {
       verdict = "Network Error";
       setLastSubmissionStatus(verdict);
     }
 
-    // Save submission locally
+    // Save submission locally for offline access
     const newSubmission = {
       problemId: problem.id,
       slug: problem.slug,
       problemTitle: problem.title,
       status: verdict,
       language,
-      code, // Optional: save code if we want to restore history
+      code,
       timestamp: new Date().toISOString()
     };
     
     setSubmissions(prev => [newSubmission, ...prev]);
     
+    // Also save to localStorage as backup
     try {
       const allSubmissions = JSON.parse(localStorage.getItem("algoryth_submissions") || "[]");
       allSubmissions.push(newSubmission);
       localStorage.setItem("algoryth_submissions", JSON.stringify(allSubmissions));
     } catch (e) {
-      console.error("Failed to save submission", e);
+      console.error("Failed to save submission to localStorage backup:", e);
     }
 
     setIsSubmitting(false);

@@ -11,7 +11,7 @@ export default function AuthButton() {
 
   // Ensure we're running on the client side
   useEffect(() => {
-    setMounted(true);
+    setMounted(true); // eslint-disable-line react-hooks/set-state-in-effect
   }, []);
 
   if (loading || !mounted) {
