@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import DashboardStats from '../../components/DashboardStats';
+import BadgeDisplayMini from '../../components/BadgeDisplayMini';
 import { Clock, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DashboardPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, token } = useAuth();
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,7 +26,7 @@ export default function DashboardPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
+      <div className="flex min-h-100 items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#d69a44] border-t-transparent dark:border-[#f2c66f]"></div>
       </div>
     );
@@ -96,6 +97,14 @@ export default function DashboardPage() {
 
         {/* Sidebar Info */}
         <div className="space-y-6">
+          {/* Recent Badges */}
+          {token && (
+            <div className="rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] p-6 dark:border-[#3c3347] dark:bg-[#211d27]">
+              <BadgeDisplayMini token={token} maxBadges={6} showViewAll={true} />
+            </div>
+          )}
+
+          {/* Quick Links */}
           <div className="rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] p-6 dark:border-[#3c3347] dark:bg-[#211d27]">
             <h3 className="text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0] mb-4">Quick Links</h3>
             <div className="grid grid-cols-1 gap-2">
