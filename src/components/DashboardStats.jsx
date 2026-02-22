@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { CheckCircle, Code, Trophy, Zap, Award, BarChart3 } from 'lucide-react';
+import { CheckCircle, Code, Trophy, Award, BarChart3 } from 'lucide-react';
 
 export default function DashboardStats({ submissions = [], stats = null }) {
   // Use provided stats if available, otherwise calculate from submissions
@@ -10,18 +10,25 @@ export default function DashboardStats({ submissions = [], stats = null }) {
   // Animated counter for total
   const totalRef = useRef(null);
   const [displayTotal, setDisplayTotal] = React.useState(0);
+  
+  // Calculate unique solved problems
+  const uniqueSolved = {};
+  submissions.forEach(s => {
+    if (s.status === 'Accepted') {
+      uniqueSolved[s.problemId] = s.difficulty || 'Medium'; // Default to Medium if not provided
+    }
+  });
+
   const total = Object.keys(uniqueSolved).length;
   const easy = Object.values(uniqueSolved).filter(d => d === 'Easy').length;
   const medium = Object.values(uniqueSolved).filter(d => d === 'Medium').length;
   const hard = Object.values(uniqueSolved).filter(d => d === 'Hard').length;
 
   useEffect(() => {
-    let start = 0;
     if (total === 0) {
-      setDisplayTotal(0);
+      requestAnimationFrame(() => setDisplayTotal(0));
       return;
     }
-    const duration = 700;
     const step = Math.ceil(total / 30) || 1;
     let current = 0;
     const increment = () => {
