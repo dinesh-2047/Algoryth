@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { FileText, BookOpen, List, History, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import CodeEditor from "./CodeEditor";
@@ -21,11 +21,15 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, onSubmission
   const [timerRunning, setTimerRunning] = useState(true);
   const [inputError, setInputError] = useState(null);
   const [openHints, setOpenHints] = useState([]);
+  const [newBadges, setNewBadges] = useState([]);
+  // Stable dismiss handler - prevents BadgeNotification effect from re-running on every render
+  const handleDismissBadges = useCallback(() => setNewBadges([]), []);
   
   // Tabs State
   const [activeTab, setActiveTab] = useState("Description");
   const [submissions, setSubmissions] = useState([]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setLastSubmissionStatus(null);
     setInputError(null);
@@ -34,16 +38,45 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, onSubmission
     setActiveTab("Description");
     setOpenHints([]);
     
-    // Load local submissions for this problem
-    try {
-      const allSubmissions = JSON.parse(localStorage.getItem("algoryth_submissions") || "[]");
-      const validSubmissions = allSubmissions.filter(s => s.problemId === problem.id || s.slug === problem.slug);
-      // Sort by newest first
-      setSubmissions(validSubmissions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
-    } catch (e) {
-      console.error("Failed to load submissions", e);
-    }
+    // Load submissions for this problem
+    const loadSubmissions = async () => {
+      try {
+        const token = localStorage.getItem("algoryth_token");
+        if (token) {
+          // Try to load from server
+          const response = await fetch(`/api/submissions/history?problemSlug=${problem.slug}&limit=10`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.submissions) {
+              // Normalize data from server to match localStorage format
+              const normalized = data.submissions.map(s => ({
+                problemId: problem.id,
+                slug: problem.slug,
+                problemTitle: s.problemTitle,
+                status: s.verdict,
+                language: s.language,
+                timestamp: s.submittedAt || new Date().toISOString()
+              }));
+              setSubmissions(normalized);
+              return;
+            }
+          }
+        }
+
+        // Fallback to local submissions
+        const allSubmissions = JSON.parse(localStorage.getItem("algoryth_submissions") || "[]");
+        const validSubmissions = allSubmissions.filter(s => s.problemId === problem.id || s.slug === problem.slug);
+        setSubmissions(validSubmissions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
+      } catch (e) {
+        console.error("Failed to load submissions", e);
+      }
+    };
+
+    loadSubmissions();
   }, [problem.id, problem.slug]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Fetch status for this problem when user or problem changes
   useEffect(() => {
@@ -125,8 +158,10 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, onSubmission
     setIsSubmitting(true);
     setLastSubmissionStatus(null);
     setInputError(null);
+    setNewBadges([]);
 
     let verdict = "Submission Error";
+    let earnedBadges = [];
 
     try {
       const headers = { "Content-Type": "application/json" };
@@ -176,14 +211,14 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, onSubmission
       setLastSubmissionStatus(verdict);
     }
 
-    // Save submission locally
+    // Save submission locally for offline access
     const newSubmission = {
       problemId: problem.id,
       slug: problem.slug,
       problemTitle: problem.title,
       status: verdict,
       language,
-      code, // Optional: save code if we want to restore history
+      code,
       timestamp: new Date().toISOString()
     };
     
@@ -197,12 +232,13 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, onSubmission
       }
     }
     
+    // Also save to localStorage as backup
     try {
       const allSubmissions = JSON.parse(localStorage.getItem("algoryth_submissions") || "[]");
       allSubmissions.push(newSubmission);
       localStorage.setItem("algoryth_submissions", JSON.stringify(allSubmissions));
     } catch (e) {
-      console.error("Failed to save submission", e);
+      console.error("Failed to save submission to localStorage backup:", e);
     }
 
     setIsSubmitting(false);
@@ -312,7 +348,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, onSubmission
              {[1, 2, 3].map((i) => (
                <div key={i} className="cursor-pointer rounded-lg border border-[#e0d5c2] bg-white p-4 transition-all hover:shadow-sm dark:border-[#3c3347] dark:bg-[#211d27]">
                  <div className="flex items-center gap-3">
-                   <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500" />
+                   <div className="h-8 w-8 rounded-full bg-linear-to-br from-blue-400 to-purple-500" />
                    <div>
                      <div className="text-sm font-medium text-[#2b2116] dark:text-[#f6ede0]">User_{100+i}</div>
                      <div className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">JavaScript • 2ms • 45MB</div>
@@ -492,6 +528,10 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, onSubmission
 
   return (
     <section className="flex flex-col gap-4 min-h-0 flex-1">
+      <BadgeNotification 
+        badges={newBadges}
+        onDismiss={handleDismissBadges}
+      />
       <div className="flex items-center justify-between rounded-2xl border border-[#e0d5c2] bg-white px-4 py-3 dark:border-[#3c3347] dark:bg-[#211d27]">
         <div className="flex items-center gap-2">
           <Link 

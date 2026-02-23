@@ -11,7 +11,7 @@ export default function AuthButton() {
 
   // Ensure we're running on the client side
   useEffect(() => {
-    setMounted(true);
+    setMounted(true); // eslint-disable-line react-hooks/set-state-in-effect
   }, []);
 
   if (loading || !mounted) {
@@ -42,6 +42,14 @@ export default function AuthButton() {
                 Signed in as<br />
                 <span className="font-medium">{user.email || user.name}</span>
               </div>
+              <Link
+                href="/profile"
+                onClick={() => setDropdownOpen(false)}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-[#2d2535] dark:text-gray-300 dark:hover:text-white"
+                role="menuitem"
+              >
+                Profile
+              </Link>
               <button
                 onClick={() => {
                   logout();

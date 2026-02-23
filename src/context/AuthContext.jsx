@@ -12,14 +12,17 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [token, setToken] = useState(null);
+
   useEffect(() => {
     // Check if user is logged in from localStorage or session storage
-    const token = localStorage.getItem('algoryth_token');
+    const storedToken = localStorage.getItem('algoryth_token');
     const storedUser = localStorage.getItem('algoryth_user');
     
-    if (token && storedUser) {
+    if (storedToken && storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        setUser(JSON.parse(storedUser)); // eslint-disable-line react-hooks/set-state-in-effect
+        setToken(storedToken); // eslint-disable-line react-hooks/set-state-in-effect
       } catch (error) {
         console.error('Error parsing stored user:', error);
       }
@@ -41,6 +44,7 @@ export function AuthProvider({ children }) {
 
       if (res.ok) {
         setUser(data.user);
+        setToken(data.token);
         localStorage.setItem('algoryth_user', JSON.stringify(data.user));
         localStorage.setItem('algoryth_token', data.token);
         return { success: true, user: data.user };
@@ -83,12 +87,14 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     setUser(null);
+    setToken(null);
     localStorage.removeItem('algoryth_user');
     localStorage.removeItem('algoryth_token');
   };
 
   const value = {
     user,
+    token,
     login,
     logout,
     signup,
