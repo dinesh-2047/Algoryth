@@ -1,11 +1,19 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { CheckCircle, Code, Trophy, Zap, Award, BarChart3 } from 'lucide-react';
+import { CheckCircle, Code, Trophy, Award, BarChart3 } from 'lucide-react';
 
 export default function DashboardStats({ submissions = [], stats = null }) {
   // Use provided stats if available, otherwise calculate from submissions
   let displayStats = stats;
+
+  // Compute unique solved problems by ID and their difficulty
+  const uniqueSolved = {};
+  submissions.forEach((s) => {
+    if (s.status === 'Accepted' && s.problemId) {
+      uniqueSolved[s.problemId] = s.difficulty || 'Unknown';
+    }
+  });
 
   // Animated counter for total
   const totalRef = useRef(null);
@@ -16,12 +24,9 @@ export default function DashboardStats({ submissions = [], stats = null }) {
   const hard = Object.values(uniqueSolved).filter(d => d === 'Hard').length;
 
   useEffect(() => {
-    let start = 0;
     if (total === 0) {
-      setDisplayTotal(0);
       return;
     }
-    const duration = 700;
     const step = Math.ceil(total / 30) || 1;
     let current = 0;
     const increment = () => {
@@ -33,8 +38,9 @@ export default function DashboardStats({ submissions = [], stats = null }) {
         requestAnimationFrame(increment);
       }
     };
-    increment();
-    // eslint-disable-next-line
+    // Use a timeout to avoid immediate setState in effect
+    const timeout = setTimeout(increment, 0);
+    return () => clearTimeout(timeout);
   }, [total]);
 
   // Language frequency
@@ -53,7 +59,7 @@ export default function DashboardStats({ submissions = [], stats = null }) {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {/* Overview Card */}
-      <div className="rounded-2xl border border-[#e0d5c2] bg-gradient-to-br from-[#fff8ed] to-[#f7e6ff] p-6 dark:border-[#3c3347] dark:bg-gradient-to-br dark:from-[#211d27] dark:to-[#2a2137] shadow-xl hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
+      <div className="rounded-2xl border border-[#e0d5c2] bg-linear-to-br from-[#fff8ed] to-[#f7e6ff] p-6 dark:border-[#3c3347] dark:bg-linear-to-br dark:from-[#211d27] dark:to-[#2a2137] shadow-xl hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-[#8a7a67] dark:text-[#b5a59c] flex items-center gap-2">
             <Award className="h-4 w-4 text-[#d69a44] dark:text-[#f2c66f]" /> Overview
@@ -67,7 +73,7 @@ export default function DashboardStats({ submissions = [], stats = null }) {
         <div className="mt-4 flex gap-2">
           <div className="h-2 flex-1 rounded-full bg-[#f2e3cc] dark:bg-[#2d2535] overflow-hidden">
             <div 
-              className="h-full bg-gradient-to-r from-[#d69a44] via-[#f2c66f] to-[#f7e6ff] dark:from-[#f2c66f] dark:to-[#a78bfa] transition-all duration-700"
+              className="h-full bg-linear-to-r from-[#d69a44] via-[#f2c66f] to-[#f7e6ff] dark:from-[#f2c66f] dark:to-[#a78bfa] transition-all duration-700"
               style={{ width: `${Math.min(100, (total / totalPossible) * 100)}%` }}
             />
           </div>
@@ -76,7 +82,7 @@ export default function DashboardStats({ submissions = [], stats = null }) {
       </div>
 
       {/* Difficulty Breakdown */}
-      <div className="rounded-2xl border border-[#e0d5c2] bg-gradient-to-br from-[#fff8ed] to-[#e6e6ff] p-6 dark:border-[#3c3347] dark:bg-gradient-to-br dark:from-[#211d27] dark:to-[#23233a] shadow-xl hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
+      <div className="rounded-2xl border border-[#e0d5c2] bg-linear-to-br from-[#fff8ed] to-[#e6e6ff] p-6 dark:border-[#3c3347] dark:bg-linear-to-br dark:from-[#211d27] dark:to-[#23233a] shadow-xl hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
         <h3 className="text-sm font-semibold uppercase tracking-wider text-[#8a7a67] dark:text-[#b5a59c] mb-6 flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-[#a78bfa]" /> Difficulty
         </h3>
@@ -89,7 +95,7 @@ export default function DashboardStats({ submissions = [], stats = null }) {
       </div>
 
       {/* Languages */}
-      <div className="rounded-2xl border border-[#e0d5c2] bg-gradient-to-br from-[#fff8ed] to-[#e6f7ff] p-6 dark:border-[#3c3347] dark:bg-gradient-to-br dark:from-[#211d27] dark:to-[#1d2732] shadow-xl hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
+      <div className="rounded-2xl border border-[#e0d5c2] bg-linear-to-br from-[#fff8ed] to-[#e6f7ff] p-6 dark:border-[#3c3347] dark:bg-linear-to-br dark:from-[#211d27] dark:to-[#1d2732] shadow-xl hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-[#8a7a67] dark:text-[#b5a59c] flex items-center gap-2">
             <Code className="h-4 w-4 text-[#8a7a67] dark:text-[#b5a59c]" /> Languages

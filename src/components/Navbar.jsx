@@ -86,7 +86,7 @@ const Navbar = () => {
 
                   {/* 🔥 Animated Underline Slide */}
                   <span
-                    className={`absolute left-0 -bottom-1 h-[2px] bg-gradient-to-r from-indigo-500 to-pink-500 transition-all duration-300
+                    className={`absolute left-0 -bottom-1 h-0.5 bg-linear-to-r from-indigo-500 to-pink-500 transition-all duration-300
                     ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`}
                   />
                 </Link>
@@ -136,7 +136,7 @@ const Navbar = () => {
         {/* Mobile Menu */}
         <div
           className={`md:hidden overflow-hidden transition-all duration-500 ${
-            isMenuOpen ? 'max-h-[500px] opacity-100 mt-4' : 'max-h-0 opacity-0'
+            isMenuOpen ? 'max-h-125 opacity-100 mt-4' : 'max-h-0 opacity-0'
           }`}
         >
           <div className="rounded-xl bg-white/95 dark:bg-[#111827]/95 shadow-lg p-4 flex flex-col gap-3">
@@ -152,7 +152,7 @@ const Navbar = () => {
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition
                   ${
                     isActive
-                      ? 'bg-gradient-to-r from-indigo-500 to-pink-500 text-white'
+                      ? 'bg-linear-to-r from-indigo-500 to-pink-500 text-white'
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                   }`}
                 >
