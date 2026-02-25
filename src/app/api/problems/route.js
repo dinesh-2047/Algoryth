@@ -12,7 +12,7 @@ export function GET(request) {
     id: p.id,
     slug: p.slug,
     title: p.title,
-    difficulty: p.difficulty,
+    rating: p.rating,
     tags: p.tags,
   }));
 
@@ -29,9 +29,18 @@ export function GET(request) {
     });
   }
 
-  // Filter by difficulty
+  // Filter by difficulty (backward compatibility with rating ranges)
   if (difficulty) {
-    filtered = filtered.filter(p => p.difficulty === difficulty);
+    filtered = filtered.filter(p => {
+      if (difficulty === 'Easy') {
+        return p.rating < 1300;
+      } else if (difficulty === 'Medium') {
+        return p.rating >= 1300 && p.rating < 1900;
+      } else if (difficulty === 'Hard') {
+        return p.rating >= 1900;
+      }
+      return true;
+    });
   }
 
   // Filter by tags
@@ -41,9 +50,8 @@ export function GET(request) {
 
   // Sort
   filtered.sort((a, b) => {
-    if (sort === 'difficulty') {
-      const order = { Easy: 1, Medium: 2, Hard: 3 };
-      return order[a.difficulty] - order[b.difficulty];
+    if (sort === 'difficulty' || sort === 'rating') {
+      return a.rating - b.rating;
     }
     if (sort === 'title') {
       return a.title.localeCompare(b.title);
