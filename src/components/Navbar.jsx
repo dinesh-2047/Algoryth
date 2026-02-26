@@ -3,20 +3,33 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
+import { Search } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import AuthButton from './AuthButton';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
-  // Close menu when resizing to larger screens
+  const [scrolled, setScrolled] = useState(false);
+  const pathname = usePathname();
+
+  // 🔥 Sticky shrink on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Close mobile on resize
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 640) { // sm breakpoint
+      if (window.innerWidth >= 768) {
         setIsMenuOpen(false);
       }
     };
-
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -27,107 +40,135 @@ const Navbar = () => {
     { href: '/problems', label: 'Problems' },
     { href: '/bookmarks', label: 'Bookmarks' },
     { href: '/contests', label: 'Contests' },
+    { href: '/badges', label: 'Achievements' },
     { href: '/rating', label: 'Rating' },
     { href: '/submissions', label: 'Submissions' },
     { href: '/settings', label: 'Settings' },
   ];
 
   return (
-    <header className="sticky top-0 z-20 border-b border-[#e0d5c2] bg-[#fdf7ed]/90 backdrop-blur dark:border-[#3c3347] dark:bg-[#1f1b27]/90">
-      <div className="mx-auto w-full max-w-7xl px-6">
-        <div className="flex items-center gap-4 py-3">
-          <Link href="/" className="flex items-center">
+    <header
+      className={`sticky top-0 z-50 transition-all duration-500 
+      backdrop-blur-xl bg-white/70 dark:bg-[#0b1120]/70
+      border-b border-gray-200/40 dark:border-gray-800/40
+      ${scrolled ? 'py-2 shadow-md' : 'py-4 shadow-lg'}`}
+    >
+      <div className="max-w-7xl mx-auto px-6">
+
+        <div className="flex items-center justify-between">
+
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3 group">
             <Image
               src="/algoryth-logo.png"
-              alt="Algoryth logo"
-              width={140}
-              height={60}
-              priority
-              className="h-10 w-auto"
+              alt="Logo"
+              width={scrolled ? 36 : 44}
+              height={scrolled ? 36 : 44}
+              className="rounded-full transition-all duration-300 group-hover:scale-110"
             />
+            <span className="text-xl font-bold text-gray-900 dark:text-white">
+              Algoryth
+            </span>
           </Link>
 
-          {/* Desktop Navigation - Hidden on small screens */}
-          <div className="hidden flex-1 sm:block">
-            <input
-              aria-label="Search"
-              placeholder="Search"
-              className="h-9 w-full rounded-full border border-[#deceb7] bg-[#fdf7ed] px-4 text-sm text-[#2b2116] outline-none placeholder:text-[#8a7a67] focus:ring-2 focus:ring-[#c99a4c]/30 dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#f6ede0] dark:placeholder:text-[#a89cae] dark:focus:ring-[#f2c66f]/30"
-            />
-          </div>
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-6 ml-10 relative">
 
-          <div className="hidden sm:flex items-center gap-2 ml-auto">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="relative text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-300 group"
+                >
+                  {link.label}
+
+                  {/* 🔥 Animated Underline Slide */}
+                  <span
+                    className={`absolute left-0 -bottom-1 h-0.5 bg-linear-to-r from-indigo-500 to-pink-500 transition-all duration-300
+                    ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`}
+                  />
+                </Link>
+              );
+            })}
+
+            {/* 🔎 Integrated Search */}
+            <div className="relative group ml-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-indigo-500 transition" />
+              <input
+                placeholder="Search..."
+                className="w-36 focus:w-52 transition-all duration-300 h-9 pl-9 pr-3 rounded-full 
+                bg-gray-100 dark:bg-gray-800 text-sm outline-none
+                focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+          </nav>
+
+          {/* Right Section */}
+          <div className="hidden md:flex items-center gap-4 ml-6">
             <ThemeToggle />
             <AuthButton />
           </div>
 
-          {/* Mobile menu button - Only visible on small screens */}
-          <div className="sm:hidden ml-auto flex items-center gap-2">
-            <ThemeToggle />
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 rounded-md text-[#2b2116] dark:text-[#f6ede0] hover:bg-[#f2e3cc] dark:hover:bg-[#2d2535] focus:outline-none"
-              aria-expanded={isMenuOpen}
-              aria-label="Main menu"
+          {/* Mobile Button */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            aria-label="Toggle menu"
+          >
+            <svg
+              className="h-6 w-6 text-gray-700 dark:text-gray-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              <svg
-                className="h-6 w-6"
-                stroke="currentColor"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                {isMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
-            </button>
-          </div>
+              {isMenuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
         </div>
 
-        {/* Desktop Navigation Links */}
-        <div className="hidden sm:flex items-center gap-2 pb-3 text-xs font-semibold uppercase tracking-wide text-[#8a7a67] dark:text-[#b5a59c]">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="rounded-full px-3 py-2 text-[#5d5245] hover:bg-[#f2e3cc] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
+        {/* Mobile Menu */}
+        <div
+          className={`md:hidden overflow-hidden transition-all duration-500 ${
+            isMenuOpen ? 'max-h-125 opacity-100 mt-4' : 'max-h-0 opacity-0'
+          }`}
+        >
+          <div className="rounded-xl bg-white/95 dark:bg-[#111827]/95 shadow-lg p-4 flex flex-col gap-3">
 
-        {/* Mobile Menu - Only visible when menu is open */}
-        {isMenuOpen && (
-          <div className="sm:hidden py-3 border-t border-[#e0d5c2] dark:border-[#3c3347]">
-            <div className="mb-3">
-              <input
-                aria-label="Search"
-                placeholder="Search"
-                className="h-9 w-full rounded-full border border-[#deceb7] bg-[#fdf7ed] px-4 text-sm text-[#2b2116] outline-none placeholder:text-[#8a7a67] focus:ring-2 focus:ring-[#c99a4c]/30 dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#f6ede0] dark:placeholder:text-[#a89cae] dark:focus:ring-[#f2c66f]/30"
-              />
-            </div>
-            
-            <div className="flex flex-col gap-1 pb-3">
-              {navLinks.map((link) => (
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+
+              return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="block rounded-full px-3 py-2 text-[#5d5245] hover:bg-[#f2e3cc] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
                   onClick={() => setIsMenuOpen(false)}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition
+                  ${
+                    isActive
+                      ? 'bg-linear-to-r from-indigo-500 to-pink-500 text-white'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }`}
                 >
                   {link.label}
                 </Link>
-              ))}
-            </div>
-            
-            <div className="pt-3 border-t border-[#e0d5c2] dark:border-[#3c3347]">
+              );
+            })}
+
+            <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
               <AuthButton />
             </div>
+
           </div>
-        )}
+        </div>
+
       </div>
     </header>
   );

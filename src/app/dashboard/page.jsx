@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import DashboardStats from '../../components/DashboardStats';
+import BadgeDisplayMini from '../../components/BadgeDisplayMini';
 import { Clock, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 export default function DashboardPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, token } = useAuth();
   const [submissions, setSubmissions] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -200,6 +201,26 @@ export default function DashboardPage() {
 
         {/* ================= SIDEBAR ================= */}
         <div className="space-y-8">
+
+        {/* Sidebar Info */}
+        <div className="space-y-6">
+          {/* Recent Badges */}
+          {token && (
+            <div className="rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] p-6 dark:border-[#3c3347] dark:bg-[#211d27]">
+              <BadgeDisplayMini token={token} maxBadges={6} showViewAll={true} />
+            </div>
+          )}
+
+          {/* Quick Links */}
+          <div className="rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] p-6 dark:border-[#3c3347] dark:bg-[#211d27]">
+            <h3 className="text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0] mb-4">Quick Links</h3>
+            <div className="grid grid-cols-1 gap-2">
+              <Link href="/problems" className="flex items-center gap-2 rounded-xl border border-[#deceb7] bg-white p-3 text-sm font-medium text-[#5d5245] hover:bg-[#f6e9d2] dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]">
+                <span>Browse Problems</span>
+              </Link>
+            </div>
+          </div>
+        </div>
 
           {/* Quick Access */}
           <motion.div

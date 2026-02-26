@@ -5,18 +5,22 @@ import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Trophy, Flame, BookOpen, ArrowRight } from "lucide-react";
 
 export default function Home() {
   const { user } = useAuth();
   const [totalSolved, setTotalSolved] = useState(0);
+  const [streak] = useState(4);
 
-  // Calculate stats from localStorage — runs only on client after mount
+  const TOTAL_PROBLEMS = 300;
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem('algoryth_submissions');
       const parsed = raw ? JSON.parse(raw) : [];
       const uniqueSolved = new Set(
-        parsed.filter(s => s.status === 'Accepted').map(s => s.problemId)
+        parsed.filter((s) => s.status === 'Accepted').map((s) => s.problemId)
       );
       setStats(prev => ({ ...prev, total: uniqueSolved.size }));
       setTotalSolved(uniqueSolved.size); // eslint-disable-line react-hooks/set-state-in-effect
@@ -24,6 +28,14 @@ export default function Home() {
       console.error(e);
     }
   }, []);
+
+  const solvedPercent = Math.min(
+    Math.round((totalSolved / TOTAL_PROBLEMS) * 100),
+    100
+  );
+
+  const cardHover =
+    "hover:shadow-2xl hover:-translate-y-1 transition-all duration-300";
 
   return (
     <div className="space-y-16 pb-20">
@@ -217,9 +229,22 @@ export default function Home() {
               <div className="text-[#5d5245] dark:text-[#d7ccbe]">Rating</div>
               <div className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">910</div>
             </div>
-            <div className="mt-2 flex items-center justify-between">
-              <div className="text-[#5d5245] dark:text-[#d7ccbe]">Solved</div>
-              <div className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">{totalSolved}</div>
+
+            {/* Progress Bar */}
+            <div className="mt-4">
+              <div className="flex justify-between text-xs mb-1">
+                <span>Progress</span>
+                <span>{solvedPercent}%</span>
+              </div>
+
+              <div className="h-2 w-full rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${solvedPercent}%` }}
+                  transition={{ duration: 0.8 }}
+                  className="h-full bg-gradient-to-r from-amber-500 to-orange-500"
+                />
+              </div>
             </div>
 
             <div className="mt-6 space-y-3 text-sm">

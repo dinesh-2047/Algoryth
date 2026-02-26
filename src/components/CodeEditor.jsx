@@ -19,6 +19,7 @@ export default function CodeEditor({
   const [code, setCode] = useState(initialCode || "");
   const [language, setLanguage] = useState(initialLanguage);
   const [theme, setTheme] = useState("vs-dark");
+  const [selectedTheme, setSelectedTheme] = useState("system");
   const [isFormatting, setIsFormatting] = useState(false);
 
   /* ---------------- File upload ---------------- */
@@ -66,6 +67,11 @@ export default function CodeEditor({
 
   /* ---------------- Theme sync ---------------- */
   useEffect(() => {
+    if (selectedTheme !== "system") {
+      setTheme(selectedTheme);
+      return;
+    }
+
     const updateTheme = () => {
       const isDark = document.documentElement.classList.contains("dark");
       setTheme(isDark ? "vs-dark" : "vs");
@@ -90,7 +96,7 @@ export default function CodeEditor({
       observer.disconnect();
       mq?.removeEventListener?.("change", handleSystemChange);
     };
-  }, []);
+  }, [selectedTheme]);
 
   /* ---------------- Auto format ---------------- */
   const handleAutoFormat = async () => {
@@ -165,6 +171,19 @@ export default function CodeEditor({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Theme Switcher */}
+            <select
+              className="h-9 rounded-full border border-[#deceb7] bg-[#fff8ed] px-3 text-xs font-semibold text-[#5d5245] outline-none dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe]"
+              value={selectedTheme}
+              onChange={(e) => setSelectedTheme(e.target.value)}
+              title="Editor Theme"
+            >
+              <option value="system">System</option>
+              <option value="vs-dark">Dark</option>
+              <option value="vs">Light</option>
+              <option value="hc-black">High Contrast</option>
+            </select>
+
             {/* Language */}
             <select
               className="h-9 rounded-full border border-[#deceb7] bg-[#fff8ed] px-3 text-xs font-semibold text-[#5d5245] outline-none dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe]"

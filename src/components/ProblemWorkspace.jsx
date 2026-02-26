@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { FileText, BookOpen, List, History, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import CodeEditor from "./CodeEditor";
 import SplitPane from "./SplitPane";
 import ProblemTimer from "./ProblemTimer";
 import Spinner from "./Spinner";
+import BadgeNotification from "./BadgeNotification";
 
 export default function ProblemWorkspace({ problem, onNext, onPrev }) {
   const [code, setCode] = useState("");
@@ -17,6 +18,9 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
   const [timerRunning, setTimerRunning] = useState(true);
   const [inputError, setInputError] = useState(null);
   const [openHints, setOpenHints] = useState([]);
+  const [newBadges, setNewBadges] = useState([]);
+  // Stable dismiss handler - prevents BadgeNotification effect from re-running on every render
+  const handleDismissBadges = useCallback(() => setNewBadges([]), []);
   
   // Tabs State
   const [activeTab, setActiveTab] = useState("Description");
@@ -130,8 +134,10 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
     setIsSubmitting(true);
     setLastSubmissionStatus(null);
     setInputError(null);
+    setNewBadges([]);
 
     let verdict = "Submission Error";
+    let earnedBadges = [];
 
     try {
       // Get token for authentication
@@ -155,6 +161,28 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       if (result.success === false) {
         verdict = result.error?.message || "Internal Error";
       } else {
+        // Capture new badges from response
+        if (result.newBadges && result.newBadges.length > 0) {
+          earnedBadges = result.newBadges;
+          setNewBadges(result.newBadges);
+        }
+
+        // Save to localStorage for dashboard tracking
+        try {
+          const raw = localStorage.getItem("algoryth_submissions");
+          const submissions = raw ? JSON.parse(raw) : [];
+          const newEntry = {
+            problemId: problem.id,
+            problemTitle: problem.title,
+            difficulty: problem.difficulty,
+            status: result.status,
+            language: language,
+            timestamp: new Date().toISOString(),
+          };
+          localStorage.setItem("algoryth_submissions", JSON.stringify([newEntry, ...submissions]));
+        } catch (e) {
+          console.error("Error saving submission to localStorage:", e);
+        }
         verdict = result.data?.verdict || result.verdict || "Unknown";
       }
 
@@ -288,7 +316,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
              {[1, 2, 3].map((i) => (
                <div key={i} className="cursor-pointer rounded-lg border border-[#e0d5c2] bg-white p-4 transition-all hover:shadow-sm dark:border-[#3c3347] dark:bg-[#211d27]">
                  <div className="flex items-center gap-3">
-                   <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500" />
+                   <div className="h-8 w-8 rounded-full bg-linear-to-br from-blue-400 to-purple-500" />
                    <div>
                      <div className="text-sm font-medium text-[#2b2116] dark:text-[#f6ede0]">User_{100+i}</div>
                      <div className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">JavaScript • 2ms • 45MB</div>
@@ -457,6 +485,10 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
 
   return (
     <section className="flex flex-col gap-4 min-h-0 flex-1">
+      <BadgeNotification 
+        badges={newBadges}
+        onDismiss={handleDismissBadges}
+      />
       <div className="flex items-center justify-between rounded-2xl border border-[#e0d5c2] bg-white px-4 py-3 dark:border-[#3c3347] dark:bg-[#211d27]">
         <div className="flex items-center gap-2">
           <Link 
