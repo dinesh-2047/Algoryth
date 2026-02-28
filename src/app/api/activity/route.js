@@ -6,8 +6,8 @@ import { verifyToken } from '../../../lib/db/middleware';
 
 /**
  * GET /api/activity
- * Returns daily submission counts for the past 365 days
- * Used to power the activity heatmap on the Achievements page
+ * Returns daily submission counts for the past 365 days.
+ * Used to power the activity heatmap on the Achievements page.
  */
 export async function GET(request) {
   try {
@@ -23,17 +23,20 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
+    // FIX 1: Validate decoded.userId before constructing ObjectId
+    // Prevents malformed payloads from throwing a 500 instead of returning 401
+    if (!mongoose.Types.ObjectId.isValid(decoded.userId)) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    const userId = new mongoose.Types.ObjectId(decoded.userId);
+
     await connectToDatabase();
 
-    const userId =
-      typeof decoded.userId === 'string'
-        ? new mongoose.Types.ObjectId(decoded.userId)
-        : decoded.userId;
-
-    // Go back exactly 365 days from today
+    // Go back exactly 365 days from today (UTC midnight)
     const oneYearAgo = new Date();
-    oneYearAgo.setDate(oneYearAgo.getDate() - 365);
-    oneYearAgo.setHours(0, 0, 0, 0);
+    oneYearAgo.setUTCDate(oneYearAgo.getUTCDate() - 365);
+    oneYearAgo.setUTCHours(0, 0, 0, 0);
 
     const activity = await Submission.aggregate([
       {
@@ -45,7 +48,7 @@ export async function GET(request) {
       {
         $group: {
           _id: {
-            $dateToString: { format: '%Y-%m-%d', date: '$submittedAt' },
+            $dateToString: { format: '%Y-%m-%d', date: '$submittedAt', timezone: 'UTC' },
           },
           count: { $sum: 1 },
         },

@@ -16,13 +16,26 @@ function getColorClass(count) {
   return 'bg-green-700 dark:bg-green-300';
 }
 
+/**
+ * FIX 2: Use UTC methods throughout to avoid off-by-one-day errors
+ * for users in non-UTC timezones (e.g. Asia/Tokyo, US/Pacific).
+ * Previously mixed local Date methods with toISOString() (UTC),
+ * which caused grid misalignment and activity map lookup failures.
+ */
 function buildGrid() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString().split('T')[0];
+  const now = new Date();
 
-  const start = new Date(today);
-  start.setDate(start.getDate() - start.getDay() - 51 * 7);
+  // Anchor today entirely in UTC
+  const todayUTC = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate()
+  ));
+  const todayStr = todayUTC.toISOString().split('T')[0];
+
+  // Start from the Sunday of the week 51 weeks ago — all in UTC
+  const startUTC = new Date(todayUTC);
+  startUTC.setUTCDate(startUTC.getUTCDate() - startUTC.getUTCDay() - 51 * 7);
 
   const weeks = [];
   const monthLabels = [];
@@ -31,14 +44,14 @@ function buildGrid() {
   for (let w = 0; w < 52; w++) {
     const week = [];
     for (let d = 0; d < 7; d++) {
-      const cell = new Date(start);
-      cell.setDate(start.getDate() + w * 7 + d);
+      const cell = new Date(startUTC);
+      cell.setUTCDate(startUTC.getUTCDate() + w * 7 + d);
       const dateStr = cell.toISOString().split('T')[0];
       const isFuture = dateStr > todayStr;
       week.push({ dateStr, isFuture });
 
       if (d === 0) {
-        const m = cell.getMonth();
+        const m = cell.getUTCMonth(); // UTC month to stay consistent
         if (m !== lastMonth) {
           monthLabels.push({ label: MONTH_NAMES[m], weekIndex: w });
           lastMonth = m;
@@ -69,9 +82,22 @@ export default function ActivityHeatmap({ token }) {
   const [activeDays, setActiveDays]             = useState(0);
   const containerRef = useRef(null);
 
+  /**
+   * FIX 3: Also refetch when user returns to the tab (visibilitychange).
+   * Previously data was only fetched on mount/token change, so submissions
+   * made in the same session would not appear until a full page reload.
+   */
   useEffect(() => {
     if (!token) { setLoading(false); return; }
+
     fetchActivity();
+
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') fetchActivity();
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [token]);
 
   async function fetchActivity() {
