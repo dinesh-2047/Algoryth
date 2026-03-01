@@ -4,38 +4,28 @@ import React, { useEffect, useRef } from 'react';
 import { CheckCircle, Code, Trophy, Award, BarChart3 } from 'lucide-react';
 
 export default function DashboardStats({ submissions = [], stats = null }) {
-  // Use provided stats if available, otherwise calculate from submissions
-  let displayStats = stats;
+  const displayStats = stats;
 
-  // Compute unique solved problems by ID and their difficulty
+  // FIX 1: Removed duplicate uniqueSolved declaration
+  // FIX 2: Changed s.status to s.verdict to match the Submission model
   const uniqueSolved = {};
   submissions.forEach((s) => {
-    if (s.status === 'Accepted' && s.problemId) {
-      uniqueSolved[s.problemId] = s.difficulty || 'Unknown';
+    if (s.verdict === 'Accepted' && s.problemId) {
+      uniqueSolved[s.problemId] = s.difficulty || 'Medium';
     }
   });
+
+  const total  = Object.keys(uniqueSolved).length;
+  const easy   = Object.values(uniqueSolved).filter(d => d === 'Easy').length;
+  const medium = Object.values(uniqueSolved).filter(d => d === 'Medium').length;
+  const hard   = Object.values(uniqueSolved).filter(d => d === 'Hard').length;
 
   // Animated counter for total
   const totalRef = useRef(null);
   const [displayTotal, setDisplayTotal] = React.useState(0);
-  
-  // Calculate unique solved problems
-  const uniqueSolved = {};
-  submissions.forEach(s => {
-    if (s.status === 'Accepted') {
-      uniqueSolved[s.problemId] = s.difficulty || 'Medium'; // Default to Medium if not provided
-    }
-  });
-
-  const total = Object.keys(uniqueSolved).length;
-  const easy = Object.values(uniqueSolved).filter(d => d === 'Easy').length;
-  const medium = Object.values(uniqueSolved).filter(d => d === 'Medium').length;
-  const hard = Object.values(uniqueSolved).filter(d => d === 'Hard').length;
 
   useEffect(() => {
-    if (total === 0) {
-      return;
-    }
+    if (total === 0) return;
     const step = Math.ceil(total / 30) || 1;
     let current = 0;
     const increment = () => {
@@ -47,7 +37,6 @@ export default function DashboardStats({ submissions = [], stats = null }) {
         requestAnimationFrame(increment);
       }
     };
-    // Use a timeout to avoid immediate setState in effect
     const timeout = setTimeout(increment, 0);
     return () => clearTimeout(timeout);
   }, [total]);
@@ -58,13 +47,13 @@ export default function DashboardStats({ submissions = [], stats = null }) {
     const lang = s.language || 'unknown';
     languages[lang] = (languages[lang] || 0) + 1;
   });
-  
+
   const sortedLanguages = Object.entries(languages)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
-  const totalPossible = 100; // Placeholder for total problems in system
-  
+  const totalPossible = 100;
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {/* Overview Card */}
@@ -76,12 +65,14 @@ export default function DashboardStats({ submissions = [], stats = null }) {
           <Trophy className="h-5 w-5 text-[#d69a44] dark:text-[#f2c66f] animate-bounce" />
         </div>
         <div className="flex items-baseline gap-2">
-          <span ref={totalRef} className="text-4xl font-extrabold text-[#2b2116] dark:text-[#f6ede0] drop-shadow-lg">{displayTotal}</span>
+          <span ref={totalRef} className="text-4xl font-extrabold text-[#2b2116] dark:text-[#f6ede0] drop-shadow-lg">
+            {displayTotal}
+          </span>
           <span className="text-sm text-[#5d5245] dark:text-[#d7ccbe]">problems solved</span>
         </div>
         <div className="mt-4 flex gap-2">
           <div className="h-2 flex-1 rounded-full bg-[#f2e3cc] dark:bg-[#2d2535] overflow-hidden">
-            <div 
+            <div
               className="h-full bg-linear-to-r from-[#d69a44] via-[#f2c66f] to-[#f7e6ff] dark:from-[#f2c66f] dark:to-[#a78bfa] transition-all duration-700"
               style={{ width: `${Math.min(100, (total / totalPossible) * 100)}%` }}
             />
@@ -96,9 +87,9 @@ export default function DashboardStats({ submissions = [], stats = null }) {
           <BarChart3 className="h-4 w-4 text-[#a78bfa]" /> Difficulty
         </h3>
         <div className="space-y-4">
-          <DifficultyRow label="Easy" count={easy} color="text-green-600 dark:text-green-400" />
+          <DifficultyRow label="Easy"   count={easy}   color="text-green-600 dark:text-green-400" />
           <DifficultyRow label="Medium" count={medium} color="text-yellow-600 dark:text-yellow-400" />
-          <DifficultyRow label="Hard" count={hard} color="text-red-600 dark:text-red-400" />
+          <DifficultyRow label="Hard"   count={hard}   color="text-red-600 dark:text-red-400" />
         </div>
         <div className="absolute left-0 top-0 w-16 h-16 bg-[#a78bfa]/20 dark:bg-[#a78bfa]/10 rounded-br-3xl blur-2xl animate-pulse" />
       </div>
