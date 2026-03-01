@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Sparkles, Target } from 'lucide-react';
 import BadgeShowcase from './BadgeShowcase';
+import ActivityHeatmap from './ActivityHeatmap';
 import Tabs from './Tabs';
 
 /**
@@ -17,7 +18,7 @@ export default function BadgePage({ token }) {
   const tabs = [
     { id: 'showcase', label: 'All Badges', icon: Trophy },
     { id: 'progress', label: 'My Progress', icon: Target },
-    { id: 'stats', label: 'Statistics', icon: Sparkles },
+    { id: 'stats',    label: 'Statistics',  icon: Sparkles },
   ];
 
   return (
@@ -83,10 +84,12 @@ export default function BadgePage({ token }) {
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.3 }}
         >
+          {/* ── All Badges ── */}
           {activeTab === 'showcase' && (
             <BadgeShowcase token={token} />
           )}
 
+          {/* ── My Progress ── */}
           {activeTab === 'progress' && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -105,12 +108,17 @@ export default function BadgePage({ token }) {
             </motion.div>
           )}
 
+          {/* ── Statistics ── */}
           {activeTab === 'stats' && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="space-y-4"
+              className="space-y-6"
             >
+              {/* Activity Heatmap — sits at the top of Statistics */}
+              <ActivityHeatmap token={token} />
+
+              {/* Badge statistics cards */}
               <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-6">
                 <h3 className="text-lg font-bold text-purple-900 dark:text-purple-200 mb-4">
                   Badge Statistics
