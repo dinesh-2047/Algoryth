@@ -11,7 +11,7 @@ export default function DashboardStats({ submissions = [], stats = null }) {
   const uniqueSolved = {};
   submissions.forEach((s) => {
     if (s.verdict === 'Accepted' && s.problemId) {
-      uniqueSolved[s.problemId] = s.difficulty || 'Medium';
+      uniqueSolved[s.problemId] = s.difficulty || 'Unknown';
     }
   });
 
