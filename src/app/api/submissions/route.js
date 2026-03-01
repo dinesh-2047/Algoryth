@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { getProblemBySlug } from "../../../lib/problems";
 import { connectToDatabase } from "../../../lib/db/connect";
-import Submission from "../../../lib/db/models/Submission";
-import User from "../../../lib/db/models/User";
-import { verifyToken } from "../../../lib/db/middleware";
-import { checkAndAwardBadges } from "../../../lib/db/badges/badgeUtils";
+import UserProblem from "../../../lib/db/models/UserProblem";
+import jwt from "jsonwebtoken";
 
 export async function POST(request) {
   const startTime = Date.now();
@@ -26,212 +24,128 @@ export async function POST(request) {
       }
     }
 
-    if (!code || code.trim().length === 0) {
-      return NextResponse.json(
-        { verdict: "Error", message: "Empty code" },
-        { status: 400 }
-      );
+    if (!slug || typeof slug !== "string") {
+      return NextResponse.json({ verdict: "Error", message: "Missing problem slug" }, { status: 400 });
+    }
+    if (!code || !code.toString().trim()) {
+      return NextResponse.json({ verdict: "Error", message: "Empty code" }, { status: 400 });
     }
 
     const problem = getProblemBySlug(slug);
-
-    if (!problem || !problem.testCases) {
-      return NextResponse.json(
-        { verdict: "Error", message: "Problem or test cases not found" },
-        { status: 404 }
-      );
+    if (!problem) {
+      return NextResponse.json({ verdict: "Error", message: "Problem not found" }, { status: 404 });
     }
 
-    let userFunction;
-    let executionTime = 0;
-    let verdict = "Error";
-    let error = null;
+    // Accept either `testCases` or `examples` from the problem definition
+    const tests = (problem.testCases && problem.testCases.length ? problem.testCases : (problem.examples || []));
+    if (!tests || tests.length === 0) {
+      return NextResponse.json({ verdict: "Error", message: "No test cases available for this problem" }, { status: 404 });
+    }
 
+    // Try to obtain the submitted `solve` function
+    let solveFn;
     try {
-      // User must define solve(input)
-      userFunction = new Function(
-        `${code}; return solve;`
-      )();
-    } catch (err) {
-      verdict = "Compilation Error";
-      error = err.toString();
-
-      // Save failed compilation submission to database
-      if (userId) {
-        try {
-          await connectToDatabase();
-          
-          const submission = new Submission({
-            userId,
-            problemSlug: slug,
-            problemId: problem.id,
-            problemTitle: problem.title,
-            code,
-            language,
-            verdict,
-            difficulty: problem.difficulty,
-            submittedAt: new Date(),
-          });
-          
-          await submission.save();
-          
-          // Update user stats for failed submission
-          await updateUserStatsOnSubmission(userId, verdict, slug);
-        } catch (dbError) {
-          console.error('Error saving compilation error to database:', dbError);
-        }
+      // The user's code must export/define a `solve` function
+      solveFn = new Function(`${code}; return solve;`)();
+      if (typeof solveFn !== "function") {
+        return NextResponse.json({ verdict: "Error", message: "Submitted code must define a `solve` function" }, { status: 400 });
       }
-      
-      return NextResponse.json({
-        verdict,
-        error,
-        verdict: "Compilation Error",
-        error: err.toString(),
-      });
+    } catch (e) {
+      return NextResponse.json({ verdict: "Runtime Error", error: e?.toString() || String(e) });
     }
 
-    // Run test cases and measure execution time
-    const testStartTime = Date.now();
-    for (const test of problem.testCases) {
-      let userOutput;
+    let verdict = "Accepted";
+    let expected = null;
+    let actual = null;
+    let runtimeError = null;
 
+    // Evaluate tests sequentially; stop on first failure but keep verdict for DB save
+    for (const t of tests) {
+      // parse input: if JSON, pass parsed value; otherwise pass raw string
+      let inputValue;
       try {
-        userOutput = userFunction(JSON.parse(test.input));
-      } catch (err) {
-        verdict = "Runtime Error";
-        error = err.toString();
-        
-        // Save runtime error submission
-        // Save Runtime Error to database
-        if (userId) {
-          try {
-            await connectToDatabase();
-            
-            const submission = new Submission({
-              userId,
-              problemSlug: slug,
-              problemId: problem.id,
-              problemTitle: problem.title,
-              code,
-              language,
-              verdict,
-              difficulty: problem.difficulty,
-              executionTime: Date.now() - testStartTime,
-              verdict: "Runtime Error",
-              difficulty: problem.difficulty,
-              submittedAt: new Date(),
-            });
-            
-            await submission.save();
-            await updateUserStatsOnSubmission(userId, verdict, slug);
-          } catch (dbError) {
-            console.error('Error saving runtime error to database:', dbError);
-          }
-        }
-
-        
-        return NextResponse.json({
-          verdict,
-          error,
-        });
+        inputValue = JSON.parse(t.input);
+      } catch {
+        inputValue = t.input;
       }
 
-      const expected = JSON.stringify(
-        JSON.parse(test.output)
-      );
+      // run user solution
+      let userOutput;
+      try {
+        userOutput = await Promise.resolve(solveFn(inputValue));
+      } catch (e) {
+        verdict = "Runtime Error";
+        runtimeError = e?.toString() || String(e);
+        break;
+      }
 
-      const actual = JSON.stringify(userOutput);
+      // normalize expected and actual for comparison and response
+      try {
+        expected = JSON.stringify(JSON.parse(t.output));
+      } catch {
+        expected = JSON.stringify(t.output);
+      }
+
+      actual = JSON.stringify(userOutput);
 
       if (actual !== expected) {
         verdict = "Wrong Answer";
-        executionTime = Date.now() - testStartTime;
-
-        // Save wrong answer submission
-        // Save Wrong Answer to database
-        if (userId) {
-          try {
-            await connectToDatabase();
-            
-            const submission = new Submission({
-              userId,
-              problemSlug: slug,
-              problemId: problem.id,
-              problemTitle: problem.title,
-              code,
-              language,
-              verdict,
-              difficulty: problem.difficulty,
-              executionTime,
-              verdict: "Wrong Answer",
-              difficulty: problem.difficulty,
-              submittedAt: new Date(),
-            });
-            
-            await submission.save();
-            await updateUserStatsOnSubmission(userId, verdict, slug);
-          } catch (dbError) {
-            console.error('Error saving wrong answer to database:', dbError);
-          }
-        }
-
-        
-        return NextResponse.json({
-          verdict,
-          expected,
-          actual,
-        });
+        break;
       }
     }
 
-    // All tests passed - Accepted
-    verdict = "Accepted";
-    executionTime = Date.now() - startTime;
-
-    // Save accepted submission to database and check badges
-    const badgeResult = { newBadges: [] };
-    
-    // Save submission to database if user is authenticated
-    if (userId) {
+    // If user is authenticated, attempt to save the submission (do not fail request on DB errors)
+    const authHeader = request.headers.get("authorization");
+    if (authHeader && authHeader.startsWith("Bearer ")) {
       try {
-        await connectToDatabase();
-        
-        const submission = new Submission({
-          userId,
-          problemSlug: slug,
-          problemId: problem.id,
-          problemTitle: problem.title,
-          code,
-          language,
-          verdict,
-          difficulty: problem.difficulty,
-          executionTime,
-          verdict: "Accepted",
-          difficulty: problem.difficulty,
-          submittedAt: new Date(),
-        });
-        
-        await submission.save();
+        const token = authHeader.slice(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback_secret_key");
+        const userId = decoded?.userId;
+        if (userId) {
+          await connectToDatabase();
 
-        // Update user stats and get new badges
-        await updateUserStatsOnSubmission(userId, verdict, slug);
-        const badgeCheckResult = await checkAndAwardBadges(userId);
-        badgeResult.newBadges = badgeCheckResult.newBadges || [];
-      } catch (dbError) {
-        console.error('Error saving accepted submission to database:', dbError);
+          let userProblem = await UserProblem.findOne({ userId, problemId: problem.id });
+          if (!userProblem) {
+            userProblem = new UserProblem({
+              userId,
+              problemId: problem.id,
+              problemSlug: problem.slug,
+              problemTitle: problem.title,
+              status: verdict === "Accepted" ? "Solved" : "Attempted",
+            });
+          } else {
+            if (verdict === "Accepted" && userProblem.status !== "Solved") {
+              userProblem.status = "Solved";
+              userProblem.solvedAt = new Date();
+            } else if (verdict !== "Accepted" && userProblem.status === "Unsolved") {
+              userProblem.status = "Attempted";
+            }
+          }
+
+          userProblem.submissions = userProblem.submissions || [];
+          userProblem.submissions.push({ code, language: "javascript", verdict, timestamp: new Date() });
+          userProblem.lastSubmissionAt = new Date();
+          await userProblem.save();
+        }
+      } catch (e) {
+        // Keep the response simple; log minimal info for server-side debugging
+        console.error("submissions: failed to save submission:", e?.message || e);
       }
     }
 
-    return NextResponse.json({
-      verdict,
-      executionTime,
-      newBadges: badgeResult.newBadges,
-    });
-  } catch (err) {
-    console.error('Submission error:', err);
-    return NextResponse.json(
-      { verdict: "Error", message: "Invalid request" },
-      { status: 400 }
-    );
+    // Prepare response
+    const responseBody = { verdict };
+    if (verdict === "Wrong Answer") {
+      responseBody.expected = expected;
+      responseBody.actual = actual;
+    }
+    if (verdict === "Runtime Error") {
+      responseBody.error = runtimeError;
+    }
+
+    return NextResponse.json(responseBody);
+  } catch (e) {
+    return NextResponse.json({ verdict: "Error", message: "Invalid request", details: e?.toString?.() || String(e) }, { status: 400 });
   }
 }
 

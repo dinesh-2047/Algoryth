@@ -2,12 +2,16 @@
 import { useEffect, useState, Suspense, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import ProblemCard from "../../components/ProblemCard";
+import { useAuth } from "../../context/AuthContext";
+import { fetchProblemStatuses } from "../../lib/problemStatusApi";
 
 function ProblemsPageContent() {
   const [problems, setProblems] = useState([]);
   const [bookmarkedProblems, setBookmarkedProblems] = useState([]);
   const [highlightedId, setHighlightedId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [statusMap, setStatusMap] = useState({});
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -68,6 +72,32 @@ function ProblemsPageContent() {
       }
     }
   }, []);
+
+  // Fetch problem statuses when user changes
+  useEffect(() => {
+    const loadStatuses = async () => {
+      if (user && typeof window !== "undefined") {
+        const statuses = await fetchProblemStatuses();
+        setStatusMap(statuses);
+      } else {
+        setStatusMap({});
+      }
+    };
+    loadStatuses();
+  }, [user]);
+
+  // Refetch statuses when the page comes back into focus
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && user) {
+        const statuses = await fetchProblemStatuses();
+        setStatusMap(statuses);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [user]);
 
   const updateURL = (newSearch, newDifficulty, newTags, newSort) => {
     const params = new URLSearchParams();
@@ -298,6 +328,7 @@ const displayProblems = useMemo(() => {
               onBookmark={handleBookmark}
               isBookmarked={bookmarkedProblems.includes(dailyProblem.id)}
               onMoveToTop={handleMoveToTop}
+              statusMap={statusMap}
             />
           </div>
         </div>
@@ -326,6 +357,7 @@ const displayProblems = useMemo(() => {
               isBookmarked={bookmarkedProblems.includes(problem.id)}
               onMoveToTop={handleMoveToTop}
               isHighlighted={highlightedId === problem.id}
+              statusMap={statusMap}
             />
           ))}
         </div>
