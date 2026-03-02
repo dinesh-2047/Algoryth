@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Trophy, Flame, BookOpen, ArrowRight } from "lucide-react";
@@ -20,7 +22,8 @@ export default function Home() {
       const uniqueSolved = new Set(
         parsed.filter((s) => s.status === 'Accepted').map((s) => s.problemId)
       );
-      setTotalSolved(uniqueSolved.size);
+      setStats(prev => ({ ...prev, total: uniqueSolved.size }));
+      setTotalSolved(uniqueSolved.size); // eslint-disable-line react-hooks/set-state-in-effect
     } catch (e) {
       console.error(e);
     }
@@ -35,236 +38,196 @@ export default function Home() {
     "hover:shadow-2xl hover:-translate-y-1 transition-all duration-300";
 
   return (
-    <div className="relative">
+    <div className="space-y-16 pb-20">
 
-      {/* Animated Background */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute w-[600px] h-[600px] bg-amber-400/20 rounded-full blur-3xl animate-pulse top-[-200px] left-[-200px]" />
-        <div className="absolute w-[500px] h-[500px] bg-indigo-500/20 rounded-full blur-3xl animate-pulse bottom-[-200px] right-[-200px]" />
-      </div>
+      {/* ================= HERO ================= */}
+      <motion.section
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-700 via-purple-700 to-fuchsia-600 p-12 text-white shadow-[0_20px_60px_rgba(99,102,241,0.4)]"
+      >
+        <div className="relative z-10 max-w-2xl">
+          <h1 className="text-5xl font-extrabold leading-tight tracking-tight">
+            Master Data Structures <br /> & Algorithms
+          </h1>
 
-      <section className="grid gap-8 lg:grid-cols-[1fr_360px]">
-        
-        {/* LEFT SECTION */}
-        <div className="grid gap-6">
+          <p className="mt-5 text-lg text-white/90">
+            Solve problems, boost your rating, and crack top tech interviews
+            with structured learning paths.
+          </p>
 
-          {/* Hero Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className={`rounded-3xl p-8 bg-gradient-to-br from-amber-400/20 to-orange-500/10 backdrop-blur-xl border border-amber-200/30 dark:border-amber-900/30 ${cardHover}`}
-          >
-            <h1 className="text-3xl font-bold text-zinc-800 dark:text-white">
-              Welcome to Algoryth 🚀
-            </h1>
-            <p className="mt-3 text-zinc-600 dark:text-zinc-300">
-              Sharpen your coding skills. Master DSA. Prepare for interviews like a pro.
-            </p>
-
+          <div className="mt-8 flex gap-5">
             <Link
               href="/problems"
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:scale-105 transition-all duration-300"
+              className="group relative overflow-hidden rounded-full bg-white px-8 py-3 text-sm font-semibold text-indigo-700 shadow-lg transition-all duration-300 hover:scale-105"
             >
-              Start Solving
-              <ArrowRight size={16} />
+              <span className="relative z-10">Start Solving</span>
+              <span className="absolute inset-0 bg-indigo-100 opacity-0 group-hover:opacity-100 transition"></span>
             </Link>
-          </motion.div>
-
-          {/* Quick Start */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className={`rounded-3xl p-6 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 ${cardHover}`}
-          >
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Flame size={18} className="text-orange-500" />
-              Recommended Problems
-            </h2>
-
-            {[
-              { title: "Two Sum", slug: "two-sum", diff: "Easy" },
-              { title: "Valid Parentheses", slug: "valid-parentheses", diff: "Easy" },
-              { title: "Maximum Subarray", slug: "max-subarray", diff: "Medium" },
-            ].map((p) => (
-              <Link
-                key={p.slug}
-                href={`/problems/${p.slug}`}
-                className="flex items-center justify-between p-3 rounded-xl hover:bg-amber-100/40 dark:hover:bg-zinc-800 transition-all duration-300"
-              >
-                <span className="font-medium">{p.title}</span>
-                <span className="text-xs px-2 py-1 rounded-full bg-zinc-200 dark:bg-zinc-700">
-                  {p.diff}
-                </span>
-              </Link>
-            ))}
-          </motion.div>
-
-          {/* Learn Section */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className={`rounded-3xl p-6 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 backdrop-blur-xl border border-indigo-200/30 dark:border-indigo-900/30 ${cardHover}`}
-          >
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <BookOpen size={18} className="text-indigo-500" />
-              DSA Roadmap
-            </h2>
-
-            <ul className="mt-4 space-y-2 text-sm text-zinc-600 dark:text-zinc-300">
-              <li>• Topic-wise learning path</li>
-              <li>• Curated problems</li>
-              <li>• Interview preparation</li>
-            </ul>
 
             <Link
               href="/topics"
-              className="mt-5 inline-flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-medium hover:underline"
+              className="rounded-full border border-white/60 px-8 py-3 text-sm font-semibold backdrop-blur-md transition-all duration-300 hover:bg-white hover:text-indigo-700 hover:scale-105"
             >
-              Explore Roadmap <ArrowRight size={14} />
+              View Roadmap
             </Link>
+          </div>
+        </div>
+
+        {/* Glow Effects */}
+        <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-white/20 blur-3xl animate-pulse" />
+        <div className="absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-pink-400/30 blur-3xl animate-pulse" />
+      </motion.section>
+
+      {/* ================= MAIN GRID ================= */}
+      <section className="grid gap-10 lg:grid-cols-[1fr_340px]">
+
+        {/* LEFT SIDE */}
+        <div className="space-y-10">
+
+          {/* Announcement */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="rounded-3xl bg-white/80 dark:bg-[#1a1a1a] backdrop-blur-lg shadow-xl border border-gray-200 dark:border-gray-800 transition-all duration-300"
+          >
+            <div className="border-b px-8 py-5">
+              <div className="text-xs font-semibold uppercase tracking-widest text-indigo-500">
+                Announcement
+              </div>
+              <h2 className="mt-2 text-2xl font-bold">
+                Welcome to Algoryth 🚀
+              </h2>
+            </div>
+
+            <div className="px-8 py-6 text-sm text-gray-600 dark:text-gray-300">
+              Start solving problems today and build consistency. Even 2
+              problems daily can change your career.
+            </div>
           </motion.div>
 
-          {/* Achievements */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className={`rounded-3xl p-6 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 ${cardHover}`}
-          >
-            <div className="font-semibold mb-4">Achievements</div>
 
-            <div className="grid grid-cols-3 gap-4 text-center">
+          {/* Quick Start */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="rounded-3xl bg-white dark:bg-[#1a1a1a] shadow-xl border border-gray-200 dark:border-gray-800"
+          >
+            <div className="border-b px-8 py-5">
+              <div className="text-xs font-semibold uppercase tracking-widest text-purple-500">
+                Quick Start
+              </div>
+              <div className="mt-1 text-sm text-gray-500">
+                Recommended problems
+              </div>
+            </div>
+
+            <div className="divide-y">
               {[
-                { icon: Flame, label: "3 Day Streak", color: "text-orange-500" },
-                { icon: Trophy, label: "50 Solved", color: "text-yellow-500" },
-                { icon: BookOpen, label: "DSA Master", color: "text-indigo-500" },
-              ].map((badge, i) => (
-                <motion.div
-                  key={i}
-                  whileHover={{ scale: 1.1 }}
-                  className="flex flex-col items-center gap-2 p-3 rounded-xl bg-zinc-100 dark:bg-zinc-800"
+                { title: "Two Sum", slug: "two-sum", diff: "Easy" },
+                { title: "Valid Parentheses", slug: "valid-parentheses", diff: "Easy" },
+                { title: "Maximum Subarray", slug: "max-subarray", diff: "Medium" },
+              ].map((p) => (
+                <Link
+                  key={p.slug}
+                  href={`/problems/${p.slug}`}
+                  className="flex items-center justify-between px-8 py-5 transition-all duration-300 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-[#222] dark:hover:to-[#2b2b2b] hover:translate-x-1"
                 >
-                  <badge.icon className={badge.color} size={22} />
-                  <span className="text-xs">{badge.label}</span>
-                </motion.div>
+                  <div className="font-semibold">{p.title}</div>
+                  <div className={`text-xs font-medium px-3 py-1 rounded-full ${
+                    p.diff === "Easy"
+                      ? "bg-green-100 text-green-600"
+                      : "bg-yellow-100 text-yellow-600"
+                  }`}>
+                    {p.diff}
+                  </div>
+                </Link>
               ))}
+            </div>
+          </motion.div>
+
+
+          {/* Learn Section */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="rounded-3xl bg-white dark:bg-[#1a1a1a] shadow-xl border border-gray-200 dark:border-gray-800"
+          >
+            <div className="border-b px-8 py-5">
+              <div className="text-xs font-semibold uppercase tracking-widest text-pink-500">
+                Learn
+              </div>
+              <h2 className="mt-2 text-xl font-bold">
+                Structured Learning Path
+              </h2>
+              <p className="mt-1 text-sm text-gray-500">
+                Topic-wise roadmap from beginner to advanced.
+              </p>
+            </div>
+
+            <div className="px-8 py-6">
+              <ul className="mb-6 space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                <li>✔ Topic-wise modules</li>
+                <li>✔ Curated difficulty progression</li>
+                <li>✔ Interview preparation focus</li>
+              </ul>
+
+              <Link
+                href="/topics"
+                className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-8 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:bg-indigo-700 hover:scale-105"
+              >
+                Explore Roadmap →
+              </Link>
             </div>
           </motion.div>
         </div>
 
-        {/* RIGHT SIDEBAR */}
-        <aside className="grid gap-6">
+
+        {/* ================= RIGHT SIDEBAR ================= */}
+        <aside className="space-y-10">
 
           {/* Contest Card */}
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-            className={`rounded-3xl p-6 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 ${cardHover}`}
+            whileHover={{ scale: 1.05 }}
+            className="rounded-3xl bg-gradient-to-br from-purple-600 to-indigo-700 p-8 text-white shadow-2xl transition"
           >
-            <div className="flex items-center gap-2 font-semibold">
-              <Trophy size={18} className="text-yellow-500" />
-              Weekly Contest
+            <div className="text-xl font-bold">
+              Weekly Contest 🔥
+            </div>
+            <div className="mt-2 text-sm text-white/90">
+              Practice Round · Improve your speed
             </div>
 
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
-              Algoryth Practice Round is live now!
-            </p>
-
-            <button className="mt-4 w-full rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 py-2 text-sm font-semibold text-white hover:scale-105 transition-all duration-300">
+            <button
+              type="button"
+              className="mt-6 w-full rounded-full bg-white py-3 text-sm font-semibold text-indigo-700 shadow-md transition-all duration-300 hover:bg-gray-100 hover:scale-105"
+            >
               Register Soon
             </button>
           </motion.div>
 
-          {/* Daily Streak */}
+
+          {/* Profile Card */}
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            className={`rounded-3xl p-6 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 ${cardHover}`}
+            whileHover={{ scale: 1.03 }}
+            className="rounded-3xl bg-white dark:bg-[#1a1a1a] shadow-xl border border-gray-200 dark:border-gray-800 p-8"
           >
-            <div className="flex items-center gap-2 font-semibold">
-              <Flame size={18} className="text-orange-500" />
-              Daily Streak
-            </div>
-
-            <div className="mt-4 text-3xl font-bold text-orange-500">
-              {streak} 🔥
-            </div>
-
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              Solve 1 problem daily to maintain streak.
-            </p>
-          </motion.div>
-
-          {/* Leaderboard Preview */}
-          <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            className={`rounded-3xl p-6 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 ${cardHover}`}
-          >
-            <div className="flex items-center gap-2 font-semibold">
-              <Trophy size={18} className="text-yellow-500" />
-              Leaderboard
-            </div>
-
-            <div className="mt-4 space-y-2 text-sm">
-              {[
-                { name: "Aarav", score: 1200 },
-                { name: "Riya", score: 1100 },
-                { name: user?.name || "You", score: 910 },
-              ].map((player, index) => (
-                <div
-                  key={index}
-                  className={`flex justify-between p-2 rounded-lg ${
-                    player.name === user?.name
-                      ? "bg-amber-100 dark:bg-zinc-800 font-semibold"
-                      : ""
-                  }`}
-                >
-                  <span>#{index + 1} {player.name}</span>
-                  <span>{player.score}</span>
-                </div>
-              ))}
-            </div>
-
-            <Link
-              href="/leaderboard"
-              className="mt-4 inline-block text-sm text-amber-600 hover:underline"
-            >
-              View Full Leaderboard →
-            </Link>
-          </motion.div>
-
-          {/* User Card */}
-          <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className={`rounded-3xl p-6 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 ${cardHover}`}
-          >
-            <div className="text-lg font-semibold">
+            <div className="text-xl font-bold">
               {user ? user.name : "Guest"}
             </div>
 
-            <div className="mt-4 space-y-3 text-sm">
+            <div className="mt-6 space-y-3 text-sm">
               <div className="flex justify-between">
-                <span>Rating</span>
-                <span className="font-semibold">910</span>
+                <span className="text-gray-500">Rating</span>
+                <span className="font-bold text-indigo-600">{stats.rating}</span>
               </div>
-
               <div className="flex justify-between">
-                <span>Solved</span>
-                <motion.span
-                  key={totalSolved}
-                  initial={{ scale: 0.8 }}
-                  animate={{ scale: 1 }}
-                  className="font-semibold text-amber-600"
-                >
-                  {totalSolved}
-                </motion.span>
+                <span className="text-gray-500">Solved</span>
+                <span className="font-bold text-green-600">{stats.total}</span>
               </div>
+          </div>
+          <div className="px-5 py-5 text-sm">
+            <div className="flex items-center justify-between">
+              <div className="text-[#5d5245] dark:text-[#d7ccbe]">Rating</div>
+              <div className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">910</div>
             </div>
 
             {/* Progress Bar */}
@@ -284,22 +247,18 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="mt-6 space-y-2 text-sm">
-              <Link href="/dashboard" className="block hover:text-amber-600 transition">
-                My Dashboard
-              </Link>
-              <Link href="/bookmarks" className="block hover:text-amber-600 transition">
-                Bookmarks
-              </Link>
-              <Link href="/submissions" className="block hover:text-amber-600 transition">
-                Submissions
-              </Link>
-              <Link href="/settings" className="block hover:text-amber-600 transition">
-                Settings
-              </Link>
+            <div className="mt-6 space-y-3 text-sm">
+              {["Dashboard", "Bookmarks", "Settings", "Submissions"].map((item) => (
+                <Link
+                  key={item}
+                  href={`/${item.toLowerCase()}`}
+                  className="block font-medium transition-all duration-300 hover:text-indigo-600 hover:translate-x-1"
+                >
+                  {item}
+                </Link>
+              ))}
             </div>
           </motion.div>
-
         </aside>
       </section>
     </div>
