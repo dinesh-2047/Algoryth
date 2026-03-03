@@ -15,7 +15,7 @@ export function GET(
     id: problem.id,
     slug: problem.slug,
     title: problem.title,
-    difficulty: problem.difficulty,
+    rating: problem.rating,
     tags: problem.tags,
     statement: problem.statement,
     constraints: problem.constraints,

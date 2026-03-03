@@ -3,32 +3,28 @@
 import Link from "next/link";
 import { CheckCircle2, FileText, ArrowUpFromLine } from "lucide-react";
 
-function getDifficultyColor(difficulty) {
-  switch (difficulty) {
-    case "Easy":
-      return {
-        bg: "bg-emerald-100 dark:bg-emerald-900",
-        text: "text-emerald-700 dark:text-emerald-300",
-        border: "border-emerald-300 dark:border-emerald-700",
-      };
-    case "Medium":
-      return {
-        bg: "bg-amber-100 dark:bg-amber-900",
-        text: "text-amber-700 dark:text-amber-300",
-        border: "border-amber-300 dark:border-amber-700",
-      };
-    case "Hard":
-      return {
-        bg: "bg-rose-100 dark:bg-rose-900",
-        text: "text-rose-700 dark:text-rose-300",
-        border: "border-rose-300 dark:border-rose-700",
-      };
-    default:
-      return {
-        bg: "bg-zinc-100 dark:bg-zinc-900",
-        text: "text-zinc-700 dark:text-zinc-300",
-        border: "border-zinc-300 dark:border-zinc-700",
-      };
+function getRatingColor(rating) {
+  if (rating < 1300) {
+    // Easy range (800-1200)
+    return {
+      bg: "bg-emerald-100 dark:bg-emerald-900",
+      text: "text-emerald-700 dark:text-emerald-300",
+      border: "border-emerald-300 dark:border-emerald-700",
+    };
+  } else if (rating < 1900) {
+    // Medium range (1300-1800)
+    return {
+      bg: "bg-amber-100 dark:bg-amber-900",
+      text: "text-amber-700 dark:text-amber-300",
+      border: "border-amber-300 dark:border-amber-700",
+    };
+  } else {
+    // Hard range (1900+)
+    return {
+      bg: "bg-rose-100 dark:bg-rose-900",
+      text: "text-rose-700 dark:text-rose-300",
+      border: "border-rose-300 dark:border-rose-700",
+    };
   }
 }
 
@@ -52,7 +48,7 @@ export default function ProblemCard({
   onMoveToTop,
   isHighlighted,
 }) {
-  const difficultyColor = getDifficultyColor(problem.difficulty);
+  const ratingColor = getRatingColor(problem.rating);
 
   return (
     <div className={`group relative h-full rounded-xl border-2 bg-white p-6 transition-all duration-300 hover:shadow-lg hover:border-[#d69a44] dark:bg-[#211d27] dark:hover:border-[#f2c66f] ${isHighlighted ? "ring-4 ring-[#d69a44]/50 scale-[1.02] border-[#d69a44] dark:ring-[#f2c66f]/50 dark:border-[#f2c66f]" : "border-[#e0d5c2] dark:border-[#3c3347]"}`}>
@@ -81,12 +77,12 @@ export default function ProblemCard({
         {problem.id}
       </p>
 
-      {/* Difficulty badge */}
+      {/* Rating badge */}
       <div className="mb-4">
         <span
-          className={`inline-flex items-center rounded-full border-2 px-4 py-1.5 text-xs font-semibold ${difficultyColor.text} ${difficultyColor.bg} ${difficultyColor.border}`}
+          className={`inline-flex items-center rounded-full border-2 px-4 py-1.5 text-xs font-semibold ${ratingColor.text} ${ratingColor.bg} ${ratingColor.border}`}
         >
-          ● {problem.difficulty}
+          ● {problem.rating}
         </span>
       </div>
 
