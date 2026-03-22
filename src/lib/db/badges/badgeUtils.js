@@ -4,9 +4,6 @@ import UserBadge from '../models/UserBadge';
 import User from '../models/User';
 import {
   getConsecutiveAcceptedCount,
-  getFailureCountBeforeSuccess,
-  getProblemsCountByDifficulty,
-  getLanguagesUsed,
 } from '../submissions/submissionStats';
 
 /**
@@ -118,38 +115,6 @@ async function evaluateBadgeCriteriaAsync(badge, user) {
   }
 }
 
-/**
- * Evaluate if a user meets the criteria for a specific badge (sync version)
- * @param {Object} badge - Badge document from DB
- * @param {Object} user - User document from DB with stats
- * @returns {boolean} - Whether user qualifies for the badge
- */
-function evaluateBadgeCriteria(badge, user) {
-  const { criteria } = badge;
-
-  switch (criteria.type) {
-    case 'milestone':
-      return evaluateMilestoneCriteria(criteria, user);
-
-    case 'streak':
-      return evaluateStreakCriteria(criteria, user);
-
-    case 'performance':
-      return evaluatePerformanceCriteria(criteria, user);
-
-    case 'accuracy':
-      return evaluateAccuracyCriteria(criteria, user);
-
-    case 'first-try':
-      return evaluateFirstTryCriteria(criteria, user);
-
-    case 'hidden':
-      return evaluateHiddenCriteria(criteria, user);
-
-    default:
-      return false;
-  }
-}
 
 /**
  * Evaluate milestone badges (problem count based)
@@ -172,16 +137,6 @@ function evaluateMilestoneCriteria(criteria, user) {
   return false;
 }
 
-/**
- * Evaluate difficulty-based badges (needs async evaluation)
- */
-async function evaluateDifficultyCriteria(criteria, user) {
-  if (criteria.condition.includes('solvedAllDifficulties === true')) {
-    return false; // Will be enhanced in async evaluator
-  }
-
-  return false;
-}
 
 /**
  * Evaluate streak badges
@@ -198,34 +153,12 @@ function evaluateStreakCriteria(criteria, user) {
   return false;
 }
 
-/**
- * Evaluate performance badges (speed, optimization)
- */
-function evaluatePerformanceCriteria(criteria, user) {
+function evaluatePerformanceCriteria() {
   // Speed Demon and Rocket Code are tracked per submission
   // This will be enhanced in Phase 3 with submission-level tracking
   return false; // Placeholder
 }
 
-/**
- * Evaluate accuracy badges
- */
-function evaluateAccuracyCriteria(criteria, user) {
-  if (criteria.condition.includes('acceptanceRate >= 80 AND totalSubmissions >= 10')) {
-    return user.acceptanceRate >= 80 && user.totalSubmissions >= 10;
-  }
-
-  if (criteria.condition.includes('acceptanceRate >= 95 AND totalSubmissions >= 20')) {
-    return user.acceptanceRate >= 95 && user.totalSubmissions >= 20;
-  }
-
-  // For async criteria, return false here
-  if (criteria.condition.includes('consecutiveAcceptedCount >= 20')) {
-    return false;
-  }
-
-  return false;
-}
 
 /**
  * Evaluate accuracy badges (async version for consecutive accepted)
@@ -258,17 +191,8 @@ function evaluateFirstTryCriteria(criteria, user) {
   return false;
 }
 
-/**
- * Evaluate hidden/special badges
- */
-async function evaluateHiddenCriteria(criteria, user) {
-  if (criteria.condition.includes('totalFailuresBeforeSuccess >= 50')) {
-    // This would require tracking total across all problems
-    // For now, it's a placeholder that can be enhanced
-    return false; // Placeholder - requires enhanced implementation
-  }
-
-  return false;
+async function evaluateHiddenCriteria() {
+  return false; // Placeholder - requires enhanced implementation
 }
 
 /**

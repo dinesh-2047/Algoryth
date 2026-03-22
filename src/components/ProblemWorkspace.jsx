@@ -132,7 +132,6 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
     setNewBadges([]);
 
     let verdict = "Submission Error";
-    let earnedBadges = [];
 
     try {
       // Get token for authentication

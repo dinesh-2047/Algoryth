@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles } from 'lucide-react';
 
@@ -20,6 +20,7 @@ export default function BadgeNotification({ badges = [], onDismiss }) {
         displayTime: idx * 1500, // Stagger notifications
       }));
 
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVisibleBadges(prev => [...prev, ...newBadges]);
 
       // Auto-dismiss notifications after 6 seconds each
@@ -38,7 +39,7 @@ export default function BadgeNotification({ badges = [], onDismiss }) {
   return (
     <AnimatePresence mode="popLayout">
       <div className="fixed top-4 right-4 z-50 space-y-3 max-w-sm pointer-events-none">
-        {visibleBadges.map((badge, idx) => (
+        {visibleBadges.map((badge) => (
           <motion.div
             key={badge.id}
             initial={{ opacity: 0, y: -20, scale: 0.95, x: 100 }}
@@ -164,15 +165,23 @@ export default function BadgeNotification({ badges = [], onDismiss }) {
  * Shows celebration confetti when badge is earned
  */
 function Confetti({ emit }) {
-  const particles = useMemo(() => Array.from({ length: 30 }).map((_, i) => ({
-    id: i,
-    left: Math.random() * 100,
-    delay: Math.random() * 0.3,
-    duration: 2 + Math.random() * 1,
-    xOffset: (Math.random() - 0.5) * 100,
-  })), []);
+  const [particles, setParticles] = useState([]);
 
-  if (!emit) return null;
+  useEffect(() => {
+    if (emit) {
+      const newParticles = Array.from({ length: 30 }).map((_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        delay: Math.random() * 0.3,
+        duration: 2 + Math.random() * 1,
+        xOffset: (Math.random() - 0.5) * 100,
+      }));
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setParticles(newParticles);
+    }
+  }, [emit]);
+
+  if (!emit || particles.length === 0) return null;
 
   return (
     <div className="fixed inset-0 pointer-events-none">

@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { Trophy, Sparkles, Target } from 'lucide-react';
 import BadgeShowcase from './BadgeShowcase';
 import ActivityHeatmap from './ActivityHeatmap';
-import Tabs from './Tabs';
 
 /**
  * BadgePage Component
