@@ -6,26 +6,35 @@ const ToastNotification = ({ message, type = 'success', isVisible, onClose }) =>
   const [show, setShow] = useState(false);
 
   useEffect(() => {
+    let timer;
+    let hideTimer;
+
     if (isVisible) {
-      setShow(true); // eslint-disable-line react-hooks/set-state-in-effect
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => setShow(true), 0);
+      hideTimer = setTimeout(() => {
         setShow(false);
         if (onClose) onClose();
       }, 3000); // Auto-hide after 3 seconds
-
-      return () => clearTimeout(timer);
+    } else {
+      // Handle isVisible === false: hide toast immediately
+      timer = setTimeout(() => setShow(false), 0);
     }
+
+    return () => {
+      clearTimeout(timer);
+      if (hideTimer) clearTimeout(hideTimer);
+    };
   }, [isVisible, onClose]);
 
   if (!show) return null;
 
   const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-500';
-  
+
   return (
     <div className="fixed top-4 right-4 z-50">
       <div className={`${bgColor} text-white px-4 py-2 rounded-md shadow-lg flex items-center min-w-max`}>
         <span>{message}</span>
-        <button 
+        <button
           onClick={() => {
             setShow(false);
             if (onClose) onClose();

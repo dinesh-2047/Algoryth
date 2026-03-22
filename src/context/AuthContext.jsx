@@ -15,19 +15,22 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
 
   useEffect(() => {
-    // Check if user is logged in from localStorage or session storage
     const storedToken = localStorage.getItem('algoryth_token');
     const storedUser = localStorage.getItem('algoryth_user');
-    
-    if (storedToken && storedUser) {
-      try {
-        setUser(JSON.parse(storedUser)); // eslint-disable-line react-hooks/set-state-in-effect
-        setToken(storedToken); // eslint-disable-line react-hooks/set-state-in-effect
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
+
+    const timer = setTimeout(() => {
+      if (storedToken && storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+          setToken(storedToken);
+        } catch (error) {
+          console.error('Error parsing stored user:', error);
+        }
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const login = async (credentials) => {

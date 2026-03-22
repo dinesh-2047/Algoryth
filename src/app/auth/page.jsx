@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import ToastNotification from '../../components/ToastNotification';
-import { Mail, Lock, User, Github, ArrowLeft, Chrome, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 
 export default function AuthPage() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function AuthPage() {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash;
       if (hash === '#signup') {
-        setIsFlipped(true);
+        setTimeout(() => setIsFlipped(true), 0);
       }
     }
   }, []);
@@ -29,28 +29,28 @@ export default function AuthPage() {
   const handleSubmit = async (e, formType) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
       if (formType === 'signup') {
         const name = document.getElementById('name-signup').value;
         const email = document.getElementById('email-signup').value;
         const password = document.getElementById('password-signup').value;
         const confirmPassword = document.getElementById('confirm-password').value;
-        
+
         if (!name || !email || !password || !confirmPassword) {
           setNotification({ show: true, message: 'Please fill in all fields', type: 'error' });
           setIsLoading(false);
           return;
         }
-        
+
         if (password !== confirmPassword) {
           setNotification({ show: true, message: 'Passwords do not match', type: 'error' });
           setIsLoading(false);
           return;
         }
-        
+
         const result = await signup({ name, email, password });
-        
+
         if (result.success) {
           setNotification({ show: true, message: 'Account created successfully!', type: 'success' });
           setTimeout(() => router.push('/'), 1000);
@@ -60,15 +60,15 @@ export default function AuthPage() {
       } else if (formType === 'login') {
         const email = document.getElementById('email-login').value;
         const password = document.getElementById('password-login').value;
-        
+
         if (!email || !password) {
           setNotification({ show: true, message: 'Please fill in all fields', type: 'error' });
           setIsLoading(false);
           return;
         }
-        
+
         const result = await login({ email, password });
-        
+
         if (result.success) {
           setNotification({ show: true, message: 'Login successful!', type: 'success' });
           setTimeout(() => router.push('/'), 1000);
@@ -76,7 +76,7 @@ export default function AuthPage() {
           setNotification({ show: true, message: result.error || 'Login failed', type: 'error' });
         }
       }
-    } catch (error) {
+    } catch {
       setNotification({ show: true, message: 'An unexpected error occurred', type: 'error' });
     } finally {
       setIsLoading(false);
@@ -111,7 +111,7 @@ export default function AuthPage() {
         {/* Auth Content Card */}
         <div className="w-full perspective-1000 min-h-[500px]">
           <div className={`relative w-full h-full transition-all duration-700 preserve-3d ${isFlipped ? 'rotate-y-180' : ''}`} style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
-            
+
             {/* Login Face */}
             <div className="backface-hidden absolute inset-0 w-full h-fit bg-[#fff8ed]/80 dark:bg-[#1c1822]/90 backdrop-blur-2xl border border-[#e0d5c2] dark:border-[#3c3347] rounded-[2.5rem] shadow-2xl p-10">
               <div className="mb-8 text-center">
@@ -136,7 +136,7 @@ export default function AuthPage() {
                     placeholder="name@example.com"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-[10px] font-black text-[#5d5245] dark:text-[#d7ccbe] flex items-center gap-2 uppercase tracking-widest opacity-70">
@@ -152,8 +152,8 @@ export default function AuthPage() {
                       className="w-full px-5 py-3 rounded-2xl border-2 border-[#deceb7] bg-white/40 dark:bg-white/5 text-[#2b2116] dark:text-[#f6ede0] outline-none focus:border-[#d69a44] dark:focus:border-[#f2c66f] transition-all text-base shadow-sm pr-12"
                       placeholder="••••••••"
                     />
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8a7a67] dark:text-[#b5a59c] hover:text-[#d69a44] transition-colors"
                     >
@@ -222,7 +222,7 @@ export default function AuthPage() {
                     placeholder="name@example.com"
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-[#5d5245] dark:text-[#d7ccbe] flex items-center gap-2 uppercase tracking-widest opacity-70">
@@ -280,15 +280,15 @@ export default function AuthPage() {
           </div>
         </div>
       </div>
-      
+
       {/* Notification component */}
-      <ToastNotification 
+      <ToastNotification
         message={notification.message}
         type={notification.type}
         isVisible={notification.show}
         onClose={() => setNotification({ ...notification, show: false })}
       />
-      
+
       <style jsx global>{`
         .rotate-y-180 {
           transform: rotateY(180deg);

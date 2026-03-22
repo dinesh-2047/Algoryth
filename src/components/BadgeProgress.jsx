@@ -143,7 +143,7 @@ export default function BadgeProgress({ badge, isEarned = false, currentProgress
           className="mt-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-center"
         >
           <p className="text-sm font-bold text-green-700 dark:text-green-400">
-            🎉 You've earned this badge!
+            🎉 You&apos;ve earned this badge!
           </p>
         </motion.div>
       )}
