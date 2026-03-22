@@ -60,6 +60,13 @@ export default function ProblemCard({
         {problem.status === "Solved" && (
           <div className="flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
             <CheckCircle2 className="h-4 w-4" />
+            <span className="sr-only">Solved</span>
+          </div>
+        )}
+        {problem.status === "Attempted" && (
+          <div className="flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+            <div className="h-4 w-4 rounded-full bg-amber-500" />
+            <span className="sr-only">Attempted</span>
           </div>
         )}
       </div>
