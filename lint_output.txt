@@ -1,0 +1,121 @@
+
+> algoryth@0.1.0 lint
+> eslint --max-warnings 0
+
+
+/Users/sahityasingh/Algoryth/src/app/api/badges/route.js
+  10:27  warning  'request' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/sahityasingh/Algoryth/src/app/auth/page.jsx
+   9:28  warning  'Github' is defined but never used  @typescript-eslint/no-unused-vars
+   9:47  warning  'Chrome' is defined but never used  @typescript-eslint/no-unused-vars
+  79:14  warning  'error' is defined but never used   @typescript-eslint/no-unused-vars
+
+/Users/sahityasingh/Algoryth/src/app/dashboard/page.jsx
+  14:10  warning  'stats' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/sahityasingh/Algoryth/src/app/layout.jsx
+  2:8  warning  'Link' is defined but never used   @typescript-eslint/no-unused-vars
+  3:8  warning  'Image' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/sahityasingh/Algoryth/src/app/page.jsx
+  23:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  21 |         parsed.filter((s) => s.status === 'Accepted').map((s) => s.problemId)
+  22 |       );
+> 23 |       setTotalSolved(uniqueSolved.size);
+     |       ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  24 |     } catch (e) {
+  25 |       console.error(e);
+  26 |     }  react-hooks/set-state-in-effect
+
+/Users/sahityasingh/Algoryth/src/app/topics/[slug]/page.jsx
+  46:11  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  44 |             }
+  45 |           });
+> 46 |           setProblemStatuses(statuses);
+     |           ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  47 |         } catch (error) {
+  48 |           console.error("Failed to parse submissions:", error);
+  49 |         }  react-hooks/set-state-in-effect
+
+/Users/sahityasingh/Algoryth/src/app/topics/page.jsx
+  2:10  warning  'title' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/sahityasingh/Algoryth/src/components/ActivityHeatmap.jsx
+  101:6  warning  React Hook useEffect has a missing dependency: 'fetchActivity'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/sahityasingh/Algoryth/src/components/BadgeNotification.jsx
+    3:31  warning  'useMemo' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   23:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  21 |       }));
+  22 |
+> 23 |       setVisibleBadges(prev => [...prev, ...newBadges]);
+     |       ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  24 |
+  25 |       // Auto-dismiss notifications after 6 seconds each
+  26 |       const timers = newBadges.map(badge =>  react-hooks/set-state-in-effect
+   41:36  warning  'idx' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+  178:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  176 |         xOffset: (Math.random() - 0.5) * 100,
+  177 |       }));
+> 178 |       setParticles(newParticles);
+      |       ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  179 |     }
+  180 |   }, [emit]);
+  181 |                                                         react-hooks/set-state-in-effect
+
+/Users/sahityasingh/Algoryth/src/components/CodeEditor.jsx
+  16:3  warning  'isRunning' is defined but never used     @typescript-eslint/no-unused-vars
+  17:3  warning  'isSubmitting' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/sahityasingh/Algoryth/src/components/ProblemWorkspace.jsx
+  140:9  warning  'earnedBadges' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/sahityasingh/Algoryth/src/components/ThemeToggle.jsx
+  27:5  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+
+/Users/sahityasingh/Algoryth/src/context/AuthContext.jsx
+  25:32  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+
+/Users/sahityasingh/Algoryth/src/lib/db/badges/badgeUtils.js
+    7:3   warning  'getFailureCountBeforeSuccess' is defined but never used  @typescript-eslint/no-unused-vars
+    8:3   warning  'getProblemsCountByDifficulty' is defined but never used  @typescript-eslint/no-unused-vars
+    9:3   warning  'getLanguagesUsed' is defined but never used              @typescript-eslint/no-unused-vars
+  127:10  warning  'evaluateBadgeCriteria' is defined but never used         @typescript-eslint/no-unused-vars
+  178:16  warning  'evaluateDifficultyCriteria' is defined but never used    @typescript-eslint/no-unused-vars
+  178:53  warning  'user' is defined but never used                          @typescript-eslint/no-unused-vars
+  204:38  warning  'criteria' is defined but never used                      @typescript-eslint/no-unused-vars
+  204:48  warning  'user' is defined but never used                          @typescript-eslint/no-unused-vars
+  264:49  warning  'user' is defined but never used                          @typescript-eslint/no-unused-vars
+
+✖ 29 problems (4 errors, 25 warnings)
+  0 errors and 2 warnings potentially fixable with the `--fix` option.
+

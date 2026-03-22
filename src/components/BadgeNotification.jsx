@@ -20,7 +20,7 @@ export default function BadgeNotification({ badges = [], onDismiss }) {
         displayTime: idx * 1500, // Stagger notifications
       }));
 
-      setVisibleBadges(prev => [...prev, ...newBadges]);
+      setTimeout(() => setVisibleBadges(prev => [...prev, ...newBadges]), 0);
 
       // Auto-dismiss notifications after 6 seconds each
       const timers = newBadges.map(badge =>
@@ -164,13 +164,20 @@ export default function BadgeNotification({ badges = [], onDismiss }) {
  * Shows celebration confetti when badge is earned
  */
 function Confetti({ emit }) {
-  const particles = useMemo(() => Array.from({ length: 30 }).map((_, i) => ({
-    id: i,
-    left: Math.random() * 100,
-    delay: Math.random() * 0.3,
-    duration: 2 + Math.random() * 1,
-    xOffset: (Math.random() - 0.5) * 100,
-  })), []);
+  const [particles, setParticles] = useState([]);
+
+  useEffect(() => {
+    if (emit) {
+      const newParticles = Array.from({ length: 30 }).map((_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        delay: Math.random() * 0.3,
+        duration: 2 + Math.random() * 1,
+        xOffset: (Math.random() - 0.5) * 100,
+      }));
+      setTimeout(() => setParticles(newParticles), 0);
+    }
+  }, [emit]);
 
   if (!emit) return null;
 

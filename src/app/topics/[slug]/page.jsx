@@ -43,7 +43,7 @@ export default function TopicPage({ params: paramsPromise }) {
               statuses[pid] = "Attempted";
             }
           });
-          setProblemStatuses(statuses);
+          setTimeout(() => setProblemStatuses(statuses), 0);
         } catch (error) {
           console.error("Failed to parse submissions:", error);
         }

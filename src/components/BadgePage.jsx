@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Sparkles, Target } from 'lucide-react';
+import Trophy from 'lucide-react/dist/esm/icons/trophy';
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles';
+import Target from 'lucide-react/dist/esm/icons/target';
 import BadgeShowcase from './BadgeShowcase';
 import ActivityHeatmap from './ActivityHeatmap';
-import Tabs from './Tabs';
 
 /**
  * BadgePage Component
