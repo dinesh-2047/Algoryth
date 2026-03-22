@@ -14,16 +14,20 @@ export default function Home() {
   const TOTAL_PROBLEMS = 300;
 
   useEffect(() => {
+    let timer;
     try {
       const raw = localStorage.getItem('algoryth_submissions');
       const parsed = raw ? JSON.parse(raw) : [];
       const uniqueSolved = new Set(
-        parsed.filter((s) => s.status === 'Accepted').map((s) => s.problemId)
+        parsed.filter((s) => (s.status || s.verdict) === 'Accepted').map((s) => s.problemId)
       );
-      setTotalSolved(uniqueSolved.size);
-    } catch (e) {
-      console.error(e);
+      timer = setTimeout(() => setTotalSolved(uniqueSolved.size), 0);
+    } catch (error) {
+      console.error('Failed to load home page stats:', error);
     }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   const solvedPercent = Math.min(

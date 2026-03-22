@@ -9,9 +9,10 @@ export default function AuthButton() {
   const [mounted, setMounted] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Ensure we're running on the client side
+  // Ensure we're running on the client side (defer to avoid hydration mismatch)
   useEffect(() => {
-    setMounted(true); // eslint-disable-line react-hooks/set-state-in-effect
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   if (loading || !mounted) {
@@ -34,7 +35,7 @@ export default function AuthButton() {
             {user.name ? user.name.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase() || 'U'}
           </span>
         </button>
-        
+
         {dropdownOpen && (
           <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-[#211d27] ring-1 ring-black ring-opacity-5 z-50">
             <div className="py-1" role="menu">
