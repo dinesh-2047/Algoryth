@@ -263,7 +263,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
                   {ex.explaination && (
                     <>
                       <div className="mt-2 font-medium text-[#2b2116] dark:text-[#f6ede0]">Explanation</div>
-                      <p className="text-xs text-[#5d5245] dark:text-[#d7ccbe] mt-1">{ex.explaination}</p>
+                      <p className="text-xs text-[#5d5245] dark:text-[#d7ccbe] mt-1 whitespace-pre-wrap">{ex.explaination}</p>
                     </>
                   )}
                 </div>

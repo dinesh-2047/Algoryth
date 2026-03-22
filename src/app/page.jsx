@@ -20,7 +20,7 @@ export default function Home() {
       const uniqueSolved = new Set(
         parsed.filter((s) => s.status === 'Accepted').map((s) => s.problemId)
       );
-      setTotalSolved(uniqueSolved.size);
+      setTimeout(() => setTotalSolved(uniqueSolved.size), 0);
     } catch (e) {
       console.error(e);
     }
