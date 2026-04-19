@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -87,20 +87,7 @@ export default function ActivityHeatmap({ token }) {
    * Previously data was only fetched on mount/token change, so submissions
    * made in the same session would not appear until a full page reload.
    */
-  useEffect(() => {
-    if (!token) { setLoading(false); return; }
-
-    fetchActivity();
-
-    function handleVisibility() {
-      if (document.visibilityState === 'visible') fetchActivity();
-    }
-
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, [token]);
-
-  async function fetchActivity() {
+  const fetchActivity = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -131,7 +118,23 @@ export default function ActivityHeatmap({ token }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    fetchActivity();
+
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') fetchActivity();
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [token, fetchActivity]);
 
   // ── Early-exit render states ───────────────────────────────────────────────
 
@@ -190,22 +193,21 @@ export default function ActivityHeatmap({ token }) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="rounded-xl border border-gray-200 bg-white p-6
-                 dark:border-gray-700 dark:bg-gray-800"
+      className="neo-card p-6"
     >
       {/* Header */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-base font-black uppercase tracking-wide text-black dark:text-[#eef3ff]">
           Submission Activity
         </h3>
-        <div className="flex gap-4 text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex gap-4 text-sm font-semibold text-black/70 dark:text-[#d4deff]/75">
           <span>
-            <span className="font-semibold text-gray-900 dark:text-white">
+            <span className="font-black text-black dark:text-[#eef3ff]">
               {totalSubmissions}
             </span>{' '}submissions
           </span>
           <span>
-            <span className="font-semibold text-gray-900 dark:text-white">
+            <span className="font-black text-black dark:text-[#eef3ff]">
               {activeDays}
             </span>{' '}active days
           </span>
@@ -223,7 +225,7 @@ export default function ActivityHeatmap({ token }) {
               return (
                 <div
                   key={wi}
-                  className="text-center text-xs text-gray-400 dark:text-gray-500"
+                  className="text-center text-xs text-black/45 dark:text-[#9baed8]"
                   style={{ width: STEP, minWidth: STEP }}
                 >
                   {entry ? entry.label : ''}
@@ -239,7 +241,7 @@ export default function ActivityHeatmap({ token }) {
               {DAY_LABELS.map((label, i) => (
                 <div
                   key={label}
-                  className="text-right text-xs leading-none text-gray-400 dark:text-gray-500"
+                  className="text-right text-xs leading-none text-black/45 dark:text-[#9baed8]"
                   style={{ height: STEP, paddingTop: (STEP - 12) / 2 }}
                 >
                   {i === 1 || i === 3 || i === 5 ? label : ''}
@@ -260,7 +262,7 @@ export default function ActivityHeatmap({ token }) {
                           ${isFuture
                             ? 'cursor-default opacity-20 bg-gray-100 dark:bg-gray-700'
                             : `cursor-pointer hover:scale-125 hover:ring-1
-                               hover:ring-gray-400 dark:hover:ring-gray-400
+                               hover:ring-black/70 dark:hover:ring-[#8aa0d0]
                                ${getColorClass(count)}`
                           }`}
                         style={{ width: CELL, height: CELL }}
@@ -298,7 +300,7 @@ export default function ActivityHeatmap({ token }) {
 
       {/* Legend */}
       <div className="mt-4 flex items-center justify-end gap-1.5">
-        <span className="text-xs text-gray-400 dark:text-gray-500">Less</span>
+        <span className="text-xs font-semibold text-black/55 dark:text-[#9baed8]">Less</span>
         {[0, 1, 2, 4, 7].map((n) => (
           <div
             key={n}
@@ -306,7 +308,7 @@ export default function ActivityHeatmap({ token }) {
             style={{ width: CELL, height: CELL }}
           />
         ))}
-        <span className="text-xs text-gray-400 dark:text-gray-500">More</span>
+        <span className="text-xs font-semibold text-black/55 dark:text-[#9baed8]">More</span>
       </div>
     </motion.div>
   );

@@ -1,170 +1,121 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { Trophy, Sparkles, Target } from 'lucide-react';
 import BadgeShowcase from './BadgeShowcase';
 import ActivityHeatmap from './ActivityHeatmap';
 
-/**
- * BadgePage Component
- * Main page for displaying all badges and achievements
- * Includes multiple tabs for different badge views
- */
 export default function BadgePage({ token }) {
   const [activeTab, setActiveTab] = useState('showcase');
 
   const tabs = [
     { id: 'showcase', label: 'All Badges', icon: Trophy },
     { id: 'progress', label: 'My Progress', icon: Target },
-    { id: 'stats',    label: 'Statistics',  icon: Sparkles },
+    { id: 'stats', label: 'Statistics', icon: Sparkles },
   ];
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-linear-to-r from-blue-600 to-purple-600 dark:from-blue-900 dark:to-purple-900 text-white pt-12 pb-8"
-      >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4 mb-3">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 3, repeat: Infinity }}
-              className="text-5xl"
-            >
-              🏆
-            </motion.div>
-            <div>
-              <h1 className="text-4xl md:text-5xl font-bold">Achievements</h1>
-              <p className="text-blue-100 mt-2">Track your coding milestones and celebrate progress</p>
+    <div className="space-y-6">
+      <header className="neo-card relative overflow-hidden px-6 py-8 md:px-8">
+        <div className="absolute -right-10 -top-12 h-36 w-36 rotate-12 border-2 border-black bg-[#ff6b35] dark:border-[#8aa0d0] dark:bg-[#243252]" />
+        <div className="absolute -bottom-10 -left-8 h-28 w-28 rounded-full border-2 border-black bg-[#44d07d] dark:border-[#8aa0d0] dark:bg-[#1f3a34]" />
+
+        <div className="relative">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#0f92ff] px-4 py-1 text-xs font-black uppercase tracking-widest text-black dark:bg-[#fbbf24]">
+            <Trophy size={14} />
+            Achievements
+          </div>
+          <h1 className="mt-3 text-3xl font-black uppercase tracking-wide text-black dark:text-[#eef3ff] md:text-4xl">
+            Badge Command Center
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm font-semibold text-black/75 dark:text-[#d4deff]/80">
+            Follow your streak, unlock milestone badges, and track progress across every difficulty level.
+          </p>
+        </div>
+      </header>
+
+      <div className="neo-card p-3">
+        <div className="flex flex-wrap gap-2">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.id;
+
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wide transition-colors ${
+                  active
+                    ? 'bg-[#0f92ff] text-black dark:bg-[#fbbf24]'
+                    : 'bg-white text-black hover:bg-[#44d07d] dark:bg-[#151525] dark:text-[#eef3ff] dark:hover:bg-[#253551]'
+                }`}
+              >
+                <Icon size={14} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {activeTab === 'showcase' && <BadgeShowcase token={token} />}
+
+      {activeTab === 'progress' && (
+        <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+          <div className="neo-card p-5">
+            <h3 className="text-lg font-black uppercase text-black dark:text-[#eef3ff]">
+              My Badge Progress
+            </h3>
+            <p className="mt-2 text-sm font-semibold text-black/75 dark:text-[#d4deff]/80">
+              Stay focused on your next unlocks and track progress over time.
+            </p>
+            <div className="mt-4">
+              <BadgeShowcase token={token} />
+            </div>
+          </div>
+
+          <div className="neo-card p-5">
+            <h3 className="text-sm font-black uppercase tracking-wide text-black dark:text-[#eef3ff]">
+              Tips To Unlock Faster
+            </h3>
+            <ul className="mt-3 space-y-2 text-sm font-semibold text-black/80 dark:text-[#d4deff]/85">
+              <li>1. Solve at least one problem daily for streak badges.</li>
+              <li>2. Mix easy, medium, and hard solves every week.</li>
+              <li>3. Re-submit optimized versions to improve performance badges.</li>
+              <li>4. Keep acceptance high by testing edge cases locally first.</li>
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'stats' && (
+        <div className="space-y-4">
+          <ActivityHeatmap token={token} />
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="neo-card p-5">
+              <div className="text-xs font-black uppercase tracking-wide text-black/70 dark:text-[#d4deff]/75">
+                Badge Categories
+              </div>
+              <div className="mt-2 text-3xl font-black text-black dark:text-[#eef3ff]">9</div>
+            </div>
+
+            <div className="neo-card p-5">
+              <div className="text-xs font-black uppercase tracking-wide text-black/70 dark:text-[#d4deff]/75">
+                Available MVP Badges
+              </div>
+              <div className="mt-2 text-3xl font-black text-black dark:text-[#eef3ff]">15</div>
+            </div>
+
+            <div className="neo-card p-5">
+              <div className="text-xs font-black uppercase tracking-wide text-black/70 dark:text-[#d4deff]/75">
+                Focus Metric
+              </div>
+              <div className="mt-2 text-3xl font-black text-black dark:text-[#eef3ff]">Consistency</div>
             </div>
           </div>
         </div>
-      </motion.div>
-
-      {/* Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Tab Navigation */}
-        <div className="mb-8 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex gap-2 overflow-x-auto pb-4">
-            {tabs.map(tab => {
-              const Icon = tab.icon;
-              return (
-                <motion.button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`
-                    flex items-center gap-2 px-6 py-3 font-semibold whitespace-nowrap transition-all rounded-t-lg
-                    ${
-                      activeTab === tab.id
-                        ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
-                    }
-                  `}
-                >
-                  <Icon size={20} />
-                  {tab.label}
-                </motion.button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.3 }}
-        >
-          {/* ── All Badges ── */}
-          {activeTab === 'showcase' && (
-            <BadgeShowcase token={token} />
-          )}
-
-          {/* ── My Progress ── */}
-          {activeTab === 'progress' && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="space-y-4"
-            >
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-                <h3 className="text-lg font-bold text-blue-900 dark:text-blue-200 mb-3">
-                  Your Badge Progress
-                </h3>
-                <p className="text-blue-800 dark:text-blue-300 mb-4">
-                  Check your progress on upcoming badges and see how close you are to unlocking them.
-                </p>
-                <BadgeShowcase token={token} />
-              </div>
-            </motion.div>
-          )}
-
-          {/* ── Statistics ── */}
-          {activeTab === 'stats' && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="space-y-6"
-            >
-              {/* Activity Heatmap — sits at the top of Statistics */}
-              <ActivityHeatmap token={token} />
-
-              {/* Badge statistics cards */}
-              <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-6">
-                <h3 className="text-lg font-bold text-purple-900 dark:text-purple-200 mb-4">
-                  Badge Statistics
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
-                    <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                      Total Badge Categories
-                    </div>
-                    <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
-                      9
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                      Achievement, Difficulty, Streak, Performance, Accuracy, Language, Time, Community, Special
-                    </p>
-                  </div>
-
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
-                    <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                      MVP Badges Available
-                    </div>
-                    <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
-                      15
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                      Currently available badges to earn
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                  <h4 className="font-semibold text-yellow-900 dark:text-yellow-200 mb-3">
-                    🎯 Pro Tips
-                  </h4>
-                  <ul className="text-sm text-yellow-800 dark:text-yellow-300 space-y-2">
-                    <li>✨ Submit code daily to build your streak!</li>
-                    <li>🎲 Try solving problems of all difficulty levels</li>
-                    <li>💯 Aim for high acceptance rates on your first attempts</li>
-                    <li>🚀 Solve more problems to unlock milestone badges</li>
-                    <li>🔥 Practice consistently to reach legendary badges</li>
-                  </ul>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </motion.div>
-      </div>
+      )}
     </div>
   );
 }

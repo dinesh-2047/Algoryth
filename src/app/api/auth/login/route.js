@@ -4,22 +4,103 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
+function buildUserResponse(user) {
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role || 'user',
+    rating: user.rating || 1200,
+    streakCount: user.streakCount || 0,
+    longestStreak: user.longestStreak || 0,
+    contestsPlayed: user.contestsPlayed || 0,
+    contestRatingHistory: user.contestRatingHistory || [],
+    createdAt: user.createdAt,
+  };
+}
+
+function signUserToken(user) {
+  return jwt.sign(
+    { userId: user._id, email: user.email, role: user.role || 'user' },
+    process.env.JWT_SECRET || 'fallback_secret_key',
+    { expiresIn: '7d' }
+  );
+}
+
+function getEnvAdminCredentials() {
+  const adminEmail = String(
+    process.env.ADMIN_EMAIL || process.env.ADMIN_EMAILS || ''
+  )
+    .split(',')[0]
+    .trim()
+    .toLowerCase();
+  const adminPassword = String(process.env.ADMIN_PASSWORD || '').trim();
+
+  return {
+    adminEmail,
+    adminPassword,
+  };
+}
+
 export async function POST(request) {
   try {
     await connectToDatabase();
 
     const { email, password } = await request.json();
+    const normalizedEmail = String(email || '').trim().toLowerCase();
 
     // Validate input
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return NextResponse.json(
         { error: 'Email and password are required' },
         { status: 400 }
       );
     }
 
+    const { adminEmail, adminPassword } = getEnvAdminCredentials();
+    const isEnvAdminLogin =
+      Boolean(adminEmail) &&
+      Boolean(adminPassword) &&
+      normalizedEmail === adminEmail &&
+      password === adminPassword;
+
+    if (isEnvAdminLogin) {
+      const hashedAdminPassword = await bcrypt.hash(adminPassword, 10);
+      const adminUser = await User.findOneAndUpdate(
+        { email: normalizedEmail },
+        {
+          $set: {
+            role: 'admin',
+            password: hashedAdminPassword,
+            updatedAt: new Date(),
+          },
+          $setOnInsert: {
+            name: 'Admin',
+            email: normalizedEmail,
+            rating: 1200,
+            streakCount: 0,
+            createdAt: new Date(),
+          },
+        },
+        {
+          upsert: true,
+          new: true,
+        }
+      );
+
+      const token = signUserToken(adminUser);
+      return NextResponse.json(
+        {
+          message: 'Admin login successful',
+          user: buildUserResponse(adminUser),
+          token,
+        },
+        { status: 200 }
+      );
+    }
+
     // Find user by email
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
@@ -36,20 +117,8 @@ export async function POST(request) {
       );
     }
 
-    // Create JWT token (you'll need to set a secret in your environment variables)
-    const token = jwt.sign(
-      { userId: user._id, email: user.email },
-      process.env.JWT_SECRET || 'fallback_secret_key',
-      { expiresIn: '7d' } // Token expires in 7 days
-    );
-
-    // Return success response without password
-    const userResponse = {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      createdAt: user.createdAt,
-    };
+    const token = signUserToken(user);
+    const userResponse = buildUserResponse(user);
 
     return NextResponse.json(
       { 

@@ -7,7 +7,7 @@ import mvpBadges from '../../../lib/db/badges/badgeData';
  * GET /api/badges
  * Get all available badges
  */
-export async function GET(request) {
+export async function GET() {
   try {
     await connectToDatabase();
 

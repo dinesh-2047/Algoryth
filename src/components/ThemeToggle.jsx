@@ -54,7 +54,7 @@ export default function ThemeToggle() {
     return (
       <button
         type="button"
-        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#deceb7] bg-[#fdf7ed] text-[#5d5245] hover:bg-[#f2e3cc] dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#0f172a] hover:bg-[#e8f0ff] dark:bg-[#1a2544] dark:text-[#d8e8ff] dark:hover:bg-[#263864]"
         aria-label="Toggle theme"
       >
         <svg
@@ -78,7 +78,7 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={toggleTheme}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#deceb7] bg-[#fdf7ed] text-[#5d5245] hover:bg-[#f2e3cc] dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+      className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#0f172a] hover:bg-[#e8f0ff] dark:bg-[#1a2544] dark:text-[#d8e8ff] dark:hover:bg-[#263864]"
       aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
     >
       {theme === "light" ? (

@@ -107,38 +107,38 @@ export default function BadgeShowcase({ token }) {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-linear-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800"
+          className="neo-card p-6"
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">
+              <div className="mb-1 text-xs font-black uppercase tracking-wide text-black/70 dark:text-[#d4deff]/75">
                 Badges Earned
               </div>
-              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+              <div className="text-3xl font-black text-black dark:text-[#eef3ff]">
                 {earnedCount}
               </div>
             </div>
             <div>
-              <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">
+              <div className="mb-1 text-xs font-black uppercase tracking-wide text-black/70 dark:text-[#d4deff]/75">
                 Total Badges
               </div>
-              <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+              <div className="text-3xl font-black text-black dark:text-[#eef3ff]">
                 {totalCount}
               </div>
             </div>
             <div>
-              <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">
+              <div className="mb-1 text-xs font-black uppercase tracking-wide text-black/70 dark:text-[#d4deff]/75">
                 Completion
               </div>
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+              <div className="text-3xl font-black text-black dark:text-[#eef3ff]">
                 {completionPercentage}%
               </div>
             </div>
             <div>
-              <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">
+              <div className="mb-1 text-xs font-black uppercase tracking-wide text-black/70 dark:text-[#d4deff]/75">
                 Upcoming
               </div>
-              <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+              <div className="text-3xl font-black text-black dark:text-[#eef3ff]">
                 {totalCount - earnedCount}
               </div>
             </div>
@@ -147,15 +147,15 @@ export default function BadgeShowcase({ token }) {
           {/* Overall progress bar */}
           <div className="mt-4">
             <div className="flex justify-between text-xs font-semibold mb-2">
-              <span className="text-gray-600 dark:text-gray-400">Overall Progress</span>
-              <span className="text-blue-600 dark:text-blue-400">{completionPercentage}%</span>
+              <span className="text-black/70 dark:text-[#d4deff]/75">Overall Progress</span>
+              <span className="font-black text-black dark:text-[#eef3ff]">{completionPercentage}%</span>
             </div>
-            <div className="w-full h-2.5 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden">
+            <div className="h-2.5 w-full overflow-hidden rounded-full border border-black bg-white dark:border-[#8aa0d0] dark:bg-[#151525]">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${completionPercentage}%` }}
                 transition={{ duration: 1, ease: 'easeOut' }}
-                className="h-full bg-linear-to-r from-blue-500 via-purple-500 to-pink-500"
+                className="h-full bg-linear-to-r from-[#44d07d] via-[#0f92ff] to-[#ff6b35]"
               ></motion.div>
             </div>
           </div>
@@ -169,11 +169,11 @@ export default function BadgeShowcase({ token }) {
             key={filterOption}
             onClick={() => setFilter(filterOption)}
             className={`
-              px-4 py-2 rounded-full font-semibold text-sm transition-all
+              rounded-full px-4 py-2 text-xs font-black uppercase tracking-wide transition-all
               ${
                 filter === filterOption
-                  ? 'bg-blue-500 dark:bg-blue-600 text-white shadow-lg'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
+                  ? 'bg-[#0f92ff] text-black dark:bg-[#fbbf24]'
+                  : 'bg-white text-black hover:bg-[#44d07d] dark:bg-[#151525] dark:text-[#eef3ff] dark:hover:bg-[#253551]'
               }
             `}
           >
@@ -210,7 +210,7 @@ export default function BadgeShowcase({ token }) {
             layout
             className="col-span-full text-center py-12"
           >
-            <p className="text-gray-500 dark:text-gray-400">
+            <p className="text-black/70 dark:text-[#d4deff]/75">
               {filter === 'earned'
                 ? 'No badges earned yet. Keep practicing! 💪'
                 : filter === 'upcoming'
@@ -237,20 +237,20 @@ export default function BadgeShowcase({ token }) {
             return (
               <div
                 key={cat.category}
-                className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
+                className="neo-card rounded-lg p-4"
               >
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-2xl">{cat.emoji}</span>
-                  <h4 className="font-semibold text-gray-900 dark:text-white">
+                  <h4 className="text-sm font-black uppercase text-black dark:text-[#eef3ff]">
                     {cat.title}
                   </h4>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-xs font-semibold text-black/70 dark:text-[#d4deff]/75">
                   {categoryEarned} of {categoryBadges.length} collected
                 </p>
-                <div className="mt-2 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full border border-black bg-white dark:border-[#8aa0d0] dark:bg-[#151525]">
                   <div
-                    className="h-full bg-linear-to-r from-blue-400 to-blue-500 transition-all"
+                    className="h-full bg-linear-to-r from-[#44d07d] to-[#0f92ff] transition-all"
                     style={{
                       width: `${
                         categoryBadges.length > 0

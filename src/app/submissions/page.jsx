@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
-import { CheckCircle2, XCircle, AlertCircle, Download, Filter } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Download, Filter, Eye, EyeOff } from 'lucide-react';
 import Spinner from '../../components/Spinner';
 
 export default function SubmissionsPage() {
@@ -22,6 +22,7 @@ export default function SubmissionsPage() {
   const [filterProblem, setFilterProblem] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [expandedSubmissionId, setExpandedSubmissionId] = useState(null);
 
   // Fetch submissions
   const fetchSubmissions = async (pageNum = 1) => {
@@ -92,9 +93,13 @@ export default function SubmissionsPage() {
     URL.revokeObjectURL(url);
   };
 
+  const toggleSubmissionCode = (submissionId) => {
+    setExpandedSubmissionId((prevId) => (prevId === submissionId ? null : submissionId));
+  };
+
   if (authLoading || (loading && page === 1)) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
+      <div className="flex min-h-100 items-center justify-center">
         <Spinner size="lg" />
       </div>
     );
@@ -105,16 +110,16 @@ export default function SubmissionsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-[#2b2116] dark:text-[#f6ede0]">
+          <h1 className="text-3xl font-black uppercase tracking-wide text-black dark:text-[#eef3ff]">
             My Submissions
           </h1>
-          <p className="mt-2 text-[#5d5245] dark:text-[#d7ccbe]">
+          <p className="mt-2 text-sm font-semibold text-black/75 dark:text-[#d4deff]/80">
             View all your code submissions and track progress
           </p>
         </div>
         <button
           onClick={handleExport}
-          className="flex items-center gap-2 rounded-lg bg-[#d69a44] px-4 py-2 text-white hover:bg-[#c4852c] dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#e4b857]"
+          className="flex items-center gap-2 rounded-lg bg-[#0f92ff] px-4 py-2 text-xs font-black uppercase tracking-wide text-black hover:bg-[#077ad8] dark:bg-[#fef08a] dark:hover:bg-[#e9db63]"
         >
           <Download className="h-4 w-4" />
           Export JSON
@@ -122,15 +127,15 @@ export default function SubmissionsPage() {
       </div>
 
       {/* Filters */}
-      <div className="rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] p-6 dark:border-[#3c3347] dark:bg-[#211d27]">
+      <div className="neo-card p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Filter className="h-4 w-4 text-[#d69a44]" />
-          <h3 className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">Filters</h3>
+          <Filter className="h-4 w-4 text-black dark:text-[#d4deff]" />
+          <h3 className="text-sm font-black uppercase tracking-wide text-black dark:text-[#eef3ff]">Filters</h3>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
           <div>
-            <label className="block text-xs font-medium text-[#5d5245] dark:text-[#d7ccbe] mb-2">
+            <label className="mb-2 block text-xs font-black uppercase tracking-wide text-black dark:text-[#d4deff]">
               Verdict
             </label>
             <select
@@ -139,18 +144,21 @@ export default function SubmissionsPage() {
                 setFilterVerdict(e.target.value);
                 handleFilterChange();
               }}
-              className="w-full rounded-lg border border-[#deceb7] bg-white px-3 py-2 text-sm dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#f6ede0]"
+              className="w-full rounded-lg bg-white px-3 py-2 text-sm font-semibold text-black dark:bg-[#151525] dark:text-[#eef3ff]"
             >
               <option value="">All</option>
               <option value="Accepted">Accepted</option>
               <option value="Wrong Answer">Wrong Answer</option>
               <option value="Runtime Error">Runtime Error</option>
               <option value="Compilation Error">Compilation Error</option>
+              <option value="Time Limit Exceeded">Time Limit Exceeded</option>
+              <option value="Memory Limit Exceeded">Memory Limit Exceeded</option>
+              <option value="Output Limit Exceeded">Output Limit Exceeded</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[#5d5245] dark:text-[#d7ccbe] mb-2">
+            <label className="mb-2 block text-xs font-black uppercase tracking-wide text-black dark:text-[#d4deff]">
               Language
             </label>
             <select
@@ -159,7 +167,7 @@ export default function SubmissionsPage() {
                 setFilterLanguage(e.target.value);
                 handleFilterChange();
               }}
-              className="w-full rounded-lg border border-[#deceb7] bg-white px-3 py-2 text-sm dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#f6ede0]"
+              className="w-full rounded-lg bg-white px-3 py-2 text-sm font-semibold text-black dark:bg-[#151525] dark:text-[#eef3ff]"
             >
               <option value="">All</option>
               <option value="javascript">JavaScript</option>
@@ -170,7 +178,7 @@ export default function SubmissionsPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[#5d5245] dark:text-[#d7ccbe] mb-2">
+            <label className="mb-2 block text-xs font-black uppercase tracking-wide text-black dark:text-[#d4deff]">
               Problem
             </label>
             <input
@@ -181,12 +189,12 @@ export default function SubmissionsPage() {
                 handleFilterChange();
               }}
               placeholder="Problem slug..."
-              className="w-full rounded-lg border border-[#deceb7] bg-white px-3 py-2 text-sm dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#f6ede0]"
+              className="w-full rounded-lg bg-white px-3 py-2 text-sm font-semibold text-black dark:bg-[#151525] dark:text-[#eef3ff]"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[#5d5245] dark:text-[#d7ccbe] mb-2">
+            <label className="mb-2 block text-xs font-black uppercase tracking-wide text-black dark:text-[#d4deff]">
               From Date
             </label>
             <input
@@ -196,12 +204,12 @@ export default function SubmissionsPage() {
                 setDateFrom(e.target.value);
                 handleFilterChange();
               }}
-              className="w-full rounded-lg border border-[#deceb7] bg-white px-3 py-2 text-sm dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#f6ede0]"
+              className="w-full rounded-lg bg-white px-3 py-2 text-sm font-semibold text-black dark:bg-[#151525] dark:text-[#eef3ff]"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[#5d5245] dark:text-[#d7ccbe] mb-2">
+            <label className="mb-2 block text-xs font-black uppercase tracking-wide text-black dark:text-[#d4deff]">
               To Date
             </label>
             <input
@@ -211,12 +219,12 @@ export default function SubmissionsPage() {
                 setDateTo(e.target.value);
                 handleFilterChange();
               }}
-              className="w-full rounded-lg border border-[#deceb7] bg-white px-3 py-2 text-sm dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#f6ede0]"
+              className="w-full rounded-lg bg-white px-3 py-2 text-sm font-semibold text-black dark:bg-[#151525] dark:text-[#eef3ff]"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[#5d5245] dark:text-[#d7ccbe] mb-2">
+            <label className="mb-2 block text-xs font-black uppercase tracking-wide text-black dark:text-[#d4deff]">
               Per Page
             </label>
             <select
@@ -225,7 +233,7 @@ export default function SubmissionsPage() {
                 setLimit(parseInt(e.target.value));
                 setPage(1);
               }}
-              className="w-full rounded-lg border border-[#deceb7] bg-white px-3 py-2 text-sm dark:border-[#40364f] dark:bg-[#211d27] dark:text-[#f6ede0]"
+              className="w-full rounded-lg bg-white px-3 py-2 text-sm font-semibold text-black dark:bg-[#151525] dark:text-[#eef3ff]"
             >
               <option value={10}>10</option>
               <option value={20}>20</option>
@@ -238,67 +246,116 @@ export default function SubmissionsPage() {
 
       {/* Error */}
       {error && (
-        <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+        <div className="rounded-lg border-2 border-red-500 bg-red-100 p-4 text-red-800 dark:border-red-400 dark:bg-red-900/30 dark:text-red-300">
           {error}
         </div>
       )}
 
       {/* Submissions List */}
-      <div className="rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] overflow-hidden dark:border-[#3c3347] dark:bg-[#211d27]">
+      <div className="neo-card overflow-hidden">
         {submissions.length === 0 ? (
           <div className="px-6 py-12 text-center">
-            <p className="text-[#5d5245] dark:text-[#d7ccbe]">No submissions found</p>
+            <p className="text-black/75 dark:text-[#d4deff]/80">No submissions found</p>
           </div>
         ) : (
-          <div className="divide-y divide-[#e0d5c2] dark:divide-[#3c3347]">
+          <div className="divide-y-2 divide-black dark:divide-[#a9b9db]">
             {submissions.map((submission, idx) => (
-              <div key={idx} className="flex items-center justify-between px-6 py-4 hover:bg-[#f2e3cc]/50 dark:hover:bg-[#2d2535]/50 transition-colors">
-                <div className="flex items-center gap-4 flex-1 min-w-0">
-                  {/* Status Icon */}
-                  <div className="flex-shrink-0">
-                    {submission.verdict === 'Accepted' ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    ) : submission.verdict?.includes('Error') ? (
-                      <AlertCircle className="h-5 w-5 text-amber-500" />
-                    ) : (
-                      <XCircle className="h-5 w-5 text-red-500" />
-                    )}
+              <div key={submission._id || idx} className="px-6 py-4 transition-colors hover:bg-[#fff4a3] dark:hover:bg-[#25304a]">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    {/* Status Icon */}
+                    <div className="shrink-0">
+                      {submission.verdict === 'Accepted' ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      ) : submission.verdict?.includes('Error') || submission.verdict?.includes('Exceeded') ? (
+                        <AlertCircle className="h-5 w-5 text-amber-500" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-red-500" />
+                      )}
+                    </div>
+
+                    {/* Submission Info */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="truncate font-black uppercase text-black dark:text-[#eef3ff]">
+                          {submission.problemTitle || submission.slug}
+                        </h4>
+                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
+                          submission.verdict === 'Accepted'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                            : submission.verdict?.includes('Error') || submission.verdict?.includes('Exceeded')
+                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        }`}>
+                          {submission.verdict}
+                        </span>
+                      </div>
+
+                      <div className="mt-1 flex items-center gap-3 text-xs text-black/65 dark:text-[#d4deff]/70">
+                        <span className="capitalize">{submission.language}</span>
+                        <span>•</span>
+                        <span>{new Date(submission.submittedAt).toLocaleDateString()}</span>
+                        <span>•</span>
+                        <span>{new Date(submission.submittedAt).toLocaleTimeString()}</span>
+                      </div>
+
+                      <div className="mt-1 text-xs text-black/75 dark:text-[#d4deff]/80">
+                        Passed {submission.testsPassed || 0}/{submission.totalTests || 0} tests
+                        {submission.executionTime ? ` • ${submission.executionTime} ms` : ''}
+                        {submission.memoryUsage ? ` • ${submission.memoryUsage} KB` : ''}
+                      </div>
+
+                      {submission.failedTestName && (
+                        <div className="mt-1 text-xs font-semibold text-black dark:text-[#eef3ff]">
+                          Failed testcase{submission.failedTestIndex ? ` #${submission.failedTestIndex}` : ''}: {submission.failedTestName}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Submission Info */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium text-[#2b2116] dark:text-[#f6ede0] truncate">
-                        {submission.problemTitle || submission.slug}
-                      </h4>
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
-                        submission.verdict === 'Accepted' 
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                          : submission.verdict?.includes('Error')
-                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                          : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                      }`}>
-                        {submission.verdict}
-                      </span>
-                    </div>
+                  <div className="ml-4 flex items-center gap-2">
+                    <button
+                      onClick={() => toggleSubmissionCode(submission._id || idx)}
+                      className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-sm font-black uppercase tracking-wide text-black hover:bg-[#44d07d] dark:bg-[#151525] dark:text-[#eef3ff] dark:hover:bg-[#2d3f62]"
+                    >
+                      {expandedSubmissionId === (submission._id || idx) ? (
+                        <>
+                          <EyeOff className="h-4 w-4" />
+                          Hide Code
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="h-4 w-4" />
+                          View Code
+                        </>
+                      )}
+                    </button>
 
-                    <div className="mt-1 flex items-center gap-3 text-xs text-[#8a7a67] dark:text-[#b5a59c]">
-                      <span className="capitalize">{submission.language}</span>
-                      <span>•</span>
-                      <span>{new Date(submission.submittedAt).toLocaleDateString()}</span>
-                      <span>•</span>
-                      <span>{new Date(submission.submittedAt).toLocaleTimeString()}</span>
-                    </div>
+                    <Link
+                      href={`/problems/${submission.problemSlug}`}
+                      className="rounded-lg bg-[#0f92ff] px-3 py-1.5 text-sm font-black uppercase tracking-wide text-black hover:bg-[#077ad8] dark:bg-[#fef08a] dark:hover:bg-[#e9db63]"
+                    >
+                      Open Problem
+                    </Link>
                   </div>
                 </div>
 
-                {/* View Button */}
-                <Link
-                  href={`/problems/${submission.problemSlug}`}
-                  className="ml-4 rounded-lg bg-[#d69a44] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#c4852c] dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#e4b857]"
-                >
-                  View
-                </Link>
+                {expandedSubmissionId === (submission._id || idx) && (
+                  <div className="mt-4 rounded-lg border-2 border-black bg-white p-4 dark:border-[#a9b9db] dark:bg-[#151525]">
+                    {submission.errorMessage && (
+                      <div className="mb-3 rounded-md bg-amber-100 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                        {submission.errorMessage}
+                      </div>
+                    )}
+
+                    <div className="mb-2 text-xs font-black uppercase tracking-wide text-black dark:text-[#d4deff]">
+                      Submitted Code ({submission.language})
+                    </div>
+                    <pre className="max-h-80 overflow-auto rounded-md bg-[#fff9d0] p-3 text-xs text-black dark:bg-[#202037] dark:text-[#eef3ff]">
+                      {submission.code || 'No code saved for this submission.'}
+                    </pre>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -311,7 +368,7 @@ export default function SubmissionsPage() {
           <button
             onClick={() => fetchSubmissions(page - 1)}
             disabled={page === 1}
-            className="rounded-lg border border-[#deceb7] bg-white px-4 py-2 text-sm font-medium disabled:opacity-50 dark:border-[#40364f] dark:bg-[#211d27]"
+            className="rounded-lg bg-white px-4 py-2 text-sm font-black uppercase disabled:opacity-50 dark:bg-[#151525] dark:text-[#eef3ff]"
           >
             Previous
           </button>
@@ -321,10 +378,10 @@ export default function SubmissionsPage() {
               <button
                 key={p}
                 onClick={() => fetchSubmissions(p)}
-                className={`rounded-lg px-3 py-2 text-sm font-medium ${
+                className={`rounded-lg px-3 py-2 text-sm font-black uppercase ${
                   p === page
-                    ? 'bg-[#d69a44] text-white dark:bg-[#f2c66f] dark:text-[#231406]'
-                    : 'border border-[#deceb7] bg-white dark:border-[#40364f] dark:bg-[#211d27]'
+                    ? 'bg-[#0f92ff] text-black dark:bg-[#fef08a]'
+                    : 'bg-white text-black dark:bg-[#151525] dark:text-[#eef3ff]'
                 }`}
               >
                 {p}
@@ -335,7 +392,7 @@ export default function SubmissionsPage() {
           <button
             onClick={() => fetchSubmissions(page + 1)}
             disabled={page === totalPages}
-            className="rounded-lg border border-[#deceb7] bg-white px-4 py-2 text-sm font-medium disabled:opacity-50 dark:border-[#40364f] dark:bg-[#211d27]"
+            className="rounded-lg bg-white px-4 py-2 text-sm font-black uppercase disabled:opacity-50 dark:bg-[#151525] dark:text-[#eef3ff]"
           >
             Next
           </button>
@@ -343,7 +400,7 @@ export default function SubmissionsPage() {
       )}
 
       {/* Info */}
-      <div className="text-center text-sm text-[#5d5245] dark:text-[#d7ccbe]">
+      <div className="text-center text-sm font-semibold text-black/75 dark:text-[#d4deff]/80">
         Showing {submissions.length} of {total} submissions
       </div>
     </div>

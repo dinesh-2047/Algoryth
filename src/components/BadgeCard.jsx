@@ -36,16 +36,16 @@ export default function BadgeCard({ badge, isEarned = false, progressPercentage 
     <motion.div
       whileHover={{ scale: isEarned ? 1.05 : 1, y: -4 }}
       transition={{ type: 'spring', stiffness: 300, damping: 10 }}
-      className="relative"
+      className="group relative"
     >
       <div
         className={`
-          relative w-32 h-40 rounded-2xl border-2 p-4 flex flex-col items-center justify-center
+          relative h-40 w-32 rounded-2xl border p-4 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#8aa0d0] flex flex-col items-center justify-center
           ${rarityBg[badge.rarity] || rarityBg.common}
           ${rarityBorder[badge.rarity] || rarityBorder.common}
-          ${isEarned ? 'shadow-lg' : 'opacity-60 grayscale'}
+          ${isEarned ? 'opacity-100' : 'opacity-80'}
           transition-all duration-300 cursor-pointer
-          hover:shadow-2xl
+          hover:-translate-y-0.5
         `}
       >
         {/* Rarity gradient background */}
@@ -68,7 +68,7 @@ export default function BadgeCard({ badge, isEarned = false, progressPercentage 
         </h3>
 
         {/* Rarity label */}
-        <div className="text-xs mt-2 px-2 py-1 rounded-full bg-white/50 dark:bg-black/30 z-10 capitalize font-semibold">
+        <div className="mt-2 rounded-full bg-white/80 px-2 py-1 text-xs font-black uppercase text-black dark:bg-[#1f2b45] dark:text-[#d8e7ff] z-10">
           {badge.rarity}
         </div>
 
@@ -79,12 +79,12 @@ export default function BadgeCard({ badge, isEarned = false, progressPercentage 
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ delay: 0.2, type: 'spring' }}
-              className="bg-green-500 dark:bg-green-600 text-white rounded-full p-2 shadow-lg"
+              className="rounded-full bg-green-500 p-2 text-white shadow-lg dark:bg-green-600"
             >
               <Check size={16} strokeWidth={3} />
             </motion.div>
           ) : (
-            <div className="bg-gray-400 dark:bg-gray-600 text-white rounded-full p-2 shadow-lg">
+            <div className="rounded-full bg-gray-500 p-2 text-white shadow-lg dark:bg-gray-600">
               <Lock size={16} />
             </div>
           )}
@@ -92,12 +92,12 @@ export default function BadgeCard({ badge, isEarned = false, progressPercentage 
 
         {/* Progress bar for locked badges */}
         {!isEarned && progressPercentage > 0 && (
-          <div className="absolute bottom-2 left-2 right-2 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden z-10">
+          <div className="absolute bottom-2 left-2 right-2 h-1.5 overflow-hidden rounded-full border border-black/20 bg-white/70 dark:border-[#8aa0d0]/35 dark:bg-[#151525] z-10">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${Math.min(progressPercentage, 100)}%` }}
               transition={{ duration: 0.6 }}
-              className="h-full bg-linear-to-r from-blue-400 to-blue-500"
+              className="h-full bg-linear-to-r from-[#44d07d] to-[#0f92ff]"
             ></motion.div>
           </div>
         )}
@@ -106,8 +106,7 @@ export default function BadgeCard({ badge, isEarned = false, progressPercentage 
       {/* Tooltip on hover */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
-        whileHover={{ opacity: 1, y: 0 }}
-        className="absolute left-1/2 transform -translate-x-1/2 mt-2 bg-gray-900 dark:bg-black text-white text-xs rounded-lg p-2 w-48 z-50 pointer-events-none hidden hover:block"
+        className="pointer-events-none absolute left-1/2 z-50 mt-2 w-48 -translate-x-1/2 rounded-lg bg-[#0b1220] p-2 text-xs text-white opacity-0 transition group-hover:opacity-100 dark:bg-[#020409]"
       >
         <p className="font-bold mb-1">{badge.description}</p>
         {!isEarned && (
