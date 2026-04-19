@@ -17,11 +17,44 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user',
+    index: true,
+  },
+  rating: {
+    type: Number,
+    default: 1200,
+    index: true,
+  },
+  contestsPlayed: {
+    type: Number,
+    default: 0,
+  },
+  contestRatingHistory: {
+    type: [
+      {
+        contestSlug: { type: String, required: true },
+        contestTitle: { type: String, default: '' },
+        rank: { type: Number, default: null },
+        oldRating: { type: Number, required: true },
+        newRating: { type: Number, required: true },
+        delta: { type: Number, required: true },
+        updatedAt: { type: Date, default: Date.now },
+      },
+    ],
+    default: [],
+  },
   // Badge and streak tracking fields
   streakCount: {
     type: Number,
     default: 0,
     index: true,
+  },
+  lastSolvedDate: {
+    type: Date,
+    default: null,
   },
   lastSubmissionDate: {
     type: Date,

@@ -7,168 +7,141 @@ import { usePathname } from 'next/navigation';
 import { Search } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import AuthButton from './AuthButton';
+import { useAuth } from '../context/AuthContext';
 
-const Navbar = () => {
+const baseNavLinks = [
+  { href: '/', label: 'Home' },
+  { href: '/problems', label: 'Problems' },
+  { href: '/contests', label: 'Contests' },
+  { href: '/about', label: 'About' },
+];
+
+export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+  const { user } = useAuth();
 
-  // 🔥 Sticky shrink on scroll
+  const navLinks = user?.role === 'admin'
+    ? [...baseNavLinks, { href: '/admin', label: 'Admin' }]
+    : baseNavLinks;
+
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      setScrolled(window.scrollY > 12);
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile on resize
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
         setIsMenuOpen(false);
       }
     };
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const navLinks = [
-    { href: '/', label: 'Home' },
-    
-    { href: '/problems', label: 'Problems' },
-    { href: '/badges', label: 'Achievements' },
-    { href: '/settings', label: 'Settings' },
-    { href: '/dashboard', label: 'Dashboard' },
-  ];
-
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-500 
-      backdrop-blur-xl bg-white/70 dark:bg-[#0b1120]/70
-      border-b border-gray-200/40 dark:border-gray-800/40
-      ${scrolled ? 'py-2 shadow-md' : 'py-4 shadow-lg'}`}
+      className={`sticky top-0 z-50 border-b-2 border-black bg-[#f8fbff] transition-all dark:border-[#7d8fc4] dark:bg-[#10182c] ${
+        scrolled
+          ? 'shadow-[0_1px_0_0_#000] dark:shadow-[0_1px_0_0_#7d8fc4]'
+          : 'shadow-[0_2px_0_0_#000] dark:shadow-[0_2px_0_0_#7d8fc4]'
+      }`}
     >
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-6 py-3">
+        <Link
+          href="/"
+          className="inline-flex items-center justify-center rounded-2xl bg-[#fff9d0] p-1.5 transition-colors hover:bg-[#fff4a3] dark:bg-[#18233f] dark:hover:bg-[#233358]"
+          aria-label="Algoryth home"
+        >
+          <Image
+            src="/algoryth-logo.png"
+            alt="Algoryth logo"
+            width={84}
+            height={84}
+            className="rounded-md"
+          />
+        </Link>
 
-        <div className="flex items-center justify-between">
+        <nav className="hidden items-center gap-2 md:flex">
+          {navLinks.map((link) => {
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`rounded-xl border border-black px-3 py-1 text-xs font-black uppercase tracking-wide transition dark:border-[#7d8fc4] ${
+                  isActive
+                    ? 'bg-[#0f92ff] text-black dark:bg-[#ff8a65] dark:text-[#1f1010]'
+                    : 'bg-[#fff9d0] text-black hover:bg-[#44d07d] dark:bg-[#161f38] dark:text-[#d9e5ff] dark:hover:bg-[#25335a]'
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+        </nav>
 
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <Image
-              src="/algoryth-logo.png"
-              alt="Logo"
-              width={scrolled ? 36 : 44}
-              height={scrolled ? 36 : 44}
-              className="rounded-full transition-all duration-300 group-hover:scale-110"
+        <div className="hidden items-center gap-3 md:flex">
+          <div className="relative hidden lg:block">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black dark:text-[#9ac9ff]" />
+            <input
+              placeholder="Search"
+              className="h-9 w-44 bg-[#fff9d0] pl-9 pr-3 text-sm font-semibold text-black dark:bg-[#161f38] dark:text-[#edf2ff]"
             />
-            <span className="text-xl font-bold text-gray-900 dark:text-white">
-              Algoryth
-            </span>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-6 ml-10 relative">
-
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
-
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="relative text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-300 group"
-                >
-                  {link.label}
-
-                  {/* 🔥 Animated Underline Slide */}
-                  <span
-                    className={`absolute left-0 -bottom-1 h-0.5 bg-linear-to-r from-indigo-500 to-pink-500 transition-all duration-300
-                    ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`}
-                  />
-                </Link>
-              );
-            })}
-
-            {/* 🔎 Integrated Search */}
-            <div className="relative group ml-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-indigo-500 transition" />
-              <input
-                placeholder="Search..."
-                className="w-36 focus:w-52 transition-all duration-300 h-9 pl-9 pr-3 rounded-full 
-                bg-gray-100 dark:bg-gray-800 text-sm outline-none
-                focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-          </nav>
-
-          {/* Right Section */}
-          <div className="hidden md:flex items-center gap-4 ml-6">
-            <ThemeToggle />
-            <AuthButton />
           </div>
-
-          {/* Mobile Button */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-            aria-label="Toggle menu"
-          >
-            <svg
-              className="h-6 w-6 text-gray-700 dark:text-gray-300"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              {isMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
+          <ThemeToggle />
+          <AuthButton />
         </div>
 
-        {/* Mobile Menu */}
-        <div
-          className={`md:hidden overflow-hidden transition-all duration-500 ${
-            isMenuOpen ? 'max-h-125 opacity-100 mt-4' : 'max-h-0 opacity-0'
-          }`}
+        <button
+          onClick={() => setIsMenuOpen((value) => !value)}
+          className="inline-flex h-10 w-10 items-center justify-center border border-black bg-white text-black md:hidden dark:border-[#7d8fc4] dark:bg-[#161f38] dark:text-[#d9e5ff]"
+          aria-label="Toggle menu"
         >
-          <div className="rounded-xl bg-white/95 dark:bg-[#111827]/95 shadow-lg p-4 flex flex-col gap-3">
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {isMenuOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
+      </div>
 
+      {isMenuOpen && (
+        <div className="border-t-2 border-black bg-[#fff9d0] px-6 py-4 md:hidden dark:border-[#7d8fc4] dark:bg-[#141d34]">
+          <div className="grid gap-2">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
-
               return (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition
-                  ${
+                  className={`rounded-xl border border-black px-3 py-2 text-sm font-bold uppercase tracking-wide dark:border-[#7d8fc4] ${
                     isActive
-                      ? 'bg-linear-to-r from-indigo-500 to-pink-500 text-white'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      ? 'bg-[#0f92ff] text-black dark:bg-[#ff8a65] dark:text-[#1f1010]'
+                      : 'bg-white text-black dark:bg-[#111a2f] dark:text-[#edf2ff]'
                   }`}
                 >
                   {link.label}
                 </Link>
               );
             })}
-
-            <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-              <AuthButton />
-            </div>
-
+          </div>
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <ThemeToggle />
+            <AuthButton />
           </div>
         </div>
-
-      </div>
+      )}
     </header>
   );
-};
-
-export default Navbar;
+}

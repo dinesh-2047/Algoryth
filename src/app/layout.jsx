@@ -1,17 +1,16 @@
-import { Geist, Geist_Mono } from "next/font/google";
-import Link from "next/link";
-import Image from "next/image";
+import { Bricolage_Grotesque, Space_Mono } from "next/font/google";
 import LayoutWrapper from "../components/LayoutWrapper";
 import { AuthProvider } from "../context/AuthContext";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const spaceMono = Space_Mono({
+  variable: "--font-space-mono",
+  weight: ["400", "700"],
   subsets: ["latin"],
 });
 
@@ -22,10 +21,10 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning className="bg-[#f8f3e6] dark:bg-[#18131f]">
+    <html lang="en" suppressHydrationWarning className="bg-[#f3f6fb] dark:bg-[#090f1b]">
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-[#f8f3e6] text-[#2b2116] antialiased transition-colors duration-300 dark:bg-[#18131f] dark:text-[#f6ede0]`}
+        className={`${bricolage.variable} ${spaceMono.variable} min-h-screen bg-[#f3f6fb] text-[#0f172a] antialiased transition-colors duration-300 dark:bg-[#090f1b] dark:text-[#edf2ff]`}
       >
 
         <AuthProvider>

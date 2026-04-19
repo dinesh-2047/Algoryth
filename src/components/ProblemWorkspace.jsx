@@ -2,81 +2,391 @@
 
 import { useMemo, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { FileText, BookOpen, List, History, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  FileText,
+  BookOpen,
+  List,
+  History,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Eye,
+  ChevronDown,
+  ChevronUp,
+  Trash2,
+} from "lucide-react";
 import CodeEditor from "./CodeEditor";
 import SplitPane from "./SplitPane";
 import ProblemTimer from "./ProblemTimer";
 import Spinner from "./Spinner";
 import BadgeNotification from "./BadgeNotification";
+import { useAuth } from "../context/AuthContext";
 
-export default function ProblemWorkspace({ problem, onNext, onPrev }) {
+const RUN_MEMORY_LIMIT_KB = 512 * 1024;
+
+function normalizeOutput(output) {
+  return String(output ?? "").replace(/\r\n/g, "\n").trim();
+}
+
+function outputsMatch(actualOutput, expectedOutput) {
+  return normalizeOutput(actualOutput) === normalizeOutput(expectedOutput);
+}
+
+function buildInitialExampleCases(examples = []) {
+  const safeExamples = Array.isArray(examples) ? examples : [];
+
+  if (safeExamples.length === 0) {
+    return [
+      {
+        id: "case-1",
+        label: "Case 1",
+        input: "",
+        expectedOutput: "",
+        explanation: "",
+        isCustom: false,
+      },
+    ];
+  }
+
+  return safeExamples.map((example, index) => ({
+    id: `case-${index + 1}`,
+    label: `Case ${index + 1}`,
+    input: String(example.input || ""),
+    expectedOutput: String(example.output || ""),
+    explanation: String(example.explanation || ""),
+    isCustom: false,
+  }));
+}
+
+function classifyRunVerdict(payload, expectedOutput = "") {
+  const errorText = String(payload?.error || payload?.details || "").toLowerCase();
+  const exitCode = Number(payload?.exitCode);
+  const signal = Number(payload?.signal);
+  const executionTime = Number(payload?.executionTime || 0);
+  const memoryUsage = Number(payload?.memoryUsage || 0);
+  const output = String(payload?.output || "");
+
+  if (exitCode === 124 || executionTime > 30000) {
+    return "Time Limit Exceeded";
+  }
+
+  if ((exitCode === 137 && signal === 9) || memoryUsage > RUN_MEMORY_LIMIT_KB) {
+    return "Memory Limit Exceeded";
+  }
+
+  if (
+    errorText.includes("output limit") ||
+    errorText.includes("too much output") ||
+    output.length >= 999
+  ) {
+    return "Output Limit Exceeded";
+  }
+
+  if (
+    errorText.includes("compile") ||
+    errorText.includes("compilation") ||
+    errorText.includes("syntax") ||
+    errorText.includes("cannot find") ||
+    errorText.includes("undeclared")
+  ) {
+    return "Compilation Error";
+  }
+
+  if (errorText.length > 0 || payload?.status === "error") {
+    return "Runtime Error";
+  }
+
+  if (expectedOutput && !outputsMatch(payload?.output, expectedOutput)) {
+    return "Wrong Answer";
+  }
+
+  if (expectedOutput) {
+    return "Accepted";
+  }
+
+  return "Executed";
+}
+
+function getVerdictClasses(verdict) {
+  if (verdict === "Accepted") {
+    return "bg-[#44d07d] text-black dark:bg-[#173924] dark:text-[#fef08a]";
+  }
+
+  if (
+    verdict === "Wrong Answer" ||
+    verdict === "Runtime Error" ||
+    verdict === "Compilation Error" ||
+    verdict === "Time Limit Exceeded" ||
+    verdict === "Memory Limit Exceeded" ||
+    verdict === "Output Limit Exceeded"
+  ) {
+    return "bg-[#ff6b35] text-black dark:bg-[#4d2a25] dark:text-[#fff9f0]";
+  }
+
+  return "bg-[#0f92ff] text-black dark:bg-[#2f4064] dark:text-[#fff9f0]";
+}
+
+function getVerdictIcon(verdict) {
+  if (verdict === "Accepted") return CheckCircle2;
+
+  if (
+    verdict === "Time Limit Exceeded" ||
+    verdict === "Memory Limit Exceeded" ||
+    verdict === "Output Limit Exceeded" ||
+    verdict === "Runtime Error" ||
+    verdict === "Compilation Error"
+  ) {
+    return AlertCircle;
+  }
+
+  return XCircle;
+}
+
+export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug }) {
+  const router = useRouter();
+  const { user, token, loading: authLoading, refreshUser } = useAuth();
+  const [isWideLayout, setIsWideLayout] = useState(true);
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("javascript");
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [lastSubmissionStatus, setLastSubmissionStatus] = useState(null);
+  const [resultDetails, setResultDetails] = useState(null);
   const [timerRunning, setTimerRunning] = useState(true);
   const [inputError, setInputError] = useState(null);
   const [openHints, setOpenHints] = useState([]);
   const [newBadges, setNewBadges] = useState([]);
+  const [activeRightTab, setActiveRightTab] = useState("testcase");
+  const [isResultPanelMinimized, setIsResultPanelMinimized] = useState(false);
+  const [exampleCases, setExampleCases] = useState(() =>
+    buildInitialExampleCases(problem.examples)
+  );
+  const [activeCaseIndex, setActiveCaseIndex] = useState(0);
+  const [removedCustomCase, setRemovedCustomCase] = useState(null);
+
   const handleDismissBadges = useCallback(() => setNewBadges([]), []);
 
-  // Tabs State
+  // Left tabs state
   const [activeTab, setActiveTab] = useState("Description");
   const [submissions, setSubmissions] = useState([]);
+  const [selectedSubmissionIndex, setSelectedSubmissionIndex] = useState(null);
+  const [editorial, setEditorial] = useState(() => problem.editorial || {});
+  const [editorialLoading, setEditorialLoading] = useState(false);
+  const [editorialError, setEditorialError] = useState("");
+  const [solutions, setSolutions] = useState([]);
+  const [solutionsLoading, setSolutionsLoading] = useState(false);
+  const [solutionsError, setSolutionsError] = useState("");
+  const [isPostingSolution, setIsPostingSolution] = useState(false);
+  const [solutionDraft, setSolutionDraft] = useState({
+    title: "",
+    summary: "",
+    code: "",
+    language: "javascript",
+  });
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    setLastSubmissionStatus(null);
+    setResultDetails(null);
     setInputError(null);
     setCode("");
+    setLanguage("javascript");
     setTimerRunning(true);
     setActiveTab("Description");
     setOpenHints([]);
+    setNewBadges([]);
+    setActiveRightTab("testcase");
+    setIsResultPanelMinimized(false);
+    setExampleCases(buildInitialExampleCases(problem.examples));
+    setActiveCaseIndex(0);
+    setRemovedCustomCase(null);
+    setSelectedSubmissionIndex(null);
+    setEditorial(problem.editorial || {});
+    setEditorialLoading(false);
+    setEditorialError("");
+    setSolutions([]);
+    setSolutionsLoading(false);
+    setSolutionsError("");
+    setIsPostingSolution(false);
+    setSolutionDraft({
+      title: "",
+      summary: "",
+      code: "",
+      language: "javascript",
+    });
 
     const loadSubmissions = async () => {
       try {
         const token = localStorage.getItem("algoryth_token");
         if (token) {
-          const response = await fetch(`/api/submissions/history?problemSlug=${problem.slug}&limit=10`, {
-            headers: { "Authorization": `Bearer ${token}` }
-          });
+          const response = await fetch(
+            `/api/submissions/history?problemSlug=${problem.slug}&limit=20`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+
           if (response.ok) {
             const data = await response.json();
             if (data.submissions) {
-              const normalized = data.submissions.map(s => ({
-                problemId: problem.id,
-                slug: problem.slug,
-                problemTitle: s.problemTitle,
-                status: s.verdict,
-                language: s.language,
-                timestamp: s.submittedAt || new Date().toISOString()
+              const normalized = data.submissions.map((submission) => ({
+                id: submission._id || `${submission.submittedAt}-${submission.problemSlug}`,
+                problemId: submission.problemId || problem.id,
+                slug: submission.problemSlug || problem.slug,
+                problemTitle: submission.problemTitle || problem.title,
+                status: submission.verdict,
+                verdict: submission.verdict,
+                language: submission.language,
+                code: submission.code || "",
+                timestamp: submission.submittedAt || new Date().toISOString(),
+                executionTime: Number(submission.executionTime || 0),
+                memoryUsage: Number(submission.memoryUsage || 0),
+                testsPassed: Number(submission.testsPassed || 0),
+                totalTests: Number(submission.totalTests || 0),
+                failedTestName: submission.failedTestName || null,
+                failedTestIndex:
+                  submission.failedTestIndex === null || submission.failedTestIndex === undefined
+                    ? null
+                    : Number(submission.failedTestIndex),
+                errorMessage: submission.errorMessage || "",
+                queueWaitMs: Number(submission.queueWaitMs || 0),
               }));
+
               setSubmissions(normalized);
               return;
             }
           }
         }
 
-        const allSubmissions = JSON.parse(localStorage.getItem("algoryth_submissions") || "[]");
-        const validSubmissions = allSubmissions.filter(s => s.problemId === problem.id || s.slug === problem.slug);
-        setSubmissions(validSubmissions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
-      } catch (e) {
-        console.error("Failed to load submissions", e);
+        const allSubmissions = JSON.parse(
+          localStorage.getItem("algoryth_submissions") || "[]"
+        );
+        const validSubmissions = allSubmissions.filter(
+          (submission) =>
+            submission.problemId === problem.id || submission.slug === problem.slug
+        );
+
+        const normalizedFallback = validSubmissions
+          .map((submission) => ({
+            id:
+              submission.id ||
+              `${submission.timestamp || submission.submittedAt || Date.now()}-${
+                submission.slug || problem.slug
+              }`,
+            problemId: submission.problemId || problem.id,
+            slug: submission.slug || problem.slug,
+            problemTitle: submission.problemTitle || problem.title,
+            status: submission.status || submission.verdict || "Error",
+            verdict: submission.verdict || submission.status || "Error",
+            language: submission.language || "javascript",
+            code: submission.code || "",
+            timestamp:
+              submission.timestamp || submission.submittedAt || new Date().toISOString(),
+            executionTime: Number(submission.executionTime || 0),
+            memoryUsage: Number(submission.memoryUsage || 0),
+            testsPassed: Number(submission.testsPassed || 0),
+            totalTests: Number(submission.totalTests || 0),
+            failedTestName: submission.failedTestName || null,
+            failedTestIndex:
+              submission.failedTestIndex === null || submission.failedTestIndex === undefined
+                ? null
+                : Number(submission.failedTestIndex),
+            errorMessage: submission.errorMessage || "",
+            queueWaitMs: Number(submission.queueWaitMs || 0),
+          }))
+          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        setSubmissions(normalizedFallback);
+      } catch (error) {
+        console.error("Failed to load submissions", error);
+      }
+    };
+
+    const authHeaders = () => {
+      const headers = {};
+      const persistedToken = localStorage.getItem("algoryth_token");
+      if (persistedToken) {
+        headers.Authorization = `Bearer ${persistedToken}`;
+      }
+      return headers;
+    };
+
+    const loadEditorial = async () => {
+      try {
+        setEditorialLoading(true);
+        setEditorialError("");
+
+        const response = await fetch(`/api/problems/${problem.slug}/editorial`, {
+          headers: authHeaders(),
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.error || "Failed to load editorial");
+        }
+
+        const payload = await response.json();
+        setEditorial(payload.editorial || {});
+      } catch (error) {
+        setEditorialError(error.message || "Failed to load editorial");
+      } finally {
+        setEditorialLoading(false);
+      }
+    };
+
+    const loadSolutions = async () => {
+      try {
+        setSolutionsLoading(true);
+        setSolutionsError("");
+
+        const response = await fetch(`/api/problems/${problem.slug}/solutions`, {
+          headers: authHeaders(),
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.error || "Failed to load solutions");
+        }
+
+        const payload = await response.json();
+        setSolutions(Array.isArray(payload.solutions) ? payload.solutions : []);
+      } catch (error) {
+        setSolutionsError(error.message || "Failed to load solutions");
+      } finally {
+        setSolutionsLoading(false);
       }
     };
 
     loadSubmissions();
-  }, [problem.id, problem.slug]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+    loadEditorial();
+    loadSolutions();
+  }, [problem]);
+
+  useEffect(() => {
+    const updateLayout = () => {
+      setIsWideLayout(window.innerWidth >= 1180);
+    };
+
+    updateLayout();
+    window.addEventListener("resize", updateLayout);
+    return () => window.removeEventListener("resize", updateLayout);
+  }, []);
 
   const starterCode = useMemo(
-    () => `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
-    [problem.title]
+    () =>
+      problem.starterCode?.[language] ||
+      `// ${problem.title}\n\n// Write your solution and print the output.\n`,
+    [problem, language]
   );
 
   const isCodeEmpty =
     !code || code.trim().length === 0 || code.trim() === starterCode.trim();
+
+  const activeCase = useMemo(() => {
+    if (exampleCases.length === 0) return null;
+    const safeIndex = Math.min(activeCaseIndex, exampleCases.length - 1);
+    return exampleCases[safeIndex];
+  }, [exampleCases, activeCaseIndex]);
 
   const validateBeforeRun = () => {
     if (isCodeEmpty) {
@@ -85,131 +395,443 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       );
       return false;
     }
+
     setInputError(null);
     return true;
+  };
+
+  const updateActiveCaseInput = (value) => {
+    setExampleCases((prevCases) =>
+      prevCases.map((testCase, index) =>
+        index === activeCaseIndex ? { ...testCase, input: value } : testCase
+      )
+    );
+  };
+
+  const removeCaseAtIndex = (indexToRemove) => {
+    const caseToRemove = exampleCases[indexToRemove];
+    if (!caseToRemove?.isCustom) return;
+
+    const nextCases = exampleCases
+      .filter((_, index) => index !== indexToRemove)
+      .map((testCase, index) => ({
+        ...testCase,
+        label: `Case ${index + 1}`,
+      }));
+
+    if (nextCases.length === 0) return;
+
+    setExampleCases(nextCases);
+    setRemovedCustomCase({
+      caseData: caseToRemove,
+      insertIndex: indexToRemove,
+    });
+
+    setActiveCaseIndex((prevIndex) => {
+      if (prevIndex > indexToRemove) return prevIndex - 1;
+      if (prevIndex === indexToRemove) return Math.max(0, indexToRemove - 1);
+      return prevIndex;
+    });
+  };
+
+  const restoreRemovedCase = () => {
+    if (!removedCustomCase?.caseData) return;
+
+    const safeInsertIndex = Math.min(
+      Math.max(removedCustomCase.insertIndex, 0),
+      exampleCases.length
+    );
+
+    const nextCases = [
+      ...exampleCases.slice(0, safeInsertIndex),
+      {
+        ...removedCustomCase.caseData,
+        isCustom: true,
+      },
+      ...exampleCases.slice(safeInsertIndex),
+    ].map((testCase, index) => ({
+      ...testCase,
+      label: `Case ${index + 1}`,
+    }));
+
+    setExampleCases(nextCases);
+    setActiveCaseIndex(safeInsertIndex);
+    setRemovedCustomCase(null);
+    setActiveRightTab("testcase");
+  };
+
+  const addCustomCase = () => {
+    const nextIndex = exampleCases.length;
+    const uniqueSuffix = Date.now();
+
+    setExampleCases((prevCases) =>
+      [
+        ...prevCases,
+        {
+          id: `custom-case-${uniqueSuffix}`,
+          label: `Case ${nextIndex + 1}`,
+          input: "",
+          expectedOutput: "",
+          explanation: "",
+          isCustom: true,
+        },
+      ].map((testCase, index) => ({
+        ...testCase,
+        label: `Case ${index + 1}`,
+      }))
+    );
+
+    setActiveCaseIndex(nextIndex);
+    setRemovedCustomCase(null);
+    setActiveRightTab("testcase");
   };
 
   const handleRun = async () => {
     if (!validateBeforeRun()) return;
 
     setIsRunning(true);
-    setLastSubmissionStatus(null);
+    setResultDetails(null);
     setInputError(null);
+    setActiveRightTab("result");
+    setIsResultPanelMinimized(false);
+
+    const runInput = activeCase?.input || "";
+    const expectedOutput = activeCase?.expectedOutput || "";
 
     try {
       const response = await fetch("/api/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
-      });
-
-      const result = await response.json();
-
-      if (result.success === false) {
-        setLastSubmissionStatus(`Error:\n${result.error?.message || "Unknown error"}`);
-      } else {
-        const { output, error } = result.data || result;
-        if (error) {
-          setLastSubmissionStatus(`Error:\n${error}`);
-        } else {
-          setLastSubmissionStatus(`Output:\n${JSON.stringify(output, null, 2) ?? "No output"}`);
-        }
-      }
-    } catch (err) {
-      setLastSubmissionStatus(`Execution Error: ${err.message}`);
-    }
-
-    setIsRunning(false);
-  };
-
-  const handleSubmit = async () => {
-    if (!validateBeforeRun()) return;
-
-    setTimerRunning(false);
-    setIsSubmitting(true);
-    setLastSubmissionStatus(null);
-    setInputError(null);
-    setNewBadges([]);
-
-    let verdict = "Submission Error";
-
-    try {
-      // Get token for authentication
-      const token = localStorage.getItem('algoryth_token');
-
-      const response = await fetch("/api/submissions", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          ...(token && { "Authorization": `Bearer ${token}` }),
-        },
         body: JSON.stringify({
-          slug: problem.slug,
           code,
           language,
+          input: runInput,
         }),
       });
 
       const result = await response.json();
 
-      if (result.success === false) {
-        verdict = result.error?.message || "Internal Error";
-      } else {
-        // Save to localStorage for dashboard tracking
-        try {
-          const raw = localStorage.getItem("algoryth_submissions");
-          const submissionsList = raw ? JSON.parse(raw) : [];
-          const newEntry = {
-            problemId: problem.id,
-            problemTitle: problem.title,
-            rating: problem.rating,
-            status: result.status,
-            language: language,
-            timestamp: new Date().toISOString(),
-          };
-          localStorage.setItem("algoryth_submissions", JSON.stringify([newEntry, ...submissionsList]));
-        } catch (e) {
-          console.error("Error saving submission to localStorage:", e);
-        }
-        verdict = result.data?.verdict || result.verdict || "Unknown";
+      if (!response.ok) {
+        const errorMessage = result.error || result.details || "Unknown execution error";
+        const verdict = classifyRunVerdict(
+          {
+            ...result,
+            output: "",
+            error: errorMessage,
+            status: "error",
+          },
+          expectedOutput
+        );
+
+        setResultDetails({
+          kind: "run",
+          verdict,
+          caseLabel: activeCase?.label || "Case",
+          caseIndex: activeCaseIndex + 1,
+          input: runInput,
+          expectedOutput,
+          output: "",
+          error: errorMessage,
+          executionTime: Number(result.executionTime || 0),
+          memoryUsage: Number(result.memoryUsage || 0),
+          queueWaitMs: Number(result.queueWaitMs || 0),
+          checkedAgainstExample: Boolean(expectedOutput.trim()),
+          outputMatchesExample: false,
+        });
+        return;
       }
-      setLastSubmissionStatus(verdict);
-    } catch {
-      verdict = "Network Error";
-      setLastSubmissionStatus(verdict);
+
+      const verdict = classifyRunVerdict(result, expectedOutput);
+      const checkedAgainstExample = Boolean(expectedOutput.trim());
+      const outputMatchesExample = checkedAgainstExample
+        ? outputsMatch(result.output, expectedOutput)
+        : null;
+
+      setResultDetails({
+        kind: "run",
+        verdict,
+        caseLabel: activeCase?.label || "Case",
+        caseIndex: activeCaseIndex + 1,
+        input: runInput,
+        expectedOutput,
+        output: String(result.output || ""),
+        error: String(result.error || ""),
+        executionTime: Number(result.executionTime || 0),
+        memoryUsage: Number(result.memoryUsage || 0),
+        queueWaitMs: Number(result.queueWaitMs || 0),
+        checkedAgainstExample,
+        outputMatchesExample,
+      });
+    } catch (error) {
+      setResultDetails({
+        kind: "run",
+        verdict: "Runtime Error",
+        caseLabel: activeCase?.label || "Case",
+        caseIndex: activeCaseIndex + 1,
+        input: runInput,
+        expectedOutput,
+        output: "",
+        error: `Execution Error: ${error.message}`,
+        executionTime: 0,
+        memoryUsage: 0,
+        queueWaitMs: 0,
+        checkedAgainstExample: Boolean(expectedOutput.trim()),
+        outputMatchesExample: false,
+      });
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!validateBeforeRun()) return;
+
+    if (authLoading) return;
+
+    if (!user || !token) {
+      setResultDetails({
+        kind: "submit",
+        verdict: "Error",
+        testsPassed: 0,
+        totalTests: 0,
+        executionTime: 0,
+        memoryUsage: 0,
+        queueWaitMs: 0,
+        failedCase: null,
+        errorMessage: "Please login first. Redirecting to login...",
+      });
+      setActiveRightTab("result");
+      setIsResultPanelMinimized(false);
+      router.push(`/auth?redirect=${encodeURIComponent(`/problems/${problem.slug}`)}`);
+      return;
     }
 
-    // Save submission locally for offline access
+    setTimerRunning(false);
+    setIsSubmitting(true);
+    setResultDetails(null);
+    setInputError(null);
+    setNewBadges([]);
+    setActiveRightTab("result");
+    setIsResultPanelMinimized(false);
+
+    let verdict = "Submission Error";
+    let responsePayload = null;
+
+    try {
+      const response = await fetch("/api/submissions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          slug: problem.slug,
+          code,
+          language,
+          contestSlug,
+        }),
+      });
+
+      responsePayload = await response.json();
+
+      if (!response.ok) {
+        verdict =
+          responsePayload.verdict ||
+          responsePayload.message ||
+          responsePayload.error ||
+          "Error";
+
+        setResultDetails({
+          kind: "submit",
+          verdict,
+          testsPassed: Number(responsePayload.testsPassed || 0),
+          totalTests: Number(responsePayload.totalTests || 0),
+          executionTime: Number(responsePayload.executionTime || 0),
+          memoryUsage: Number(responsePayload.memoryUsage || 0),
+          queueWaitMs: Number(responsePayload.queueWaitMs || 0),
+          failedCase: responsePayload.failedCase || null,
+          errorMessage:
+            responsePayload.details ||
+            responsePayload.message ||
+            responsePayload.error ||
+            "Submission failed",
+        });
+      } else {
+        verdict = responsePayload.verdict || "Unknown";
+
+        setResultDetails({
+          kind: "submit",
+          verdict,
+          testsPassed: Number(responsePayload.testsPassed || 0),
+          totalTests: Number(responsePayload.totalTests || 0),
+          executionTime: Number(responsePayload.executionTime || 0),
+          memoryUsage: Number(responsePayload.memoryUsage || 0),
+          queueWaitMs: Number(responsePayload.queueWaitMs || 0),
+          failedCase: responsePayload.failedCase || null,
+          errorMessage:
+            responsePayload.details || responsePayload.failedCase?.reason || "",
+        });
+
+        if (responsePayload.newBadges?.length > 0) {
+          setNewBadges(responsePayload.newBadges);
+        }
+      }
+    } catch (error) {
+      verdict = "Network Error";
+
+      setResultDetails({
+        kind: "submit",
+        verdict,
+        testsPassed: 0,
+        totalTests: 0,
+        executionTime: 0,
+        memoryUsage: 0,
+        queueWaitMs: 0,
+        failedCase: null,
+        errorMessage: error.message,
+      });
+    }
+
     const newSubmission = {
+      id: `${Date.now()}-${problem.slug}`,
       problemId: problem.id,
       slug: problem.slug,
       problemTitle: problem.title,
       status: verdict,
+      verdict,
       language,
       code,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      executionTime: Number(responsePayload?.executionTime || 0),
+      memoryUsage: Number(responsePayload?.memoryUsage || 0),
+      testsPassed: Number(responsePayload?.testsPassed || 0),
+      totalTests: Number(responsePayload?.totalTests || 0),
+      failedTestName: responsePayload?.failedCase?.name || null,
+      failedTestIndex:
+        responsePayload?.failedCase?.index === undefined ||
+        responsePayload?.failedCase?.index === null
+          ? null
+          : Number(responsePayload.failedCase.index),
+      errorMessage:
+        responsePayload?.details ||
+        responsePayload?.failedCase?.reason ||
+        responsePayload?.message ||
+        "",
+      queueWaitMs: Number(responsePayload?.queueWaitMs || 0),
     };
 
-    setSubmissions(prev => [newSubmission, ...prev]);
+    setSubmissions((prevSubmissions) => [newSubmission, ...prevSubmissions]);
+    setSelectedSubmissionIndex(0);
 
     try {
-      const allSubmissions = JSON.parse(localStorage.getItem("algoryth_submissions") || "[]");
-      allSubmissions.push(newSubmission);
-      localStorage.setItem("algoryth_submissions", JSON.stringify(allSubmissions));
-    } catch (e) {
-      console.error("Failed to save submission to localStorage backup:", e);
+      const allSubmissions = JSON.parse(
+        localStorage.getItem("algoryth_submissions") || "[]"
+      );
+      localStorage.setItem(
+        "algoryth_submissions",
+        JSON.stringify([newSubmission, ...allSubmissions])
+      );
+    } catch (error) {
+      console.error("Failed to save submission to localStorage backup:", error);
     }
 
     setIsSubmitting(false);
-    // Switch to submissions tab to show result
+
+    if (token) {
+      await refreshUser(token);
+    }
+
     setActiveTab("Submissions");
   };
 
-  const toggleHint = (i) => {
-    setOpenHints((prev) =>
-      prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]
-
+  const toggleHint = (index) => {
+    setOpenHints((prevHints) =>
+      prevHints.includes(index)
+        ? prevHints.filter((hintIndex) => hintIndex !== index)
+        : [...prevHints, index]
     );
+  };
+
+  const handlePostSolution = async () => {
+    if (authLoading) return;
+
+    if (!user || !token) {
+      router.push(`/auth?redirect=${encodeURIComponent(`/problems/${problem.slug}`)}`);
+      return;
+    }
+
+    const title = String(solutionDraft.title || "").trim();
+    const codeToSubmit = String(solutionDraft.code || code || "").trim();
+
+    if (!title || !codeToSubmit) {
+      setSolutionsError("Solution title and code are required.");
+      return;
+    }
+
+    try {
+      setIsPostingSolution(true);
+      setSolutionsError("");
+
+      const response = await fetch(`/api/problems/${problem.slug}/solutions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title,
+          summary: solutionDraft.summary || "",
+          code: codeToSubmit,
+          language: solutionDraft.language || language,
+        }),
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Failed to post solution");
+      }
+
+      if (payload.solution) {
+        setSolutions((prev) => [payload.solution, ...prev]);
+      }
+
+      setSolutionDraft({
+        title: "",
+        summary: "",
+        code: codeToSubmit,
+        language: solutionDraft.language || language,
+      });
+    } catch (error) {
+      setSolutionsError(error.message || "Failed to post solution");
+    } finally {
+      setIsPostingSolution(false);
+    }
+  };
+
+  const handleDeleteSolution = async (solutionId) => {
+    if (!token) return;
+
+    try {
+      const response = await fetch(
+        `/api/problems/${problem.slug}/solutions/${solutionId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.error || "Failed to remove solution");
+      }
+
+      setSolutions((prev) => prev.filter((item) => item.id !== solutionId));
+    } catch (error) {
+      setSolutionsError(error.message || "Failed to remove solution");
+    }
   };
 
   const tabs = [
@@ -228,49 +850,86 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
               {problem.statement}
             </p>
 
-            <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">Constraints</h3>
+            {problem.inputFormat && (
+              <>
+                <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+                  Input Format
+                </h3>
+                <pre className="mt-2 overflow-x-auto rounded bg-[#f7f0e0] p-3 text-xs text-[#5d5245] dark:bg-[#2d2535] dark:text-[#d7ccbe]">
+                  {problem.inputFormat}
+                </pre>
+              </>
+            )}
+
+            {problem.outputFormat && (
+              <>
+                <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+                  Output Format
+                </h3>
+                <pre className="mt-2 overflow-x-auto rounded bg-[#f7f0e0] p-3 text-xs text-[#5d5245] dark:bg-[#2d2535] dark:text-[#d7ccbe]">
+                  {problem.outputFormat}
+                </pre>
+              </>
+            )}
+
+            <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+              Constraints
+            </h3>
             <ul className="mt-2 list-disc pl-5 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
-              {problem.constraints.map((c) => (
-                <li key={c}>{c}</li>
+              {(problem.constraints || []).map((constraint) => (
+                <li key={constraint}>{constraint}</li>
               ))}
             </ul>
 
-            <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">Examples</h3>
+            <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+              Examples
+            </h3>
             <div className="mt-2 grid gap-3">
-              {problem.examples.map((ex, i) => (
-                <div key={i} className="rounded-lg border border-[#e0d5c2] bg-white p-3 text-sm dark:border-[#3c3347] dark:bg-[#211d27]">
+              {(problem.examples || []).map((example, index) => (
+                <div
+                  key={index}
+                  className="rounded-lg border border-[#e0d5c2] bg-white p-3 text-sm dark:border-[#3c3347] dark:bg-[#211d27]"
+                >
                   <div className="font-medium text-[#2b2116] dark:text-[#f6ede0]">Input</div>
                   <pre className="mt-1 overflow-x-auto rounded bg-[#f7f0e0] p-2 font-mono text-xs dark:bg-[#2d2535] dark:text-[#d7ccbe]">
-                    {ex.input}
+                    {example.input}
                   </pre>
                   <div className="mt-2 font-medium text-[#2b2116] dark:text-[#f6ede0]">Output</div>
                   <pre className="mt-1 overflow-x-auto rounded bg-[#f7f0e0] p-2 font-mono text-xs dark:bg-[#2d2535] dark:text-[#d7ccbe]">
-                    {ex.output}
+                    {example.output}
                   </pre>
-                  {ex.explanation && (
+                  {example.explanation && (
                     <>
-                      <div className="mt-2 font-medium text-[#2b2116] dark:text-[#f6ede0]">Explanation</div>
-                      <p className="text-xs text-[#5d5245] dark:text-[#d7ccbe] mt-1">{ex.explanation}</p>
+                      <div className="mt-2 font-medium text-[#2b2116] dark:text-[#f6ede0]">
+                        Explanation
+                      </div>
+                      <p className="mt-1 text-xs text-[#5d5245] dark:text-[#d7ccbe]">
+                        {example.explanation}
+                      </p>
                     </>
                   )}
                 </div>
               ))}
             </div>
 
-            {problem.hints && (
+            {Array.isArray(problem.hints) && problem.hints.length > 0 && (
               <>
-                <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">Hints</h3>
+                <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+                  Hints
+                </h3>
                 <div className="mt-2 grid gap-2">
-                  {problem.hints.map((hint, i) => (
+                  {problem.hints.map((hint, index) => (
                     <div
-                      key={i}
+                      key={index}
                       className="cursor-pointer rounded border border-[#e0d5c2] p-2 text-sm transition-colors hover:bg-[#fff8ed] dark:border-[#3c3347] dark:hover:bg-[#2d2535]"
-                      onClick={() => toggleHint(i)}
+                      onClick={() => toggleHint(index)}
                     >
                       <div className="flex items-center gap-2 font-medium text-[#2b2116] dark:text-[#f6ede0]">
-                        <span>💡 Hint {i + 1}</span>
+                        <span>Hint {index + 1}</span>
                       </div>
-                      {openHints.includes(i) && <p className="mt-2 text-[#5d5245] dark:text-[#d7ccbe]">{hint}</p>}
+                      {openHints.includes(index) && (
+                        <p className="mt-2 text-[#5d5245] dark:text-[#d7ccbe]">{hint}</p>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -281,14 +940,42 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
 
       case "Editorial":
         return (
-          <div className="flex flex-col items-center justify-center py-10 text-center">
-            <div className="mb-4 rounded-full bg-[#f2e3cc] p-4 dark:bg-[#292331]">
-              <BookOpen className="h-8 w-8 text-[#d69a44] dark:text-[#f2c66f]" />
-            </div>
-            <h3 className="text-lg font-semibold text-[#2b2116] dark:text-[#f6ede0]">Editorial Coming Soon</h3>
-            <p className="mt-2 max-w-xs text-sm text-[#5d5245] dark:text-[#d7ccbe]">
-              Our team is working on a detailed explanation for this problem. Check back later!
-            </p>
+          <div className="space-y-4">
+            {editorialLoading ? (
+              <div className="rounded-lg border border-[#e0d5c2] bg-white p-4 text-sm text-[#5d5245] dark:border-[#3c3347] dark:bg-[#211d27] dark:text-[#d7ccbe]">
+                Loading editorial...
+              </div>
+            ) : editorialError ? (
+              <div className="rounded-lg border border-[#e0d5c2] bg-[#fff0ea] p-4 text-sm text-[#5d5245] dark:border-[#3c3347] dark:bg-[#3b2423] dark:text-[#ffd7cc]">
+                {editorialError}
+              </div>
+            ) : editorial?.content ? (
+              <div className="rounded-lg border border-[#e0d5c2] bg-white p-4 dark:border-[#3c3347] dark:bg-[#211d27]">
+                <h3 className="text-sm font-black uppercase tracking-wide text-[#2b2116] dark:text-[#f6ede0]">
+                  {editorial.title || `${problem.title} Editorial`}
+                </h3>
+                <pre className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-[#5d5245] dark:text-[#d7ccbe]">
+                  {editorial.content}
+                </pre>
+                {editorial.updatedAt && (
+                  <p className="mt-3 text-xs text-[#8a7a67] dark:text-[#b5a59c]">
+                    Updated {new Date(editorial.updatedAt).toLocaleString()}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <div className="mb-4 rounded-full bg-[#f2e3cc] p-4 dark:bg-[#292331]">
+                  <BookOpen className="h-8 w-8 text-[#d69a44] dark:text-[#f2c66f]" />
+                </div>
+                <h3 className="text-lg font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+                  No Editorial Yet
+                </h3>
+                <p className="mt-2 max-w-xs text-sm text-[#5d5245] dark:text-[#d7ccbe]">
+                  An admin can add editorial content from the admin dashboard.
+                </p>
+              </div>
+            )}
           </div>
         );
 
@@ -296,25 +983,147 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
         return (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">Community Solutions</h3>
-              <span className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">Top Rated</span>
+              <h3 className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+                Community Solutions
+              </h3>
+              <span className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">
+                {solutions.length} posted
+              </span>
             </div>
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="cursor-pointer rounded-lg border border-[#e0d5c2] bg-white p-4 transition-all hover:shadow-sm dark:border-[#3c3347] dark:bg-[#211d27]">
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500" />
-                  <div>
-                    <div className="text-sm font-medium text-[#2b2116] dark:text-[#f6ede0]">User_{100 + i}</div>
-                    <div className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">JavaScript • 2ms • 45MB</div>
+
+            {user ? (
+              <div className="rounded-lg border border-[#e0d5c2] bg-white p-4 dark:border-[#3c3347] dark:bg-[#211d27]">
+                <h4 className="text-sm font-black uppercase tracking-wide text-[#2b2116] dark:text-[#f6ede0]">
+                  Post Your Solution
+                </h4>
+                <div className="mt-3 grid gap-3">
+                  <input
+                    value={solutionDraft.title}
+                    onChange={(event) =>
+                      setSolutionDraft((prev) => ({ ...prev, title: event.target.value }))
+                    }
+                    placeholder="Solution title"
+                    className="rounded-lg border border-[#e0d5c2] bg-[#fff9d0] px-3 py-2 text-sm text-black dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#fff9f0]"
+                  />
+                  <textarea
+                    value={solutionDraft.summary}
+                    onChange={(event) =>
+                      setSolutionDraft((prev) => ({ ...prev, summary: event.target.value }))
+                    }
+                    placeholder="Short explanation of your approach"
+                    className="h-20 resize-none rounded-lg border border-[#e0d5c2] bg-[#fff9d0] px-3 py-2 text-sm text-black dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#fff9f0]"
+                  />
+                  <textarea
+                    value={solutionDraft.code}
+                    onChange={(event) =>
+                      setSolutionDraft((prev) => ({ ...prev, code: event.target.value }))
+                    }
+                    placeholder="Paste solution code here"
+                    className="h-40 resize-y rounded-lg border border-[#e0d5c2] bg-[#fff9d0] px-3 py-2 font-mono text-xs text-black dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#fff9f0]"
+                  />
+                  <div className="flex items-center justify-between gap-3">
+                    <select
+                      value={solutionDraft.language}
+                      onChange={(event) =>
+                        setSolutionDraft((prev) => ({
+                          ...prev,
+                          language: event.target.value,
+                        }))
+                      }
+                      className="rounded-lg border border-[#e0d5c2] bg-[#fff9d0] px-3 py-2 text-sm text-black dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#fff9f0]"
+                    >
+                      <option value="javascript">JavaScript</option>
+                      <option value="python">Python</option>
+                      <option value="java">Java</option>
+                      <option value="cpp">C++</option>
+                      <option value="go">Go</option>
+                    </select>
+                    <button
+                      onClick={handlePostSolution}
+                      disabled={isPostingSolution}
+                      className="rounded-lg bg-[#0f92ff] px-3 py-2 text-xs font-black uppercase tracking-wide text-black disabled:opacity-60 dark:bg-[#fef08a]"
+                    >
+                      {isPostingSolution ? "Posting..." : "Post Solution"}
+                    </button>
                   </div>
                 </div>
-                <h4 className="mt-3 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">My O(n) Approach with HashMap</h4>
-                <div className="mt-2 flex gap-2">
-                  <span className="rounded bg-[#f7f0e0] px-2 py-0.5 text-xs text-[#5d5245] dark:bg-[#2d2535] dark:text-[#d7ccbe]">Easy to understand</span>
-                  <span className="rounded bg-[#f7f0e0] px-2 py-0.5 text-xs text-[#5d5245] dark:bg-[#2d2535] dark:text-[#d7ccbe]">Clean code</span>
-                </div>
               </div>
-            ))}
+            ) : (
+              <div className="rounded-lg border border-dashed border-[#e0d5c2] bg-white p-4 text-xs text-[#5d5245] dark:border-[#3c3347] dark:bg-[#211d27] dark:text-[#d7ccbe]">
+                Login to post your own solution.
+              </div>
+            )}
+
+            {solutionsError && (
+              <div className="rounded-lg border border-[#e0d5c2] bg-[#fff0ea] p-3 text-xs text-[#5d5245] dark:border-[#3c3347] dark:bg-[#3b2423] dark:text-[#ffd7cc]">
+                {solutionsError}
+              </div>
+            )}
+
+            {solutionsLoading ? (
+              <div className="rounded-lg border border-[#e0d5c2] bg-white p-4 text-sm text-[#5d5245] dark:border-[#3c3347] dark:bg-[#211d27] dark:text-[#d7ccbe]">
+                Loading community solutions...
+              </div>
+            ) : solutions.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-[#e0d5c2] bg-white p-5 text-sm text-[#5d5245] dark:border-[#3c3347] dark:bg-[#211d27] dark:text-[#d7ccbe]">
+                No solutions posted yet. Be the first to share one.
+              </div>
+            ) : (
+              solutions.map((entry) => {
+                const canDelete = Boolean(
+                  user &&
+                    (String(entry.userId) === String(user.id) || user.role === "admin")
+                );
+
+                return (
+                  <div
+                    key={entry.id}
+                    className="rounded-lg border border-[#e0d5c2] bg-white p-4 transition-all hover:shadow-sm dark:border-[#3c3347] dark:bg-[#211d27]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h4 className="text-sm font-black text-[#2b2116] dark:text-[#f6ede0]">
+                          {entry.title}
+                        </h4>
+                        <div className="mt-1 text-xs text-[#8a7a67] dark:text-[#b5a59c]">
+                          {entry.authorName}  {entry.language}
+                          {entry.runtimeMs !== null && entry.runtimeMs !== undefined
+                            ? `  ${entry.runtimeMs}ms`
+                            : ""}
+                          {entry.memoryKb !== null && entry.memoryKb !== undefined
+                            ? `  ${entry.memoryKb}KB`
+                            : ""}
+                        </div>
+                      </div>
+
+                      {canDelete && (
+                        <button
+                          onClick={() => handleDeleteSolution(entry.id)}
+                          className="inline-flex items-center gap-1 rounded-lg bg-[#ff6b35] px-2 py-1 text-[11px] font-black uppercase tracking-wide text-black dark:bg-[#4d2a25] dark:text-[#fff9f0]"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Remove
+                        </button>
+                      )}
+                    </div>
+
+                    {entry.summary && (
+                      <p className="mt-2 text-xs text-[#5d5245] dark:text-[#d7ccbe]">
+                        {entry.summary}
+                      </p>
+                    )}
+
+                    <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded bg-[#fff9d0] p-3 text-xs text-black dark:bg-[#151525] dark:text-[#fff9f0]">
+                      {entry.code}
+                    </pre>
+
+                    <div className="mt-2 text-[11px] text-[#8a7a67] dark:text-[#b5a59c]">
+                      Posted {new Date(entry.createdAt).toLocaleString()}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         );
 
@@ -323,8 +1132,8 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           <div className="space-y-4">
             <h3 className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">Your Submissions</h3>
             {submissions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 text-center rounded-lg border border-dashed border-[#e0d5c2] dark:border-[#3c3347]">
-                <History className="h-8 w-8 text-[#b5a08a] dark:text-[#7f748a] mb-2" />
+              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-[#e0d5c2] py-10 text-center dark:border-[#3c3347]">
+                <History className="mb-2 h-8 w-8 text-[#b5a08a] dark:text-[#7f748a]" />
                 <p className="text-sm text-[#5d5245] dark:text-[#d7ccbe]">No submissions yet</p>
                 <button
                   onClick={() => setActiveTab("Description")}
@@ -335,34 +1144,73 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
               </div>
             ) : (
               <div className="space-y-2">
-                {submissions.map((sub, idx) => (
-                  <div key={idx} className="flex items-center justify-between rounded-lg border border-[#e0d5c2] bg-white p-3 text-sm dark:border-[#3c3347] dark:bg-[#211d27]">
-                    <div className="flex items-center gap-3">
-                      {sub.status === "Accepted" ? (
-                        <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                      ) : sub.status?.includes("Error") ? (
-                        <AlertCircle className="h-5 w-5 text-amber-500" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-rose-500" />
-                      )}
-                      <div>
-                        <div className={`font-semibold ${sub.status === "Accepted" ? "text-emerald-700 dark:text-emerald-400" :
-                          sub.status?.includes("Error") ? "text-amber-700 dark:text-amber-400" :
-                            "text-rose-700 dark:text-rose-400"
-                          }`}>
-                          {sub.status}
+                {submissions.map((submission, index) => {
+                  const verdict = submission.status || submission.verdict || "Error";
+                  const isSelected = selectedSubmissionIndex === index;
+                  const VerdictIcon = getVerdictIcon(verdict);
+
+                  return (
+                    <div
+                      key={submission.id || `${submission.timestamp}-${index}`}
+                      className="rounded-lg border border-[#e0d5c2] bg-white p-3 text-sm dark:border-[#3c3347] dark:bg-[#211d27]"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <VerdictIcon className="h-5 w-5 text-black dark:text-[#fef08a]" />
+                          <div>
+                            <div
+                              className={`inline-flex rounded-full px-2 py-0.5 text-xs font-black uppercase tracking-wide ${getVerdictClasses(
+                                verdict
+                              )}`}
+                            >
+                              {verdict}
+                            </div>
+                            <div className="mt-1 text-xs text-[#8a7a67] dark:text-[#b5a59c]">
+                              {new Date(submission.timestamp).toLocaleString()}  {submission.language}
+                            </div>
+                            <div className="mt-1 text-xs text-[#5d5245] dark:text-[#d7ccbe]">
+                              Passed {submission.testsPassed || 0}/{submission.totalTests || 0} tests
+                              {submission.executionTime ? `  ${submission.executionTime} ms` : ""}
+                              {submission.memoryUsage ? `  ${submission.memoryUsage} KB` : ""}
+                            </div>
+                            {submission.failedTestName && (
+                              <div className="mt-1 text-xs font-semibold text-[#5d5245] dark:text-[#f6ede0]">
+                                Failed on test case
+                                {submission.failedTestIndex ? ` #${submission.failedTestIndex}` : ""}: {submission.failedTestName}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">
-                          {new Date(sub.timestamp).toLocaleString()}
-                        </div>
+
+                        <button
+                          onClick={() =>
+                            setSelectedSubmissionIndex(isSelected ? null : index)
+                          }
+                          className="inline-flex items-center gap-1 rounded-lg bg-[#0f92ff] px-3 py-1.5 text-xs font-black uppercase tracking-wide text-black dark:bg-[#fef08a]"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          {isSelected ? "Hide Code" : "View Code"}
+                        </button>
                       </div>
+
+                      {isSelected && (
+                        <div className="mt-3 rounded-lg border-2 border-black bg-[#fff9d0] p-3 dark:border-[#fef08a] dark:bg-[#151525]">
+                          {submission.errorMessage && (
+                            <div className="mb-2 rounded bg-[#ffddd3] px-2 py-1 text-xs font-semibold text-black dark:bg-[#3f2320] dark:text-[#fff9f0]">
+                              {submission.errorMessage}
+                            </div>
+                          )}
+                          <div className="mb-2 text-xs font-black uppercase tracking-wide text-black dark:text-[#fef08a]">
+                            Submitted Code ({submission.language})
+                          </div>
+                          <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded bg-white p-3 text-xs text-black dark:bg-[#202037] dark:text-[#fff9f0]">
+                            {submission.code || "Code not available for this submission."}
+                          </pre>
+                        </div>
+                      )}
                     </div>
-                    <div className="text-right text-xs">
-                      <div className="font-mono text-[#5d5245] dark:text-[#d7ccbe]">{sub.language}</div>
-                      {/* Placeholder for runtime/memory if we had it */}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -372,27 +1220,173 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
         return null;
     }
   };
+  const renderResultPanel = () => {
+    if (!resultDetails && !inputError) {
+      return (
+        <div className="text-[#8a7a67] dark:text-[#b5a59c] italic">
+          Run code or submit to see detailed results here.
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3 code-font">
+        {inputError && (
+          <div className="rounded bg-rose-100 px-3 py-2 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+            {inputError}
+          </div>
+        )}
+
+        {resultDetails && (
+          <>
+            <div
+              className={`inline-flex rounded-full px-3 py-1 text-xs font-black uppercase tracking-wide ${getVerdictClasses(
+                resultDetails.verdict
+              )}`}
+            >
+              {resultDetails.verdict}
+            </div>
+
+            {resultDetails.kind === "run" && (
+              <>
+                <div className="rounded border border-[#e0d5c2] bg-white p-3 text-xs text-[#2b2116] dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#f6ede0]">
+                  Running {resultDetails.caseLabel} with selected input.
+                  {resultDetails.checkedAgainstExample
+                    ? ` Expected-output check: ${
+                        resultDetails.outputMatchesExample ? "Matched" : "Not matched"
+                      }.`
+                    : " No expected output configured for this case."}
+                </div>
+
+                {resultDetails.error ? (
+                  <div className="rounded border border-[#e0d5c2] bg-white p-3 text-xs text-black dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#fff9f0]">
+                    <div className="mb-1 font-black uppercase">Error</div>
+                    <pre className="whitespace-pre-wrap">{resultDetails.error}</pre>
+                  </div>
+                ) : (
+                  <div className="rounded border border-[#e0d5c2] bg-white p-3 text-xs text-black dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#fff9f0]">
+                    <div className="mb-1 font-black uppercase">Output</div>
+                    <pre className="whitespace-pre-wrap">{resultDetails.output || "<empty>"}</pre>
+                  </div>
+                )}
+
+                {resultDetails.checkedAgainstExample && (
+                  <div className="rounded border border-[#e0d5c2] bg-white p-3 text-xs text-black dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#fff9f0]">
+                    <div className="mb-1 font-black uppercase">Expected Output</div>
+                    <pre className="whitespace-pre-wrap">
+                      {resultDetails.expectedOutput || "<empty>"}
+                    </pre>
+                  </div>
+                )}
+              </>
+            )}
+
+            {resultDetails.kind === "submit" && (
+              <>
+                <div className="rounded border border-[#e0d5c2] bg-white p-3 text-xs text-black dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#fff9f0]">
+                  <div className="font-black uppercase">Passed Tests</div>
+                  <div className="mt-1">
+                    {resultDetails.testsPassed || 0}/{resultDetails.totalTests || 0}
+                  </div>
+                </div>
+
+                {resultDetails.failedCase && (
+                  <div className="rounded border border-[#e0d5c2] bg-white p-3 text-xs text-black dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#fff9f0]">
+                    <div className="font-black uppercase">Failed Test Case</div>
+                    <div className="mt-1">
+                      #{resultDetails.failedCase.index} ({resultDetails.failedCase.name})
+                    </div>
+                    {resultDetails.failedCase.reason && (
+                      <div className="mt-1">Reason: {resultDetails.failedCase.reason}</div>
+                    )}
+                    {resultDetails.failedCase.expectedOutput !== undefined && (
+                      <div className="mt-2">
+                        <div className="font-black uppercase">Expected</div>
+                        <pre className="whitespace-pre-wrap">
+                          {resultDetails.failedCase.expectedOutput}
+                        </pre>
+                      </div>
+                    )}
+                    {resultDetails.failedCase.actualOutput !== undefined && (
+                      <div className="mt-2">
+                        <div className="font-black uppercase">Actual</div>
+                        <pre className="whitespace-pre-wrap">
+                          {resultDetails.failedCase.actualOutput || "<empty>"}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {resultDetails.errorMessage && (
+                  <div className="rounded border border-[#e0d5c2] bg-white p-3 text-xs text-black dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#fff9f0]">
+                    <div className="font-black uppercase">Details</div>
+                    <pre className="mt-1 whitespace-pre-wrap">{resultDetails.errorMessage}</pre>
+                  </div>
+                )}
+              </>
+            )}
+
+            <div className="rounded border border-[#e0d5c2] bg-white p-3 text-xs text-[#2b2116] dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#f6ede0]">
+              <div>
+                Time: {resultDetails.executionTime || 0} ms
+                {" • "}
+                Memory: {resultDetails.memoryUsage || 0} KB
+                {" • "}
+                Queue Wait: {resultDetails.queueWaitMs || 0} ms
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
 
   const leftPanel = (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
-      {/* Header */}
-      <div className="border-b border-[#e0d5c2] bg-[#f2e3cc]/30 px-5 py-4 dark:border-[#3c3347] dark:bg-[#292331]/30">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border-2 border-black bg-[#fff9d0] shadow-[2px_2px_0_0_#000] dark:border-[#fef08a] dark:bg-[#202037] dark:shadow-[2px_2px_0_0_#a9b9db]">
+      <div className="border-b-2 border-black bg-[#ff6b35] px-5 py-4 dark:border-[#fef08a] dark:bg-[#2f2f4a]">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs font-medium text-[#8a7a67] dark:text-[#b5a59c]">{problem.id}</div>
-            <h1 className="text-xl font-bold text-[#2b2116] dark:text-[#f6ede0]">{problem.title}</h1>
+            <div className="text-xs font-black uppercase tracking-wide text-black dark:text-[#fef08a]">
+              {problem.id}
+            </div>
+            <h1 className="text-xl font-black uppercase text-black dark:text-[#fff9f0]">
+              {problem.title}
+            </h1>
           </div>
-          <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-            (problem.difficulty || (problem.rating < 1300 ? "Easy" : problem.rating < 1900 ? "Medium" : "Hard")) === "Easy" ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" :
-            (problem.difficulty || (problem.rating < 1300 ? "Easy" : problem.rating < 1900 ? "Medium" : "Hard")) === "Medium" ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400" :
-            "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-900/30 dark:text-rose-400"
-          }`}>
-            {problem.difficulty || (problem.rating < 1300 ? "Easy" : problem.rating < 1900 ? "Medium" : "Hard")}
+          <span
+            className={`rounded-full border-2 border-black px-3 py-1 text-xs font-black uppercase tracking-wide dark:border-[#fef08a] ${
+              (
+                problem.difficulty ||
+                (problem.rating < 1300
+                  ? "Easy"
+                  : problem.rating < 1900
+                    ? "Medium"
+                    : "Hard")
+              ) === "Easy"
+                ? "bg-[#44d07d] text-black dark:bg-[#173924] dark:text-[#fef08a]"
+                : (
+                      problem.difficulty ||
+                      (problem.rating < 1300
+                        ? "Easy"
+                        : problem.rating < 1900
+                          ? "Medium"
+                          : "Hard")
+                    ) === "Medium"
+                  ? "bg-[#0f92ff] text-black dark:bg-[#1c3653] dark:text-[#fff9f0]"
+                  : "bg-[#ff6b35] text-black dark:bg-[#4d2a25] dark:text-[#fff9f0]"
+            }`}
+          >
+            {problem.difficulty ||
+              (problem.rating < 1300
+                ? "Easy"
+                : problem.rating < 1900
+                  ? "Medium"
+                  : "Hard")}
           </span>
         </div>
 
-        {/* Tabs */}
-        <div className="mt-6 flex space-x-1 rounded-lg bg-[#e0d5c2]/50 p-1 dark:bg-[#3c3347]/50">
+        <div className="mt-6 flex space-x-1 rounded-lg border border-black bg-[#fff9d0] p-1 dark:border-[#fef08a] dark:bg-[#151525]">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -400,10 +1394,11 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-md py-1.5 text-xs font-semibold transition-all ${isActive
-                  ? "bg-white text-[#2b2116] shadow-sm dark:bg-[#211d27] dark:text-[#f6ede0]"
-                  : "text-[#5d5245] hover:bg-white/50 dark:text-[#b5a59c] dark:hover:bg-[#211d27]/50"
-                  }`}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-md py-1.5 text-xs font-black uppercase tracking-wide transition-all ${
+                  isActive
+                    ? "bg-[#0f92ff] text-black dark:bg-[#fef08a]"
+                    : "bg-transparent text-black hover:bg-[#44d07d] dark:text-[#fff9f0] dark:hover:bg-[#263f3a]"
+                }`}
               >
                 <Icon className="h-3.5 w-3.5" />
                 {tab.label}
@@ -413,81 +1408,209 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
         </div>
       </div>
 
-      {/* Content Area */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 custom-scrollbar">
-        {renderTabContent()}
-      </div>
+      <div className="custom-scrollbar flex-1 overflow-y-auto px-5 py-4">{renderTabContent()}</div>
     </div>
   );
 
-  const rightPanel = (
+  const editorPanel = (
+    <CodeEditor
+      initialLanguage={language}
+      initialCode={starterCode}
+      onChange={(value) => {
+        setCode(value);
+        setInputError(null);
+      }}
+      onLanguageChange={setLanguage}
+      onRun={handleRun}
+      onSubmit={handleSubmit}
+    />
+  );
+
+  const rightPanel = isResultPanelMinimized ? (
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      <div className="min-h-0 flex-1">{editorPanel}</div>
+      <div className="flex items-center justify-between rounded-2xl border-2 border-black bg-[#44d07d] px-4 py-2 shadow-[2px_2px_0_0_#000] dark:border-[#fef08a] dark:bg-[#234436] dark:shadow-[2px_2px_0_0_#a9b9db]">
+        <div className="text-xs font-black uppercase tracking-wide text-black dark:text-[#fef08a]">
+          Testcase &gt; Test Result
+        </div>
+        <button
+          onClick={() => setIsResultPanelMinimized(false)}
+          className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-xs font-black uppercase tracking-wide text-black hover:bg-[#0f92ff] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2d3f63]"
+        >
+          <ChevronUp className="h-3.5 w-3.5" />
+          Restore Panel
+        </button>
+      </div>
+    </div>
+  ) : (
     <SplitPane
       direction="vertical"
-      initialPrimary={680}
-      minPrimary={260}
-      minSecondary={220}
-      primary={
-        <CodeEditor
-          initialLanguage={language}
-          initialCode={starterCode}
-          onChange={(val) => {
-            setCode(val);
-            setInputError(null);
-          }}
-          onLanguageChange={setLanguage}
-          onRun={handleRun}
-          onSubmit={handleSubmit}
-          isRunning={isRunning}
-          isSubmitting={isSubmitting}
-        />
-      }
+      initialPrimary={isWideLayout ? 420 : 340}
+      minPrimary={160}
+      minSecondary={0}
+      storageKey={`problem-workspace-right-split-${isWideLayout ? "wide" : "stacked"}`}
+      className="h-full w-full min-h-0 min-w-0"
+      primary={<div className="h-full min-h-0">{editorPanel}</div>}
       secondary={
-        <div className="flex h-full min-h-0 flex-col rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
-          <div className="border-b border-[#e0d5c2] bg-[#f2e3cc]/30 px-4 py-2 text-xs font-semibold text-[#5d5245] dark:border-[#3c3347] dark:bg-[#292331]/30 dark:text-[#d7ccbe]">
-            Test Result
+        <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border-2 border-black bg-[#fff9d0] shadow-[2px_2px_0_0_#000] dark:border-[#fef08a] dark:bg-[#202037] dark:shadow-[2px_2px_0_0_#a9b9db]">
+          <div className="flex items-center justify-between gap-3 border-b-2 border-black bg-[#44d07d] px-4 py-2 dark:border-[#fef08a] dark:bg-[#234436]">
+            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-black dark:text-[#fef08a]">
+              <button
+                onClick={() => setActiveRightTab("testcase")}
+                className={`rounded px-2 py-1 ${
+                  activeRightTab === "testcase"
+                    ? "bg-black text-white dark:bg-[#fef08a] dark:text-black"
+                    : ""
+                }`}
+              >
+                Testcase
+              </button>
+              <span>&gt;</span>
+              <button
+                onClick={() => setActiveRightTab("result")}
+                className={`rounded px-2 py-1 ${
+                  activeRightTab === "result"
+                    ? "bg-black text-white dark:bg-[#fef08a] dark:text-black"
+                    : ""
+                }`}
+              >
+                Test Result
+              </button>
+            </div>
+
+            <button
+              onClick={() => setIsResultPanelMinimized(true)}
+              className="inline-flex items-center gap-1 rounded-lg bg-white px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-black hover:bg-[#0f92ff] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2d3f63]"
+              title="Minimize testcase/result panel"
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+              Minimize
+            </button>
           </div>
-          <div className="flex-1 overflow-auto px-4 pt-4 text-sm code-font">
-            {inputError && (
-              <div className="mb-3 rounded bg-rose-100 px-3 py-2 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
-                {inputError}
+
+          {activeRightTab === "testcase" ? (
+            <>
+              <div className="custom-scrollbar flex items-center gap-2 overflow-x-auto border-b-2 border-black px-3 py-3 dark:border-[#fef08a]">
+                {exampleCases.map((testCase, index) => (
+                  <div key={testCase.id} className="relative shrink-0">
+                    <button
+                      onClick={() => setActiveCaseIndex(index)}
+                      className={`rounded-xl border border-black px-3 py-1.5 text-xs font-black uppercase tracking-wide dark:border-[#fef08a] ${
+                        testCase.isCustom ? "pr-6" : ""
+                      } ${
+                        index === activeCaseIndex
+                          ? "bg-[#0f92ff] text-black dark:bg-[#fef08a]"
+                          : "bg-white text-black dark:bg-[#151525] dark:text-[#fff9f0]"
+                      }`}
+                    >
+                      {testCase.label}
+                    </button>
+
+                    {testCase.isCustom && (
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          removeCaseAtIndex(index);
+                        }}
+                        className="absolute right-1 top-1/2 inline-flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full border border-black bg-white text-[10px] font-black leading-none text-black hover:bg-[#ff6b35] dark:border-[#fef08a] dark:bg-[#202037] dark:text-[#fff9f0] dark:hover:bg-[#4d2a25]"
+                        title="Remove this custom testcase"
+                        aria-label={`Remove ${testCase.label}`}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+                <button
+                  onClick={addCustomCase}
+                  className="shrink-0 rounded-xl border border-black bg-white px-3 py-1.5 text-xs font-black dark:border-[#fef08a] dark:bg-[#151525] dark:text-[#fff9f0]"
+                  title="Add custom testcase"
+                >
+                  +
+                </button>
+
+                {removedCustomCase && (
+                  <button
+                    onClick={restoreRemovedCase}
+                    className="shrink-0 rounded-xl border border-black bg-[#ffefc7] px-3 py-1.5 text-xs font-black uppercase tracking-wide text-black dark:border-[#fef08a] dark:bg-[#2f2f4a] dark:text-[#fff9f0]"
+                    title="Undo remove"
+                  >
+                    Undo
+                  </button>
+                )}
               </div>
-            )}
-            {lastSubmissionStatus && (
-              <pre className="whitespace-pre-wrap text-[#2b2116] dark:text-[#f6ede0]">
-                {lastSubmissionStatus}
-              </pre>
-            )}
-            {!lastSubmissionStatus && !inputError && (
-              <div className="text-[#8a7a67] dark:text-[#b5a59c] italic">
-                Run your code to see results here...
+
+              <div className="custom-scrollbar flex-1 overflow-auto px-4 py-4 text-sm">
+                <div className="text-xs font-black uppercase tracking-wide text-black dark:text-[#fef08a]">
+                  Input
+                </div>
+                <textarea
+                  value={activeCase?.input || ""}
+                  onChange={(event) => updateActiveCaseInput(event.target.value)}
+                  placeholder="Enter testcase input"
+                  className="mt-2 h-28 w-full resize-none rounded-md bg-white p-2 font-mono text-xs text-black dark:bg-[#151525] dark:text-[#fff9f0]"
+                />
+
+                <div className="mt-4 text-xs font-black uppercase tracking-wide text-black dark:text-[#fef08a]">
+                  Expected Output
+                </div>
+                {activeCase?.expectedOutput ? (
+                  <pre className="mt-2 overflow-auto whitespace-pre-wrap rounded-md border border-[#e0d5c2] bg-white p-2 text-xs text-black dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#fff9f0]">
+                    {activeCase.expectedOutput}
+                  </pre>
+                ) : (
+                  <div className="mt-2 rounded-md border border-dashed border-[#e0d5c2] bg-white p-2 text-xs text-[#5d5245] dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#d7ccbe]">
+                    No expected output in this case yet. This works as custom input.
+                  </div>
+                )}
+
+                {activeCase?.explanation && (
+                  <div className="mt-3 rounded-md border border-[#e0d5c2] bg-white p-2 text-xs text-[#2b2116] dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#f6ede0]">
+                    {activeCase.explanation}
+                  </div>
+                )}
+
+                {inputError && (
+                  <div className="mt-3 rounded bg-rose-100 px-3 py-2 text-xs text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+                    {inputError}
+                  </div>
+                )}
+
+                <p className="mt-4 text-xs text-[#5d5245] dark:text-[#d7ccbe]">
+                  Run uses the currently selected testcase. Submit always evaluates your code
+                  against the full hidden test suite from the database.
+                </p>
               </div>
-            )}
-          </div>
+            </>
+          ) : (
+            <div className="custom-scrollbar flex-1 overflow-auto px-4 py-4 text-sm">
+              {renderResultPanel()}
+            </div>
+          )}
         </div>
       }
     />
   );
 
   return (
-    <section className="flex flex-col gap-4 min-h-0 flex-1">
-      <BadgeNotification 
-        badges={newBadges}
-        onDismiss={handleDismissBadges}
-      />
-      <div className="flex items-center justify-between rounded-2xl border border-[#e0d5c2] bg-white px-4 py-3 dark:border-[#3c3347] dark:bg-[#211d27]">
+    <section className="flex h-full min-h-0 flex-1 flex-col gap-3">
+      <BadgeNotification badges={newBadges} onDismiss={handleDismissBadges} />
+
+      <div className="flex items-center justify-between rounded-2xl border-2 border-black bg-[#fff9d0] px-4 py-2.5 shadow-[2px_2px_0_0_#000] dark:border-[#fef08a] dark:bg-[#202037] dark:shadow-[2px_2px_0_0_#a9b9db]">
         <div className="flex items-center gap-2">
           <Link
             href="/problems"
-            className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-[#5d5245] hover:bg-[#f7f0e0] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+            className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-black uppercase tracking-wide text-black hover:bg-[#44d07d] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2a3c2f]"
           >
             ← All Problems
           </Link>
-          <div className="h-4 w-px bg-[#e0d5c2] dark:bg-[#3c3347]" />
+          <div className="h-4 w-px bg-black dark:bg-[#fef08a]" />
           <div className="flex gap-1">
             <button
               onClick={onPrev}
               disabled={!onPrev}
-              className="rounded-lg p-1.5 text-[#5d5245] hover:bg-[#f7f0e0] disabled:opacity-30 dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+              className="rounded-lg bg-white p-1.5 text-black hover:bg-[#44d07d] disabled:opacity-30 dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2a3c2f]"
               title="Previous Problem"
             >
               &lt;
@@ -495,13 +1618,13 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
             <button
               onClick={onNext}
               disabled={!onNext}
-              className="rounded-lg p-1.5 text-[#5d5245] hover:bg-[#f7f0e0] disabled:opacity-30 dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+              className="rounded-lg bg-white p-1.5 text-black hover:bg-[#44d07d] disabled:opacity-30 dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2a3c2f]"
               title="Next Problem"
             >
               &gt;
             </button>
           </div>
-          <div className="h-4 w-px bg-[#e0d5c2] dark:bg-[#3c3347]" />
+          <div className="h-4 w-px bg-black dark:bg-[#fef08a]" />
           <ProblemTimer running={timerRunning} />
         </div>
 
@@ -509,7 +1632,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           <button
             onClick={handleRun}
             disabled={isRunning || isSubmitting}
-            className="flex items-center gap-2 rounded-lg bg-[#f7f0e0] px-4 py-2 text-sm font-semibold text-[#5d5245] hover:bg-[#f2e3cc] disabled:opacity-50 dark:bg-[#2d2535] dark:text-[#d7ccbe] dark:hover:bg-[#3c3347]"
+            className="flex items-center gap-2 rounded-lg bg-[#44d07d] px-4 py-2 text-sm font-black uppercase tracking-wide text-black hover:bg-[#35b768] disabled:opacity-50 dark:bg-[#233f35] dark:text-[#fef08a] dark:hover:bg-[#2f5043]"
           >
             {isRunning && <Spinner className="h-4 w-4" />}
             {isRunning ? "Running..." : "Run Code"}
@@ -517,19 +1640,21 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           <button
             onClick={handleSubmit}
             disabled={isRunning || isSubmitting}
-            className="flex items-center gap-2 rounded-lg bg-[#d69a44] px-4 py-2 text-sm font-semibold text-white hover:bg-[#c99a4c] disabled:opacity-50 dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#f2d580]"
+            className="flex items-center gap-2 rounded-lg bg-[#0f92ff] px-4 py-2 text-sm font-black uppercase tracking-wide text-black hover:bg-[#077ad8] disabled:opacity-50 dark:bg-[#fef08a] dark:text-black dark:hover:bg-[#e9db63]"
           >
             {isSubmitting && <Spinner className="h-4 w-4" />}
-            {isSubmitting ? "Submitting..." : "Submit"}
+            {isSubmitting ? "Submitting..." : user && token ? "Submit" : "Login to Submit"}
           </button>
         </div>
       </div>
 
       <SplitPane
-        direction="horizontal"
-        initialPrimary={760}
-        minPrimary={420}
-        minSecondary={420}
+        direction={isWideLayout ? "horizontal" : "vertical"}
+        initialPrimary={isWideLayout ? 760 : 360}
+        minPrimary={isWideLayout ? 340 : 240}
+        minSecondary={isWideLayout ? 320 : 200}
+        storageKey={`problem-workspace-main-${isWideLayout ? "wide" : "stacked"}`}
+        className="h-full w-full min-h-0 min-w-0"
         primary={leftPanel}
         secondary={rightPanel}
       />

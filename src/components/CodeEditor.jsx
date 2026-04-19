@@ -160,18 +160,18 @@ export default function CodeEditor({
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border-2 border-black bg-[#fff9d0] shadow-[2px_2px_0_0_#000] dark:border-[#fef08a] dark:bg-[#202037] dark:shadow-[2px_2px_0_0_#a9b9db]">
       {/* Toolbar */}
-      <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-5 py-3 dark:border-[#3c3347] dark:bg-[#292331]">
+      <div className="border-b-2 border-black bg-[#ff6b35] px-5 py-3 dark:border-[#fef08a] dark:bg-[#2f2f4a]">
         <div className="flex items-center justify-between gap-3">
-          <div className="text-sm font-semibold text-[#5d5245] dark:text-[#d7ccbe]">
+          <div className="text-sm font-black uppercase tracking-wide text-black dark:text-[#fef08a]">
             Code
           </div>
 
           <div className="flex items-center gap-2">
             {/* Theme Switcher */}
             <select
-              className="h-9 rounded-full border border-[#deceb7] bg-[#fff8ed] px-3 text-xs font-semibold text-[#5d5245] outline-none dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe]"
+              className="h-9 rounded-xl bg-[#fff9d0] px-3 text-xs font-black uppercase tracking-wide text-black dark:bg-[#151525] dark:text-[#fff9f0]"
               value={selectedTheme}
               onChange={(e) => setSelectedTheme(e.target.value)}
               title="Editor Theme"
@@ -184,7 +184,7 @@ export default function CodeEditor({
 
             {/* Language */}
             <select
-              className="h-9 rounded-full border border-[#deceb7] bg-[#fff8ed] px-3 text-xs font-semibold text-[#5d5245] outline-none dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe]"
+              className="h-9 rounded-xl bg-[#fff9d0] px-3 text-xs font-black uppercase tracking-wide text-black dark:bg-[#151525] dark:text-[#fff9f0]"
               value={language}
               onChange={(e) => {
                 setLanguage(e.target.value);
@@ -201,7 +201,7 @@ export default function CodeEditor({
             {/* Upload file */}
             <label
               htmlFor="code-file-upload"
-              className="inline-flex h-9 items-center justify-center rounded-full border border-[#deceb7] bg-white px-4 text-xs font-semibold text-[#5d5245] hover:bg-[#f6e9d2] cursor-pointer dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+              className="inline-flex h-9 cursor-pointer items-center justify-center rounded-xl bg-white px-4 text-xs font-black uppercase tracking-wide text-black hover:bg-[#44d07d] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2a3c2f]"
               title="Upload code file"
             >
               Upload
@@ -219,7 +219,7 @@ export default function CodeEditor({
               type="button"
               onClick={handleAutoFormat}
               disabled={isFormatting}
-              className="inline-flex h-9 items-center justify-center rounded-full border border-[#deceb7] bg-white px-4 text-xs font-semibold hover:bg-[#f6e9d2] disabled:opacity-50 dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+              className="inline-flex h-9 items-center justify-center rounded-xl bg-white px-4 text-xs font-black uppercase tracking-wide text-black hover:bg-[#44d07d] disabled:opacity-50 dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2a3c2f]"
               title="Auto format (JavaScript only)"
             >
               {isFormatting ? "Formatting..." : "Auto"}
@@ -230,7 +230,7 @@ export default function CodeEditor({
               type="button"
               onClick={resetCode}
               title="Reset code (Ctrl + B)"
-              className="inline-flex h-9 items-center justify-center rounded-full border border-[#deceb7] bg-white px-4 text-xs font-semibold text-[#5d5245] hover:bg-[#f6e9d2] dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+              className="inline-flex h-9 items-center justify-center rounded-xl bg-white px-4 text-xs font-black uppercase tracking-wide text-black hover:bg-[#0f92ff] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2d3f63]"
             >
               Reset
             </button>

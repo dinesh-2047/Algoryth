@@ -30,7 +30,7 @@ export async function POST(request) {
 
     // Parse request body
     const body = await request.json();
-    const { slug, code, language = 'javascript', verdict = 'Pending', testsPassed = 0, totalTests = 0, executionTime = 0, memoryUsage = 0, submittedAt } = body;
+    const { slug, code, language = 'javascript', verdict = 'Error', testsPassed = 0, totalTests = 0, executionTime = 0, memoryUsage = 0, submittedAt } = body;
 
     // Validate required fields
     if (!slug || !code) {

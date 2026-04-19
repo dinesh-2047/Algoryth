@@ -3,41 +3,17 @@
 import Link from "next/link";
 import { CheckCircle2, FileText, ArrowUpFromLine } from "lucide-react";
 
-function getRatingColor(rating) {
-  if (rating < 1300) {
-    // Easy range (800-1200)
-    return {
-      bg: "bg-emerald-100 dark:bg-emerald-900",
-      text: "text-emerald-700 dark:text-emerald-300",
-      border: "border-emerald-300 dark:border-emerald-700",
-    };
-  } else if (rating < 1900) {
-    // Medium range (1300-1800)
-    return {
-      bg: "bg-amber-100 dark:bg-amber-900",
-      text: "text-amber-700 dark:text-amber-300",
-      border: "border-amber-300 dark:border-amber-700",
-    };
-  } else {
-    // Hard range (1900+)
-    return {
-      bg: "bg-rose-100 dark:bg-rose-900",
-      text: "text-rose-700 dark:text-rose-300",
-      border: "border-rose-300 dark:border-rose-700",
-    };
-  }
+function getDifficulty(problem) {
+  if (problem.difficulty) return problem.difficulty;
+  if (problem.rating < 1300) return "Easy";
+  if (problem.rating < 1900) return "Medium";
+  return "Hard";
 }
 
-function getCategoryColor(index) {
-  const colors = [
-    "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300",
-    "bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300",
-    "bg-pink-100 dark:bg-pink-900 text-pink-700 dark:text-pink-300",
-    "bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300",
-    "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300",
-    "bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300",
-  ];
-  return colors[index % colors.length];
+function getDifficultyColors(difficulty) {
+  if (difficulty === "Easy") return "bg-[#44d07d]";
+  if (difficulty === "Medium") return "bg-[#0f92ff]";
+  return "bg-[#ff6b35]";
 }
 
 export default function ProblemCard({
@@ -48,153 +24,130 @@ export default function ProblemCard({
   onMoveToTop,
   isHighlighted,
 }) {
-  const ratingColor = getRatingColor(problem.rating);
+  const difficulty = getDifficulty(problem);
 
   return (
-    <div className={`group relative h-full rounded-xl border-2 bg-white p-6 transition-all duration-300 hover:shadow-lg hover:border-[#d69a44] dark:bg-[#211d27] dark:hover:border-[#f2c66f] ${isHighlighted ? "ring-4 ring-[#d69a44]/50 scale-[1.02] border-[#d69a44] dark:ring-[#f2c66f]/50 dark:border-[#f2c66f]" : "border-[#e0d5c2] dark:border-[#3c3347]"}`}>
-      {/* Header with number and solved indicator */}
-      <div className="mb-4 flex items-start justify-between">
-        <span className="text-3xl font-bold text-[#c99a4c] dark:text-[#f2c66f]">
+    <div
+      className={`neo-card relative h-full p-5 ${
+        isHighlighted
+          ? "-translate-y-1 bg-[#fff34d] dark:bg-[#29304f]"
+          : "bg-[#fff9d0] dark:bg-[#202037]"
+      }`}
+    >
+      <div className="mb-4 flex items-start justify-between gap-2">
+        <span className="text-2xl font-black uppercase text-black dark:text-[#fef08a]">
           #{String(index + 1).padStart(2, "0")}
         </span>
         {problem.status === "Solved" && (
-          <div className="flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
-            <CheckCircle2 className="h-4 w-4" />
-          </div>
+          <span className="inline-flex items-center gap-1 rounded-full border-2 border-black bg-[#44d07d] px-2 py-1 text-[10px] font-black uppercase text-black dark:border-[#fef08a] dark:bg-[#173924] dark:text-[#fef08a]">
+            <CheckCircle2 className="h-3 w-3" />
+            Solved
+          </span>
         )}
       </div>
 
-      {/* Problem title */}
-      <h3 className="mb-2 line-clamp-2 text-lg font-bold text-[#2b2116] transition-colors dark:text-[#f6ede0] group-hover:text-[#c99a4c] dark:group-hover:text-[#f2c66f]">
-        <Link href={`/problems/${problem.slug}`} className="focus:outline-none">
-          <span className="absolute inset-0" aria-hidden="true" />
+      <h3 className="text-lg font-black uppercase leading-snug text-black dark:text-[#fff9f0]">
+        <Link href={`/problems/${problem.slug}`} className="hover:underline">
           {problem.title}
         </Link>
       </h3>
 
-      {/* Problem ID / Slug */}
-      <p className="mb-4 text-xs font-medium text-[#8a7a67] dark:text-[#b5a59c] uppercase tracking-wide">
+      <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-black/70 dark:text-[#fff9f0]/70">
         {problem.id}
       </p>
 
-      {/* Rating badge */}
-      <div className="mb-4">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
         <span
-          className={`inline-flex items-center rounded-full border-2 px-4 py-1.5 text-xs font-semibold ${ratingColor.text} ${ratingColor.bg} ${ratingColor.border}`}
+          className={`rounded-full border-2 border-black px-3 py-1 text-xs font-black uppercase text-black dark:border-[#fef08a] dark:text-black ${getDifficultyColors(
+            difficulty
+          )}`}
         >
-          ● {problem.rating}
+          {difficulty}
+        </span>
+        <span className="rounded-full border-2 border-black bg-white px-3 py-1 text-xs font-black text-black dark:border-[#fef08a] dark:bg-[#151525] dark:text-[#fff9f0]">
+          {problem.rating}
         </span>
       </div>
 
-      {/* Category/Topic badges */}
-      {problem.tags && problem.tags.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-2 relative z-10">
-          {problem.tags.slice(0, 3).map((tag, idx) => (
+      {problem.tags?.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {problem.tags.slice(0, 4).map((tag) => (
             <span
               key={`${problem.id}-${tag}`}
-              className={`inline-flex rounded-lg px-3 py-1.5 text-xs font-semibold ${getCategoryColor(
-                idx
-              )}`}
+              className="rounded-full border-2 border-black bg-white px-2 py-1 text-[10px] font-black uppercase tracking-wide text-black dark:border-[#fef08a] dark:bg-[#151525] dark:text-[#fff9f0]"
             >
-              #{tag}
+              {tag}
             </span>
           ))}
-          {problem.tags.length > 3 && (
-            <span className="inline-flex rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:bg-gray-900 dark:text-gray-300">
-              +{problem.tags.length - 3}
-            </span>
-          )}
         </div>
       )}
 
-      {/* Stats section with dividers */}
-      <div className="mb-4 grid grid-cols-3 gap-2 rounded-lg bg-[#f7f0e0] p-3 dark:bg-[#2d2535] relative z-10">
-        <div className="text-center">
-          <div className="text-sm font-bold text-[#2b2116] dark:text-[#f6ede0]">
-            {problem.acceptanceRate || "—"}%
+      <div className="mt-5 grid grid-cols-2 gap-2 rounded-xl border-2 border-black bg-white p-2 dark:border-[#fef08a] dark:bg-[#151525]">
+        <div>
+          <div className="text-sm font-black text-black dark:text-[#fff9f0]">
+            {problem.acceptanceRate || 0}%
           </div>
-          <div className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">
+          <div className="text-[10px] font-bold uppercase text-black/70 dark:text-[#fff9f0]/70">
             Acceptance
           </div>
         </div>
-        <div className="border-r border-l border-[#e0d5c2] dark:border-[#3c3347]"></div>
-        <div className="text-center">
-          <div className="text-sm font-bold text-[#2b2116] dark:text-[#f6ede0]">
-            {problem.submissions || "0"}
+        <div>
+          <div className="text-sm font-black text-black dark:text-[#fff9f0]">
+            {problem.submissions || 0}
           </div>
-          <div className="text-xs text-[#8a7a67] dark:text-[#b5a59c]">
+          <div className="text-[10px] font-bold uppercase text-black/70 dark:text-[#fff9f0]/70">
             Attempts
           </div>
         </div>
       </div>
 
-      {/* Quick action buttons - visible on hover */}
-      <div className="flex gap-2 opacity-0 transition-all duration-200 group-hover:opacity-100 relative z-20">
+      <div className="mt-5 grid grid-cols-4 gap-2">
         <Link
           href={`/problems/${problem.slug}`}
-          className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-[#d69a44] px-3 py-2.5 text-xs font-bold text-[#2b1a09] transition-all hover:bg-[#c99a4c] dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#f2d580]"
+          className="col-span-2 inline-flex items-center justify-center rounded-xl bg-[#0f92ff] px-3 py-2 text-xs font-black uppercase text-black dark:bg-[#fef08a]"
           title="Start solving this problem"
         >
-          <span>Start Solving</span>
-          <span>→</span>
+          Solve
         </Link>
         <button
-          className={`rounded-lg border-2 p-2.5 transition-all ${isBookmarked
-              ? "border-[#d69a44] bg-[#d69a44]/10 text-[#d69a44] dark:border-[#f2c66f] dark:bg-[#f2c66f]/10 dark:text-[#f2c66f]"
-              : "border-[#deceb7] text-[#5d5245] hover:bg-[#f6e9d2] dark:border-[#40364f] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
-            }`}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+          className={`rounded-xl px-2 py-2 text-xs font-black uppercase ${
+            isBookmarked
+              ? "bg-[#ff6b35] text-black dark:bg-[#fef08a]"
+              : "bg-white text-black dark:bg-[#151525] dark:text-[#fff9f0]"
+          }`}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
             onBookmark?.(problem.id);
           }}
           title={isBookmarked ? "Remove bookmark" : "Bookmark this problem"}
         >
-          <svg
-            className="h-4 w-4"
-            fill={isBookmarked ? "currentColor" : "none"}
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 5a2 2 0 012-2h6a2 2 0 012 2v16l-7-3.5L5 21V5z"
-            />
-          </svg>
+          Save
         </button>
         <button
-          className="rounded-lg border-2 border-[#deceb7] p-2.5 text-[#5d5245] transition-all hover:bg-[#f6e9d2] dark:border-[#40364f] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          title="View editorial (coming soon)"
-        >
-          <FileText className="h-4 w-4" />
-        </button>
-        <button
-          className="rounded-lg border-2 border-[#deceb7] p-2.5 text-[#5d5245] transition-all hover:bg-[#f6e9d2] dark:border-[#40364f] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+          className="rounded-xl bg-white px-2 py-2 text-xs font-black uppercase text-black dark:bg-[#151525] dark:text-[#fff9f0]"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
             onMoveToTop?.(problem.id);
           }}
           title="Move this problem to the top"
         >
-          <ArrowUpFromLine className="h-4 w-4" />
+          <ArrowUpFromLine className="mx-auto h-4 w-4" />
         </button>
       </div>
 
-      {/* Status indicator at bottom */}
-      {problem.status && (
-        <div className="mt-4 pt-4 border-t border-[#e0d5c2] dark:border-[#3c3347]">
-          <span className="inline-flex items-center rounded-full border border-[#deceb7] bg-[#d69a441a] px-3 py-1 text-xs font-medium text-[#5d5245] dark:border-[#40364f] dark:bg-[#f6ede01a] dark:text-[#d7ccbe]">
-            {problem.status}
-          </span>
-        </div>
-      )}
+      <button
+        className="mt-2 inline-flex items-center gap-1 rounded-xl bg-white px-3 py-2 text-[11px] font-black uppercase text-black dark:bg-[#151525] dark:text-[#fff9f0]"
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+        }}
+        title="Editorial coming soon"
+      >
+        <FileText className="h-3.5 w-3.5" />
+        Editorial
+      </button>
     </div>
   );
 }

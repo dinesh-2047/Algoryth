@@ -1,93 +1,145 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import DashboardStats from '../../components/DashboardStats';
-import { 
-  User, Mail, Calendar, MapPin, Link as LinkIcon, 
-  Github, Twitter, Edit3, Award, Activity, Star, Zap,
-  Clock, ExternalLink, CheckCircle, XCircle
-} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import {
+  Calendar,
+  CheckCircle2,
+  Clock3,
+  Code2,
+  Compass,
+  Flame,
+  Medal,
+  Mail,
+  MapPin,
+  Settings,
+  Target,
+  Trophy,
+  User,
+  XCircle,
+} from 'lucide-react';
+import ActivityHeatmap from '../../components/ActivityHeatmap';
+import { useAuth } from '../../context/AuthContext';
+
+function normalizeDifficulty(value) {
+  const normalized = String(value || '').toLowerCase();
+  if (normalized === 'easy') return 'Easy';
+  if (normalized === 'medium') return 'Medium';
+  if (normalized === 'hard') return 'Hard';
+  return 'Unknown';
+}
+
+function normalizeSubmission(entry, index) {
+  const timestamp = entry.submittedAt || entry.timestamp || new Date().toISOString();
+  const verdict = entry.verdict || entry.status || 'Error';
+
+  return {
+    id: entry._id || entry.id || `${timestamp}-${index}`,
+    slug: entry.problemSlug || entry.slug || '',
+    title: entry.problemTitle || entry.title || entry.problemId || 'Untitled Problem',
+    verdict,
+    language: String(entry.language || 'javascript').toLowerCase(),
+    timestamp,
+    difficulty: normalizeDifficulty(entry.difficulty),
+    executionTime: Number(entry.executionTime || 0),
+    memoryUsage: Number(entry.memoryUsage || 0),
+  };
+}
+
+function getVerdictStyles(verdict) {
+  if (verdict === 'Accepted') {
+    return 'bg-[#44d07d] text-black dark:bg-[#1f3a34] dark:text-[#d8ffe4]';
+  }
+
+  if (
+    verdict === 'Wrong Answer' ||
+    verdict === 'Runtime Error' ||
+    verdict === 'Compilation Error' ||
+    verdict === 'Time Limit Exceeded' ||
+    verdict === 'Memory Limit Exceeded' ||
+    verdict === 'Output Limit Exceeded'
+  ) {
+    return 'bg-[#ff6b35] text-black dark:bg-[#4d2a25] dark:text-[#ffe2d8]';
+  }
+
+  return 'bg-[#0f92ff] text-black dark:bg-[#2f2b5a] dark:text-[#d5e4ff]';
+}
+
+function getDifficultyBarClasses(difficulty) {
+  if (difficulty === 'Easy') {
+    return {
+      label: 'text-[#1c6b3a] dark:text-[#8ff0b8]',
+      fill: 'bg-[#44d07d] dark:bg-[#2f8f59]',
+    };
+  }
+
+  if (difficulty === 'Medium') {
+    return {
+      label: 'text-[#0d5fa5] dark:text-[#8edbff]',
+      fill: 'bg-[#0f92ff] dark:bg-[#3a86db]',
+    };
+  }
+
+  return {
+    label: 'text-[#a2481a] dark:text-[#ffc8b2]',
+    fill: 'bg-[#ff6b35] dark:bg-[#9a4a44]',
+  };
+}
 
 export default function ProfilePage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, token, loading: authLoading } = useAuth();
   const [submissions, setSubmissions] = useState([]);
-  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({
-    name: '',
-    username: '',
-    bio: '',
-    location: '',
-    github: '',
-    twitter: '',
-    website: ''
-  });
-
-  // Initialize form when user loads
-  useEffect(() => {
-    if (user) {
-      setEditForm({
-        name: user.name || '',
-        username: user.username || user.email?.split('@')[0] || '',
-        bio: user.bio || '',
-        location: user.location || '',
-        github: user.github || '',
-        twitter: user.twitter || '',
-        website: user.website || ''
-      });
-    }
-  }, [user]);
-
-  const handleSaveProfile = () => {
-    // In a real app, you would make an API call here to save the user data
-    // For now, we'll just update the local storage to simulate it
-    const updatedUser = { ...user, ...editForm };
-    localStorage.setItem('algoryth_user', JSON.stringify(updatedUser));
-    
-    // Force a reload to reflect changes (or you could update context)
-    window.location.reload();
-  };
 
   useEffect(() => {
     const fetchSubmissions = async () => {
       try {
         setLoading(true);
 
-        const token = localStorage.getItem('algoryth_token');
         if (!token) {
           const raw = localStorage.getItem('algoryth_submissions');
           const parsed = raw ? JSON.parse(raw) : [];
-          setSubmissions(Array.isArray(parsed) ? parsed : []);
-          setLoading(false);
+          const localSubmissions = Array.isArray(parsed)
+            ? parsed.map((entry, index) => normalizeSubmission(entry, index))
+            : [];
+
+          localSubmissions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+          setSubmissions(localSubmissions);
           return;
         }
 
-        const response = await fetch('/api/submissions/history?limit=50', {
+        const response = await fetch('/api/submissions/history?limit=100', {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch submissions: ${response.status}`);
+          throw new Error(`Failed to fetch submissions (${response.status})`);
         }
 
         const data = await response.json();
-        setSubmissions(data.submissions || []);
-        setStats(data.stats || {});
-      } catch (e) {
-        console.error('Failed to fetch submissions:', e);
+        const normalized = Array.isArray(data.submissions)
+          ? data.submissions.map((entry, index) => normalizeSubmission(entry, index))
+          : [];
+
+        normalized.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        setSubmissions(normalized);
+      } catch (error) {
+        console.error('Failed to load profile submissions:', error);
 
         try {
           const raw = localStorage.getItem('algoryth_submissions');
           const parsed = raw ? JSON.parse(raw) : [];
-          if (Array.isArray(parsed)) setSubmissions(parsed);
+          const fallbackSubmissions = Array.isArray(parsed)
+            ? parsed.map((entry, index) => normalizeSubmission(entry, index))
+            : [];
+
+          fallbackSubmissions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+          setSubmissions(fallbackSubmissions);
         } catch (fallbackError) {
-          console.error('Fallback failed:', fallbackError);
+          console.error('Fallback submissions load failed:', fallbackError);
+          setSubmissions([]);
         }
       } finally {
         setLoading(false);
@@ -97,25 +149,77 @@ export default function ProfilePage() {
     if (!authLoading) {
       fetchSubmissions();
     }
-  }, [authLoading]);
+  }, [authLoading, token]);
+
+  const profileStats = useMemo(() => {
+    const acceptedSubmissions = submissions.filter((submission) => submission.verdict === 'Accepted');
+
+    const solvedByProblem = new Map();
+    acceptedSubmissions.forEach((submission) => {
+      const problemKey = submission.slug || submission.title;
+      if (!problemKey || solvedByProblem.has(problemKey)) return;
+      solvedByProblem.set(problemKey, submission.difficulty);
+    });
+
+    let easySolved = 0;
+    let mediumSolved = 0;
+    let hardSolved = 0;
+
+    solvedByProblem.forEach((difficulty) => {
+      if (difficulty === 'Easy') easySolved += 1;
+      if (difficulty === 'Medium') mediumSolved += 1;
+      if (difficulty === 'Hard') hardSolved += 1;
+    });
+
+    const languageCounts = submissions.reduce((accumulator, submission) => {
+      const language = submission.language || 'unknown';
+      accumulator[language] = (accumulator[language] || 0) + 1;
+      return accumulator;
+    }, {});
+
+    const topLanguages = Object.entries(languageCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    const totalSubmissions = submissions.length;
+    const acceptanceRate = totalSubmissions > 0
+      ? Math.round((acceptedSubmissions.length / totalSubmissions) * 100)
+      : 0;
+
+    return {
+      solvedTotal: solvedByProblem.size,
+      easySolved,
+      mediumSolved,
+      hardSolved,
+      totalSubmissions,
+      acceptedSubmissions: acceptedSubmissions.length,
+      acceptanceRate,
+      topLanguages,
+      recentSubmissions: submissions.slice(0, 12),
+    };
+  }, [submissions]);
 
   if (authLoading || loading) {
     return (
-      <div className="flex min-h-[600px] items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
+      <div className="flex min-h-96 items-center justify-center">
+        <div className="h-11 w-11 animate-spin rounded-full border-4 border-[#0f92ff] border-t-transparent dark:border-[#56d5ff] dark:border-t-transparent" />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="flex min-h-[600px] flex-col items-center justify-center text-center">
-        <User className="h-16 w-16 text-gray-400 mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Not Signed In</h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">Please sign in to view your profile.</p>
-        <Link 
-          href="/auth" 
-          className="rounded-full bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
+      <div className="neo-card mx-auto flex max-w-xl flex-col items-center p-10 text-center">
+        <User className="h-12 w-12 text-black/60 dark:text-[#9ab0e6]" />
+        <h2 className="mt-4 text-2xl font-black uppercase text-black dark:text-[#edf2ff]">
+          Login Required
+        </h2>
+        <p className="mt-2 text-sm font-semibold text-black/75 dark:text-[#d8e2ff]/82">
+          Sign in to view your LeetCode-style profile dashboard.
+        </p>
+        <Link
+          href="/auth"
+          className="mt-5 rounded-xl bg-[#0f92ff] px-5 py-2 text-xs font-black uppercase tracking-wide text-black dark:bg-[#63f3b6] dark:text-[#07150f]"
         >
           Sign In
         </Link>
@@ -123,347 +227,287 @@ export default function ProfilePage() {
     );
   }
 
-  // Calculate some derived stats
-  const totalSubmissions = submissions.length;
-  const acceptedSubmissions = submissions.filter(s => s.status === 'Accepted').length;
-  const acceptanceRate = totalSubmissions > 0 
-    ? Math.round((acceptedSubmissions / totalSubmissions) * 100) 
-    : 0;
+  const username = user.username || user.email?.split('@')[0] || 'coder';
+  const joinedLabel = user.createdAt
+    ? new Date(user.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
+    : 'Recently';
 
-  // Get unique days active
-  const activeDays = new Set(submissions.map(s => new Date(s.timestamp).toDateString())).size;
+  const solvedTotal = profileStats.solvedTotal || 1;
+  const solvedBars = [
+    { label: 'Easy', value: profileStats.easySolved },
+    { label: 'Medium', value: profileStats.mediumSolved },
+    { label: 'Hard', value: profileStats.hardSolved },
+  ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="mx-auto max-w-7xl space-y-8 pb-24 pt-8 px-4 sm:px-6 lg:px-8"
-    >
-      {/* Profile Header Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-[#17171d] shadow-xl border border-gray-200 dark:border-gray-800">
-        {/* Cover Banner */}
-        <div className="h-32 sm:h-48 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 relative overflow-hidden">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/20 blur-3xl"></div>
-          <div className="absolute -left-20 -bottom-20 h-64 w-64 rounded-full bg-white/20 blur-3xl"></div>
-        </div>
+    <section className="space-y-6">
+      <header className="neo-card relative overflow-hidden px-6 py-8 md:px-8">
+        <div className="absolute -right-10 -top-10 h-28 w-28 rotate-12 border-2 border-black bg-[#0f92ff] dark:border-[#7d8fc4] dark:bg-[#2f2b5a]" />
+        <div className="absolute -bottom-12 left-10 h-24 w-24 rounded-full border-2 border-black bg-[#44d07d] dark:border-[#7d8fc4] dark:bg-[#1f3a34]" />
 
-        <div className="px-6 sm:px-10 pb-8">
-          <div className="relative flex flex-col sm:flex-row sm:items-end gap-6 -mt-16 sm:-mt-20 mb-6">
-            {/* Avatar */}
-            <motion.div 
-              whileHover={{ scale: 1.05 }}
-              className="relative h-32 w-32 sm:h-40 sm:w-40 rounded-full border-4 border-white dark:border-[#17171d] bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 flex items-center justify-center shadow-lg overflow-hidden shrink-0"
-            >
-              <span className="text-5xl sm:text-6xl font-bold text-indigo-600 dark:text-indigo-300">
-                {user.name ? user.name.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase() || 'U'}
-              </span>
-            </motion.div>
-
-            {/* User Info */}
-            <div className="flex-1 pb-2">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-                    {user.name || 'Developer'}
-                  </h1>
-                  <p className="text-lg text-gray-500 dark:text-gray-400 font-medium mt-1">
-                    @{user.username || user.email?.split('@')[0] || 'user'}
-                  </p>
-                </div>
-                
-                <button 
-                  onClick={() => setIsEditing(true)}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gray-100 dark:bg-gray-800 px-5 py-2.5 text-sm font-semibold text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors self-start sm:self-auto"
-                >
-                  <Edit3 className="h-4 w-4" />
-                  Edit Profile
-                </button>
-              </div>
-            </div>
+        <div className="relative flex items-center gap-4">
+          <div className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-black bg-white text-2xl font-black text-black dark:border-[#7d8fc4] dark:bg-[#10182d] dark:text-[#edf2ff]">
+            {(user.name || user.email || 'U').charAt(0).toUpperCase()}
           </div>
-
-          {/* Bio & Details */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-            <div className="lg:col-span-2 space-y-6">
-              {isEditing ? (
-                <div className="space-y-4 bg-gray-50 dark:bg-[#21212b] p-6 rounded-2xl border border-gray-200 dark:border-gray-800">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Edit Profile</h3>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
-                      <input 
-                        type="text" 
-                        value={editForm.name}
-                        onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                        className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#17171d] px-4 py-2 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-indigo-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
-                      <input 
-                        type="text" 
-                        value={editForm.username}
-                        onChange={(e) => setEditForm({...editForm, username: e.target.value})}
-                        className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#17171d] px-4 py-2 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-indigo-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bio</label>
-                    <textarea 
-                      rows="3"
-                      value={editForm.bio}
-                      onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#17171d] px-4 py-2 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-indigo-500"
-                    ></textarea>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
-                      <input 
-                        type="text" 
-                        value={editForm.location}
-                        onChange={(e) => setEditForm({...editForm, location: e.target.value})}
-                        className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#17171d] px-4 py-2 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-indigo-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Website</label>
-                      <input 
-                        type="url" 
-                        value={editForm.website}
-                        onChange={(e) => setEditForm({...editForm, website: e.target.value})}
-                        className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#17171d] px-4 py-2 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-indigo-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">GitHub Username</label>
-                      <input 
-                        type="text" 
-                        value={editForm.github}
-                        onChange={(e) => setEditForm({...editForm, github: e.target.value})}
-                        className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#17171d] px-4 py-2 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-indigo-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Twitter Username</label>
-                      <input 
-                        type="text" 
-                        value={editForm.twitter}
-                        onChange={(e) => setEditForm({...editForm, twitter: e.target.value})}
-                        className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#17171d] px-4 py-2 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-indigo-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-4">
-                    <button 
-                      onClick={() => setIsEditing(false)}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      onClick={handleSaveProfile}
-                      className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
-                    >
-                      Save Changes
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">About</h3>
-                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                      {user.bio || "Passionate developer solving algorithmic challenges and building awesome software. Always learning and exploring new technologies."}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-4 sm:gap-6 text-sm text-gray-600 dark:text-gray-400">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-gray-400" />
-                      <span>{user.location || 'Earth'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-gray-400" />
-                      <span>{user.email}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-gray-400" />
-                      <span>Joined {new Date(user.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4 pt-2">
-                    {user.github && (
-                      <a href={`https://github.com/${user.github}`} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                        <Github className="h-5 w-5" />
-                      </a>
-                    )}
-                    {user.twitter && (
-                      <a href={`https://twitter.com/${user.twitter}`} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-400 transition-colors">
-                        <Twitter className="h-5 w-5" />
-                      </a>
-                    )}
-                    {user.website && (
-                      <a href={user.website} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-indigo-500 transition-colors">
-                        <LinkIcon className="h-5 w-5" />
-                      </a>
-                    )}
-                    {!user.github && !user.twitter && !user.website && (
-                      <span className="text-sm text-gray-400 italic">No social links added yet.</span>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Quick Stats Cards */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-2xl bg-gray-50 dark:bg-[#21212b] p-4 border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center text-center">
-                <div className="h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center mb-2">
-                  <Activity className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                </div>
-                <span className="text-2xl font-bold text-gray-900 dark:text-white">{activeDays}</span>
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider mt-1">Active Days</span>
-              </div>
-              
-              <div className="rounded-2xl bg-gray-50 dark:bg-[#21212b] p-4 border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center text-center">
-                <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-2">
-                  <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <span className="text-2xl font-bold text-gray-900 dark:text-white">{acceptanceRate}%</span>
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider mt-1">Acceptance</span>
-              </div>
-
-              <div className="rounded-2xl bg-gray-50 dark:bg-[#21212b] p-4 border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center text-center">
-                <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-2">
-                  <Star className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <span className="text-2xl font-bold text-gray-900 dark:text-white">{user.rating || 1200}</span>
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider mt-1">Rating</span>
-              </div>
-
-              <div className="rounded-2xl bg-gray-50 dark:bg-[#21212b] p-4 border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center text-center">
-                <div className="h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mb-2">
-                  <Zap className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                </div>
-                <span className="text-2xl font-bold text-gray-900 dark:text-white">{user.streak || 0}</span>
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider mt-1">Day Streak</span>
-              </div>
-            </div>
+          <div>
+            <h1 className="text-3xl font-black uppercase tracking-wide text-black dark:text-[#edf2ff]">
+              {user.name || 'Developer'}
+            </h1>
+            <p className="text-sm font-semibold text-black/70 dark:text-[#d8e2ff]/82">@{username}</p>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Detailed Stats */}
-      <div>
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-          <Award className="h-5 w-5 text-indigo-500" />
-          Problem Solving Stats
-        </h2>
-        <DashboardStats submissions={submissions} stats={stats} />
-      </div>
+      <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+        <aside className="space-y-4">
+          <div className="neo-card p-5">
+            <h2 className="text-sm font-black uppercase tracking-wide text-black dark:text-[#edf2ff]">
+              Profile
+            </h2>
 
-      {/* Recent Activity */}
-      <div className="rounded-3xl bg-white dark:bg-[#17171d] shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-        <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#1f1f27]">
-          <div className="flex items-center gap-3">
-            <Clock className="h-5 w-5 text-indigo-500" />
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-              Recent Activity
+            <div className="mt-4 space-y-3 text-sm font-semibold text-black/80 dark:text-[#d8e2ff]/84">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                <span className="truncate">{user.email}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>Joined {joinedLabel}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                <span>{user.location || 'Earth'}</span>
+              </div>
+            </div>
+
+            <p className="mt-4 text-sm font-medium text-black/75 dark:text-[#d8e2ff]/82">
+              {user.bio || 'Focused on daily DSA drills, clean implementations, and consistent rating growth.'}
+            </p>
+          </div>
+
+          <div className="neo-card p-5">
+            <h3 className="text-sm font-black uppercase tracking-wide text-black dark:text-[#edf2ff]">
+              Quick Numbers
             </h3>
-          </div>
-          <Link
-            href="/submissions"
-            className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition duration-200"
-          >
-            View all history →
-          </Link>
-        </div>
 
-        <div className="divide-y divide-gray-100 dark:divide-gray-800">
-          {submissions.length > 0 ? (
-            submissions.slice(0, 10).map((s, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: idx * 0.03 }}
-                className="flex flex-col sm:flex-row sm:items-center justify-between px-6 sm:px-8 py-4 hover:bg-gray-50 dark:hover:bg-[#23232d] transition-colors gap-4 sm:gap-0"
-              >
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${
-                    s.status === 'Accepted' 
-                      ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' 
-                      : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                  }`}>
-                    {s.status === 'Accepted' ? <CheckCircle className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
-                  </div>
-                  
-                  <div className="min-w-0">
-                    <Link href={`/problems/${s.problemId?.replace('p-', '') || ''}`} className="text-base font-semibold text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 truncate block transition-colors">
-                      {s.problemTitle || s.problemId}
-                    </Link>
-                    <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      <span className="font-medium text-gray-700 dark:text-gray-300">{s.language}</span>
-                      <span>•</span>
-                      <span>{new Date(s.timestamp).toLocaleString()}</span>
-                      {s.runtime && (
-                        <>
-                          <span>•</span>
-                          <span>{s.runtime}ms</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-lg border border-black/20 bg-white p-3 dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
+                <div className="text-xs font-black uppercase text-black/60 dark:text-[#9baed8]">Rating</div>
+                <div className="mt-1 text-xl font-black text-black dark:text-[#edf2ff]">
+                  {user.rating || 1200}
                 </div>
-
-                <div className="flex items-center gap-3 sm:ml-4 pl-14 sm:pl-0">
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                    s.status === 'Accepted'
-                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-                      : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
-                  }`}>
-                    {s.status}
-                  </span>
-                  <Link
-                    href={`/problems/${s.problemId?.replace('p-', '') || ''}`}
-                    className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors rounded-full hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </Link>
-                </div>
-              </motion.div>
-            ))
-          ) : (
-            <div className="px-8 py-16 text-center">
-              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
-                <Activity className="h-8 w-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">No activity yet</h3>
-              <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                You haven&apos;t submitted any solutions yet. Start solving problems to build your profile!
+
+              <div className="rounded-lg border border-black/20 bg-white p-3 dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
+                <div className="text-xs font-black uppercase text-black/60 dark:text-[#9baed8]">Streak</div>
+                <div className="mt-1 flex items-center gap-1 text-xl font-black text-black dark:text-[#edf2ff]">
+                  {user.streakCount || user.streak || 0}
+                  <Flame className="h-4 w-4" />
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-black/20 bg-white p-3 dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
+                <div className="text-xs font-black uppercase text-black/60 dark:text-[#9baed8]">Attempts</div>
+                <div className="mt-1 text-xl font-black text-black dark:text-[#edf2ff]">
+                  {profileStats.totalSubmissions}
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-black/20 bg-white p-3 dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
+                <div className="text-xs font-black uppercase text-black/60 dark:text-[#9baed8]">Accepted</div>
+                <div className="mt-1 text-xl font-black text-black dark:text-[#edf2ff]">
+                  {profileStats.acceptedSubmissions}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="neo-card p-5">
+            <h3 className="text-sm font-black uppercase tracking-wide text-black dark:text-[#edf2ff]">
+              Top Languages
+            </h3>
+            {profileStats.topLanguages.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {profileStats.topLanguages.map(([language, count]) => (
+                  <span
+                    key={language}
+                    className="rounded-full border border-black/30 bg-white px-3 py-1 text-xs font-black uppercase tracking-wide text-black dark:border-[#7d8fc4]/35 dark:bg-[#10182d] dark:text-[#edf2ff]"
+                  >
+                    {language} ({count})
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 text-sm font-semibold text-black/70 dark:text-[#d8e2ff]/76">
+                No language data yet.
               </p>
-              <Link 
-                href="/problems" 
-                className="inline-block mt-6 rounded-full bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
+            )}
+          </div>
+
+          <div className="neo-card p-5">
+            <h3 className="text-sm font-black uppercase tracking-wide text-black dark:text-[#edf2ff]">
+              Profile Menu
+            </h3>
+            <div className="mt-3 grid gap-2">
+              <Link
+                href="/badges"
+                className="inline-flex items-center gap-2 rounded-lg border border-black/30 bg-white px-3 py-2 text-xs font-black uppercase tracking-wide text-black transition-colors hover:bg-[#44d07d] dark:border-[#7d8fc4]/35 dark:bg-[#10182d] dark:text-[#edf2ff] dark:hover:bg-[#2b406b]"
               >
-                Explore Problems
+                <Medal className="h-3.5 w-3.5" />
+                Achievements
+              </Link>
+              <Link
+                href="/settings"
+                className="inline-flex items-center gap-2 rounded-lg border border-black/30 bg-white px-3 py-2 text-xs font-black uppercase tracking-wide text-black transition-colors hover:bg-[#44d07d] dark:border-[#7d8fc4]/35 dark:bg-[#10182d] dark:text-[#edf2ff] dark:hover:bg-[#2b406b]"
+              >
+                <Settings className="h-3.5 w-3.5" />
+                Settings
+              </Link>
+              <Link
+                href="/contests"
+                className="inline-flex items-center gap-2 rounded-lg border border-black/30 bg-white px-3 py-2 text-xs font-black uppercase tracking-wide text-black transition-colors hover:bg-[#44d07d] dark:border-[#7d8fc4]/35 dark:bg-[#10182d] dark:text-[#edf2ff] dark:hover:bg-[#2b406b]"
+              >
+                <Compass className="h-3.5 w-3.5" />
+                Contests
               </Link>
             </div>
-          )}
+          </div>
+        </aside>
+
+        <div className="space-y-6">
+          <div className="neo-card p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-black uppercase text-black dark:text-[#edf2ff]">
+                  Solved Problems
+                </h2>
+                <p className="mt-1 text-sm font-semibold text-black/70 dark:text-[#d8e2ff]/76">
+                  LeetCode-style difficulty split based on accepted submissions.
+                </p>
+              </div>
+
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#0f92ff] px-4 py-1.5 text-sm font-black uppercase text-black dark:bg-[#56d5ff]">
+                <Trophy className="h-4 w-4" />
+                {profileStats.solvedTotal} solved
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-4">
+              {solvedBars.map((bar) => {
+                const style = getDifficultyBarClasses(bar.label);
+                const width = Math.round((bar.value / solvedTotal) * 100);
+
+                return (
+                  <div key={bar.label}>
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className={`text-sm font-black uppercase ${style.label}`}>{bar.label}</span>
+                      <span className="text-sm font-black text-black dark:text-[#edf2ff]">{bar.value}</span>
+                    </div>
+                    <div className="h-2.5 overflow-hidden rounded-full border border-black/20 bg-white dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
+                      <div
+                        className={`h-full ${style.fill}`}
+                        style={{ width: `${Math.max(width, bar.value > 0 ? 6 : 0)}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-4 flex items-center gap-4 text-xs font-semibold text-black/70 dark:text-[#d8e2ff]/76">
+              <span className="inline-flex items-center gap-1">
+                <Target className="h-3.5 w-3.5" />
+                Acceptance: {profileStats.acceptanceRate}%
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Code2 className="h-3.5 w-3.5" />
+                Attempts: {profileStats.totalSubmissions}
+              </span>
+            </div>
+          </div>
+
+          <ActivityHeatmap token={token} />
+
+          <div className="neo-card overflow-hidden">
+            <div className="flex items-center justify-between border-b border-black/20 bg-white px-5 py-3 dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
+              <h3 className="text-sm font-black uppercase tracking-wide text-black dark:text-[#edf2ff]">
+                Recent Submissions
+              </h3>
+              <Link
+                href="/submissions"
+                className="text-xs font-black uppercase tracking-wide text-black underline dark:text-[#8edbff]"
+              >
+                View All
+              </Link>
+            </div>
+
+            {profileStats.recentSubmissions.length === 0 ? (
+              <div className="p-8 text-center">
+                <p className="text-sm font-semibold text-black/70 dark:text-[#d8e2ff]/76">
+                  No submissions yet. Start solving to populate your profile timeline.
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-black/10 dark:divide-[#7d8fc4]/25">
+                {profileStats.recentSubmissions.map((submission) => (
+                  <div key={submission.id} className="grid gap-3 px-5 py-3 md:grid-cols-[minmax(0,2fr)_130px_120px_150px] md:items-center">
+                    <div className="min-w-0">
+                      {submission.slug ? (
+                        <Link
+                          href={`/problems/${submission.slug}`}
+                          className="truncate text-sm font-black uppercase text-black hover:underline dark:text-[#edf2ff]"
+                        >
+                          {submission.title}
+                        </Link>
+                      ) : (
+                        <div className="truncate text-sm font-black uppercase text-black dark:text-[#edf2ff]">
+                          {submission.title}
+                        </div>
+                      )}
+
+                      <div className="mt-1 flex items-center gap-2 text-xs font-semibold text-black/65 dark:text-[#d8e2ff]/76">
+                        <span>{new Date(submission.timestamp).toLocaleDateString()}</span>
+                        <span>•</span>
+                        <span className="capitalize">{submission.language}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-black uppercase ${getVerdictStyles(submission.verdict)}`}>
+                        {submission.verdict}
+                      </span>
+                    </div>
+
+                    <div className="text-xs font-semibold text-black/70 dark:text-[#d8e2ff]/76">
+                      {submission.executionTime > 0 ? (
+                        <span className="inline-flex items-center gap-1">
+                          <Clock3 className="h-3.5 w-3.5" />
+                          {submission.executionTime} ms
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1">
+                          {submission.verdict === 'Accepted' ? (
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                          ) : (
+                            <XCircle className="h-3.5 w-3.5" />
+                          )}
+                          Recorded
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="text-xs font-semibold text-black/70 dark:text-[#d8e2ff]/76">
+                      {submission.memoryUsage > 0 ? `${submission.memoryUsage} KB` : '—'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </motion.div>
+    </section>
   );
 }
+
+

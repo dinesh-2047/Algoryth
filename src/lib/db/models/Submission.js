@@ -31,7 +31,16 @@ const submissionSchema = new mongoose.Schema({
   },
   verdict: {
     type: String,
-    enum: ['Accepted', 'Wrong Answer', 'Runtime Error', 'Time Limit Exceeded', 'Compilation Error', 'Error'],
+    enum: [
+      'Accepted',
+      'Wrong Answer',
+      'Runtime Error',
+      'Time Limit Exceeded',
+      'Memory Limit Exceeded',
+      'Output Limit Exceeded',
+      'Compilation Error',
+      'Error',
+    ],
     default: 'Error',
     index: true,
   },
@@ -42,6 +51,22 @@ const submissionSchema = new mongoose.Schema({
   memoryUsage: {
     type: Number, // in KB
     default: 0,
+  },
+  queueWaitMs: {
+    type: Number,
+    default: 0,
+  },
+  failedTestName: {
+    type: String,
+    default: null,
+  },
+  failedTestIndex: {
+    type: Number,
+    default: null,
+  },
+  errorMessage: {
+    type: String,
+    default: '',
   },
   difficulty: {
     type: String,

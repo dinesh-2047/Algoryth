@@ -18,7 +18,7 @@ export default function AuthButton() {
   if (loading || !mounted) {
     // Render nothing or a loading state while checking auth status
     return (
-      <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+      <div className="h-9 w-9 animate-pulse rounded-full bg-gray-200 dark:bg-[#263458]"></div>
     );
   }
 
@@ -28,7 +28,7 @@ export default function AuthButton() {
       <div className="relative">
         <button
           onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="flex items-center justify-center w-9 h-9 rounded-full bg-[#d69a44] text-white hover:bg-[#c4852c] dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#e4b857]"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2563eb] text-white hover:bg-[#1d4ed8] dark:bg-[#56d5ff] dark:text-[#07131d] dark:hover:bg-[#35bee9]"
           aria-label="User profile"
         >
           <span className="font-medium">
@@ -37,26 +37,52 @@ export default function AuthButton() {
         </button>
 
         {dropdownOpen && (
-          <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-[#211d27] ring-1 ring-black ring-opacity-5 z-50">
+          <div className="absolute right-0 z-50 mt-2 w-52 rounded-md border border-black/10 bg-white shadow-lg dark:border-[#7d8fc4]/45 dark:bg-[#101a31]">
             <div className="py-1" role="menu">
-              <div className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-[#3c3347]" role="none">
+              <div className="border-b border-gray-200 px-4 py-2 text-sm text-gray-700 dark:border-[#304267] dark:text-[#dbe7ff]" role="none">
                 Signed in as<br />
                 <span className="font-medium">{user.email || user.name}</span>
               </div>
               <Link
                 href="/profile"
                 onClick={() => setDropdownOpen(false)}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-[#2d2535] dark:text-gray-300 dark:hover:text-white"
+                className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-[#e8f0ff] dark:text-[#dbe7ff] dark:hover:bg-[#1d2f55] dark:hover:text-white"
                 role="menuitem"
               >
                 Profile
               </Link>
+              <Link
+                href="/badges"
+                onClick={() => setDropdownOpen(false)}
+                className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-[#e8f0ff] dark:text-[#dbe7ff] dark:hover:bg-[#1d2f55] dark:hover:text-white"
+                role="menuitem"
+              >
+                Achievements
+              </Link>
+              <Link
+                href="/settings"
+                onClick={() => setDropdownOpen(false)}
+                className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-[#e8f0ff] dark:text-[#dbe7ff] dark:hover:bg-[#1d2f55] dark:hover:text-white"
+                role="menuitem"
+              >
+                Settings
+              </Link>
+              {user.role === 'admin' && (
+                <Link
+                  href="/admin"
+                  onClick={() => setDropdownOpen(false)}
+                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-[#e8f0ff] dark:text-[#dbe7ff] dark:hover:bg-[#1d2f55] dark:hover:text-white"
+                  role="menuitem"
+                >
+                  Admin Panel
+                </Link>
+              )}
               <button
                 onClick={() => {
                   logout();
                   setDropdownOpen(false);
                 }}
-                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-[#2d2535] dark:text-red-400 dark:hover:text-red-300"
+                className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-[#ffe9e9] dark:text-red-300 dark:hover:bg-[#41263a] dark:hover:text-red-200"
                 role="menuitem"
               >
                 Sign out
@@ -71,7 +97,7 @@ export default function AuthButton() {
     return (
       <Link
         href="/auth"
-        className="inline-flex h-9 items-center justify-center rounded-full bg-[#d69a44] px-4 text-sm font-medium text-[#2b1a09] hover:bg-[#c4852c] dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#e4b857]"
+        className="inline-flex h-9 items-center justify-center rounded-full bg-[#2563eb] px-4 text-sm font-semibold text-white hover:bg-[#1d4ed8] dark:bg-[#63f3b6] dark:text-[#07150f] dark:hover:bg-[#47d89a]"
       >
         Sign in
       </Link>

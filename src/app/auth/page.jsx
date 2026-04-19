@@ -15,6 +15,7 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
   const [isLoading, setIsLoading] = useState(false);
+  const [safeRedirect, setSafeRedirect] = useState('/');
 
   // Check URL hash to determine initial view
   useEffect(() => {
@@ -22,6 +23,11 @@ export default function AuthPage() {
       const hash = window.location.hash;
       if (hash === '#signup') {
         setTimeout(() => setIsFlipped(true), 0);
+      }
+
+      const redirectParam = new URLSearchParams(window.location.search).get('redirect');
+      if (redirectParam && redirectParam.startsWith('/')) {
+        setSafeRedirect(redirectParam);
       }
     }
   }, []);
@@ -52,8 +58,13 @@ export default function AuthPage() {
         const result = await signup({ name, email, password });
 
         if (result.success) {
-          setNotification({ show: true, message: 'Account created successfully!', type: 'success' });
-          setTimeout(() => router.push('/'), 1000);
+          if (result.autoLoggedIn) {
+            setNotification({ show: true, message: 'Account created successfully!', type: 'success' });
+            setTimeout(() => router.push(safeRedirect), 1000);
+          } else {
+            setNotification({ show: true, message: 'Account created. Please sign in to continue.', type: 'success' });
+            setIsFlipped(false);
+          }
         } else {
           setNotification({ show: true, message: result.error || 'Registration failed', type: 'error' });
         }
@@ -71,7 +82,7 @@ export default function AuthPage() {
 
         if (result.success) {
           setNotification({ show: true, message: 'Login successful!', type: 'success' });
-          setTimeout(() => router.push('/'), 1000);
+          setTimeout(() => router.push(safeRedirect), 1000);
         } else {
           setNotification({ show: true, message: result.error || 'Login failed', type: 'error' });
         }
@@ -109,7 +120,7 @@ export default function AuthPage() {
         </div>
 
         {/* Auth Content Card */}
-        <div className="w-full perspective-1000 min-h-[500px]">
+        <div className="w-full perspective-1000 min-h-125">
           <div className={`relative w-full h-full transition-all duration-700 preserve-3d ${isFlipped ? 'rotate-y-180' : ''}`} style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
 
             {/* Login Face */}
