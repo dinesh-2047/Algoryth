@@ -364,7 +364,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
 
   useEffect(() => {
     const updateLayout = () => {
-      setIsWideLayout(window.innerWidth >= 1180);
+      setIsWideLayout(window.innerWidth >= 768);
     };
 
     updateLayout();
@@ -835,10 +835,10 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
   };
 
   const tabs = [
-    { id: "Description", icon: FileText, label: "Description" },
-    { id: "Editorial", icon: BookOpen, label: "Editorial" },
-    { id: "Solutions", icon: List, label: "Solutions" },
-    { id: "Submissions", icon: History, label: "Submissions" },
+    { id: "Description", icon: FileText, label: "Description", shortLabel: "Desc" },
+    { id: "Editorial", icon: BookOpen, label: "Editorial", shortLabel: "Edit" },
+    { id: "Solutions", icon: List, label: "Solutions", shortLabel: "Sol" },
+    { id: "Submissions", icon: History, label: "Submissions", shortLabel: "Subs" },
   ];
 
   const renderTabContent = () => {
@@ -1345,17 +1345,17 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
   const leftPanel = (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border-2 border-black bg-[#fff9d0] shadow-[2px_2px_0_0_#000] dark:border-[#fef08a] dark:bg-[#202037] dark:shadow-[2px_2px_0_0_#a9b9db]">
       <div className="border-b-2 border-black bg-[#ff6b35] px-5 py-4 dark:border-[#fef08a] dark:bg-[#2f2f4a]">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex min-w-0 items-center justify-between gap-3">
+          <div className="min-w-0">
             <div className="text-xs font-black uppercase tracking-wide text-black dark:text-[#fef08a]">
               {problem.id}
             </div>
-            <h1 className="text-xl font-black uppercase text-black dark:text-[#fff9f0]">
+            <h1 className="truncate text-lg font-black uppercase text-black sm:text-xl dark:text-[#fff9f0]">
               {problem.title}
             </h1>
           </div>
           <span
-            className={`rounded-full border-2 border-black px-3 py-1 text-xs font-black uppercase tracking-wide dark:border-[#fef08a] ${
+            className={`shrink-0 rounded-full border-2 border-black px-2 py-1 text-[10px] font-black uppercase tracking-wide sm:px-3 sm:text-xs dark:border-[#fef08a] ${
               (
                 problem.difficulty ||
                 (problem.rating < 1300
@@ -1386,7 +1386,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
           </span>
         </div>
 
-        <div className="mt-6 flex space-x-1 rounded-lg border border-black bg-[#fff9d0] p-1 dark:border-[#fef08a] dark:bg-[#151525]">
+        <div className="mt-4 grid grid-cols-4 gap-1 rounded-lg border border-black bg-[#fff9d0] p-1 dark:border-[#fef08a] dark:bg-[#151525]">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1394,14 +1394,16 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-md py-1.5 text-xs font-black uppercase tracking-wide transition-all ${
+                title={tab.label}
+                className={`flex min-w-0 items-center justify-center gap-1 rounded-md px-1 py-1 text-[10px] font-black uppercase tracking-wide transition-all sm:gap-2 sm:py-1.5 sm:text-xs ${
                   isActive
                     ? "bg-[#0f92ff] text-black dark:bg-[#fef08a]"
                     : "bg-transparent text-black hover:bg-[#44d07d] dark:text-[#fff9f0] dark:hover:bg-[#263f3a]"
                 }`}
               >
-                <Icon className="h-3.5 w-3.5" />
-                {tab.label}
+                <Icon className="hidden h-3.5 w-3.5 sm:block" />
+                <span className="truncate sm:hidden">{tab.shortLabel}</span>
+                <span className="hidden truncate sm:inline">{tab.label}</span>
               </button>
             );
           })}
@@ -1594,11 +1596,11 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
   );
 
   return (
-    <section className="flex h-full min-h-0 flex-1 flex-col gap-3">
+    <section className="flex min-h-0 flex-1 flex-col gap-3 md:h-full">
       <BadgeNotification badges={newBadges} onDismiss={handleDismissBadges} />
 
-      <div className="flex items-center justify-between rounded-2xl border-2 border-black bg-[#fff9d0] px-4 py-2.5 shadow-[2px_2px_0_0_#000] dark:border-[#fef08a] dark:bg-[#202037] dark:shadow-[2px_2px_0_0_#a9b9db]">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border-2 border-black bg-[#fff9d0] px-4 py-2.5 shadow-[2px_2px_0_0_#000] dark:border-[#fef08a] dark:bg-[#202037] dark:shadow-[2px_2px_0_0_#a9b9db]">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Link
             href="/problems"
             className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-black uppercase tracking-wide text-black hover:bg-[#44d07d] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2a3c2f]"
@@ -1628,7 +1630,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
           <ProblemTimer running={timerRunning} />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={handleRun}
             disabled={isRunning || isSubmitting}
@@ -1648,16 +1650,29 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
         </div>
       </div>
 
-      <SplitPane
-        direction={isWideLayout ? "horizontal" : "vertical"}
-        initialPrimary={isWideLayout ? 760 : 360}
-        minPrimary={isWideLayout ? 340 : 240}
-        minSecondary={isWideLayout ? 320 : 200}
-        storageKey={`problem-workspace-main-${isWideLayout ? "wide" : "stacked"}`}
-        className="h-full w-full min-h-0 min-w-0"
-        primary={leftPanel}
-        secondary={rightPanel}
-      />
+      {isWideLayout ? (
+        <SplitPane
+          direction="horizontal"
+          initialPrimary={760}
+          minPrimary={340}
+          minSecondary={320}
+          storageKey="problem-workspace-main-wide"
+          className="h-full w-full min-h-0 min-w-0"
+          primary={leftPanel}
+          secondary={rightPanel}
+        />
+      ) : (
+        <SplitPane
+          direction="vertical"
+          initialPrimary={520}
+          minPrimary={260}
+          minSecondary={320}
+          storageKey="problem-workspace-main-mobile"
+          className="h-[132vh] min-h-170 w-full min-w-0"
+          primary={leftPanel}
+          secondary={rightPanel}
+        />
+      )}
     </section>
   );
 }

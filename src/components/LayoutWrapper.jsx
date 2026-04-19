@@ -19,7 +19,7 @@ export default function LayoutWrapper({ children }) {
   }
 
   const mainClassName = isProblemWorkspaceRoute
-    ? 'w-full max-w-none flex h-[100dvh] min-h-0 flex-col overflow-hidden px-3 py-3 sm:px-4 sm:py-4'
+    ? 'w-full max-w-none flex min-h-[100dvh] flex-col overflow-y-auto overflow-x-hidden px-3 py-3 sm:px-4 sm:py-4 md:h-[100dvh] md:min-h-0 md:overflow-hidden'
     : 'mx-auto w-full max-w-7xl px-6 py-8';
 
   return (
