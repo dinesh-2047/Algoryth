@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useState, Suspense, useMemo } from "react";
+import { useEffect, useState, Suspense, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useAuth } from "../../context/AuthContext";
 
 function ProblemsPageContent() {
   const [problems, setProblems] = useState([]);
@@ -10,6 +11,7 @@ function ProblemsPageContent() {
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { token } = useAuth();
 
   const { urlSearch, urlDifficulty, urlTags, urlSort } = useMemo(() => {
     const search = searchParams.get("search") || "";
@@ -69,29 +71,113 @@ function ProblemsPageContent() {
     }
   }, []);
 
-  // Load solved problems for status marker
-  useEffect(() => {
+  const loadSolvedProblemKeys = useCallback(async () => {
     if (typeof window === "undefined") return;
 
+    const solvedKeys = new Set();
+    const addSolvedKey = (value) => {
+      if (!value) return;
+      solvedKeys.add(String(value));
+    };
+    const isAcceptedVerdict = (value) =>
+      String(value || "").trim().toLowerCase() === "accepted";
+
+    // Keep local backup support for logged-out users and offline history.
     try {
       const raw = localStorage.getItem("algoryth_submissions");
       const parsed = raw ? JSON.parse(raw) : [];
-      const solved = parsed.filter(
-        (submission) => (submission.status || submission.verdict) === "Accepted"
+      const solved = parsed.filter((submission) =>
+        isAcceptedVerdict(submission.status || submission.verdict)
       );
 
-      const solvedKeys = new Set();
       solved.forEach((submission) => {
-        if (submission.problemId) solvedKeys.add(submission.problemId);
-        if (submission.slug) solvedKeys.add(submission.slug);
+        addSolvedKey(submission.problemId);
+        addSolvedKey(submission.slug);
+        addSolvedKey(submission.problemSlug);
       });
-
-      setSolvedProblemKeys(Array.from(solvedKeys));
     } catch (error) {
-      console.error("Failed to load solved problem markers:", error);
-      setSolvedProblemKeys([]);
+      console.error("Failed to load solved markers from localStorage:", error);
     }
-  }, []);
+
+    // Prefer server truth when authenticated so solved markers stay consistent across devices.
+    if (token) {
+      try {
+        const firstResponse = await fetch(
+          "/api/submissions/history?verdict=Accepted&limit=200&page=1",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            cache: "no-store",
+          }
+        );
+
+        if (firstResponse.ok) {
+          const firstPayload = await firstResponse.json();
+          const firstBatch = Array.isArray(firstPayload?.submissions)
+            ? firstPayload.submissions
+            : [];
+
+          firstBatch.forEach((submission) => {
+            addSolvedKey(submission.problemId);
+            addSolvedKey(submission.slug);
+            addSolvedKey(submission.problemSlug);
+          });
+
+          const totalPages = Number(firstPayload?.pagination?.totalPages || 1);
+          const maxPages = Math.min(totalPages, 10);
+
+          for (let page = 2; page <= maxPages; page += 1) {
+            const response = await fetch(
+              `/api/submissions/history?verdict=Accepted&limit=200&page=${page}`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+                cache: "no-store",
+              }
+            );
+
+            if (!response.ok) break;
+
+            const payload = await response.json();
+            const batch = Array.isArray(payload?.submissions) ? payload.submissions : [];
+
+            batch.forEach((submission) => {
+              addSolvedKey(submission.problemId);
+              addSolvedKey(submission.slug);
+              addSolvedKey(submission.problemSlug);
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load solved markers from server:", error);
+      }
+    }
+
+    setSolvedProblemKeys(Array.from(solvedKeys));
+  }, [token]);
+
+  // Load solved markers and refresh when tab/page becomes active again.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadSolvedProblemKeys();
+      }
+    };
+
+    loadSolvedProblemKeys();
+
+    window.addEventListener("focus", loadSolvedProblemKeys);
+    window.addEventListener("pageshow", loadSolvedProblemKeys);
+    window.addEventListener("storage", loadSolvedProblemKeys);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", loadSolvedProblemKeys);
+      window.removeEventListener("pageshow", loadSolvedProblemKeys);
+      window.removeEventListener("storage", loadSolvedProblemKeys);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [loadSolvedProblemKeys]);
 
   const updateURL = (newSearch, newDifficulty, newTags, newSort) => {
     const params = new URLSearchParams();
@@ -195,8 +281,14 @@ const displayProblems = useMemo(() => {
     return "bg-[#ff6b35] text-black dark:bg-[#5a3025] dark:text-[#ffe0d7]";
   };
 
+  const solvedProblemKeySet = useMemo(
+    () => new Set(solvedProblemKeys.map((key) => String(key))),
+    [solvedProblemKeys]
+  );
+
   const isSolved = (problem) =>
-    solvedProblemKeys.includes(problem.id) || solvedProblemKeys.includes(problem.slug);
+    solvedProblemKeySet.has(String(problem.id)) ||
+    solvedProblemKeySet.has(String(problem.slug));
 
   return (
     <section className="flex flex-col gap-8">
