@@ -372,6 +372,18 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     return () => window.removeEventListener("resize", updateLayout);
   }, []);
 
+  // On mobile, when the result panel is minimized/restored, the code editor
+  // container switches between a SplitPane (fixed height) and a flex layout.
+  // Monaco doesn't detect this container resize on its own, so we dispatch a
+  // window resize event to force it to recalculate its dimensions.
+  useEffect(() => {
+    if (isWideLayout) return; // only needed on mobile
+    const id = setTimeout(() => {
+      window.dispatchEvent(new Event("resize"));
+    }, 50);
+    return () => clearTimeout(id);
+  }, [isResultPanelMinimized, isWideLayout]);
+
   const starterCode = useMemo(
     () =>
       problem.starterCode?.[language] ||
@@ -1429,9 +1441,9 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
   );
 
   const rightPanel = isResultPanelMinimized ? (
-    <div className="flex h-full min-h-0 flex-col gap-2">
-      <div className="min-h-0 flex-1">{editorPanel}</div>
-      <div className="flex items-center justify-between rounded-2xl border-2 border-black bg-[#44d07d] px-4 py-2 shadow-[2px_2px_0_0_#000] dark:border-[#fef08a] dark:bg-[#234436] dark:shadow-[2px_2px_0_0_#a9b9db]">
+    <div className="h-full min-h-0" style={{ display: "grid", gridTemplateRows: "1fr auto" }}>
+      <div className="min-h-0 overflow-hidden">{editorPanel}</div>
+      <div className="mt-2 flex items-center justify-between rounded-2xl border-2 border-black bg-[#44d07d] px-4 py-2 shadow-[2px_2px_0_0_#000] dark:border-[#fef08a] dark:bg-[#234436] dark:shadow-[2px_2px_0_0_#a9b9db]">
         <div className="text-xs font-black uppercase tracking-wide text-black dark:text-[#fef08a]">
           Testcase &gt; Test Result
         </div>
