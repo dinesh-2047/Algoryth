@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
-import { CheckCircle2, XCircle, AlertCircle, Download, Filter, Eye, EyeOff } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Download, Filter, Eye } from 'lucide-react';
 import Spinner from '../../components/Spinner';
 
 export default function SubmissionsPage() {
@@ -22,7 +22,6 @@ export default function SubmissionsPage() {
   const [filterProblem, setFilterProblem] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [expandedSubmissionId, setExpandedSubmissionId] = useState(null);
 
   // Fetch submissions
   const fetchSubmissions = async (pageNum = 1) => {
@@ -91,10 +90,6 @@ export default function SubmissionsPage() {
     link.download = `submissions_${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
-  };
-
-  const toggleSubmissionCode = (submissionId) => {
-    setExpandedSubmissionId((prevId) => (prevId === submissionId ? null : submissionId));
   };
 
   if (authLoading || (loading && page === 1)) {
@@ -313,49 +308,17 @@ export default function SubmissionsPage() {
                     </div>
                   </div>
 
-                  <div className="ml-4 flex items-center gap-2">
-                    <button
-                      onClick={() => toggleSubmissionCode(submission._id || idx)}
-                      className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-sm font-black uppercase tracking-wide text-black hover:bg-[#44d07d] dark:bg-[#151525] dark:text-[#eef3ff] dark:hover:bg-[#2d3f62]"
-                    >
-                      {expandedSubmissionId === (submission._id || idx) ? (
-                        <>
-                          <EyeOff className="h-4 w-4" />
-                          Hide Code
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="h-4 w-4" />
-                          View Code
-                        </>
-                      )}
-                    </button>
-
+                  <div className="ml-4 flex items-center">
                     <Link
-                      href={`/problems/${submission.problemSlug}`}
-                      className="rounded-lg bg-[#0f92ff] px-3 py-1.5 text-sm font-black uppercase tracking-wide text-black hover:bg-[#077ad8] dark:bg-[#fef08a] dark:hover:bg-[#e9db63]"
+                      href={`/submissions/${encodeURIComponent(String(submission._id || submission.id || idx))}`}
+                      aria-label="View submission details"
+                      title="View submission"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white text-black transition-colors hover:bg-[#44d07d] dark:bg-[#151525] dark:text-[#eef3ff] dark:hover:bg-[#2d3f62]"
                     >
-                      Open Problem
+                      <Eye className="h-4.5 w-4.5" />
                     </Link>
                   </div>
                 </div>
-
-                {expandedSubmissionId === (submission._id || idx) && (
-                  <div className="mt-4 rounded-lg border-2 border-black bg-white p-4 dark:border-[#a9b9db] dark:bg-[#151525]">
-                    {submission.errorMessage && (
-                      <div className="mb-3 rounded-md bg-amber-100 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                        {submission.errorMessage}
-                      </div>
-                    )}
-
-                    <div className="mb-2 text-xs font-black uppercase tracking-wide text-black dark:text-[#d4deff]">
-                      Submitted Code ({submission.language})
-                    </div>
-                    <pre className="max-h-80 overflow-auto rounded-md bg-[#fff9d0] p-3 text-xs text-black dark:bg-[#202037] dark:text-[#eef3ff]">
-                      {submission.code || 'No code saved for this submission.'}
-                    </pre>
-                  </div>
-                )}
               </div>
             ))}
           </div>

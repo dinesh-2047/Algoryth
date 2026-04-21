@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   Calendar,
-  CheckCircle2,
   Clock3,
   Code2,
   Compass,
@@ -16,7 +15,6 @@ import {
   Target,
   Trophy,
   User,
-  XCircle,
 } from 'lucide-react';
 import ActivityHeatmap from '../../components/ActivityHeatmap';
 import { useAuth } from '../../context/AuthContext';
@@ -36,6 +34,7 @@ function normalizeSubmission(entry, index) {
   return {
     id: entry._id || entry.id || `${timestamp}-${index}`,
     slug: entry.problemSlug || entry.slug || '',
+    problemSlug: entry.problemSlug || entry.slug || '',
     title: entry.problemTitle || entry.title || entry.problemId || 'Untitled Problem',
     verdict,
     language: String(entry.language || 'javascript').toLowerCase(),
@@ -43,6 +42,8 @@ function normalizeSubmission(entry, index) {
     difficulty: normalizeDifficulty(entry.difficulty),
     executionTime: Number(entry.executionTime || 0),
     memoryUsage: Number(entry.memoryUsage || 0),
+    code: String(entry.code || ''),
+    errorMessage: String(entry.errorMessage || entry.details || ''),
   };
 }
 
@@ -240,132 +241,132 @@ export default function ProfilePage() {
   ];
 
   return (
-    <section className="space-y-6">
-      <header className="neo-card relative overflow-hidden px-6 py-8 md:px-8">
-        <div className="absolute -right-10 -top-10 h-28 w-28 rotate-12 border-2 border-black bg-[#0f92ff] dark:border-[#7d8fc4] dark:bg-[#2f2b5a]" />
-        <div className="absolute -bottom-12 left-10 h-24 w-24 rounded-full border-2 border-black bg-[#44d07d] dark:border-[#7d8fc4] dark:bg-[#1f3a34]" />
+    <section className="mx-auto w-full max-w-6xl min-w-0 space-y-4 overflow-x-hidden sm:space-y-6">
+      <header className="neo-card relative w-full min-w-0 overflow-hidden px-4 py-5 sm:px-6 sm:py-8 md:px-8">
+        <div className="absolute -right-8 -top-8 h-20 w-20 rotate-12 border-2 border-black bg-[#0f92ff] dark:border-[#7d8fc4] dark:bg-[#2f2b5a] sm:-right-10 sm:-top-10 sm:h-28 sm:w-28" />
+        <div className="absolute -bottom-9 left-7 h-16 w-16 rounded-full border-2 border-black bg-[#44d07d] dark:border-[#7d8fc4] dark:bg-[#1f3a34] sm:-bottom-12 sm:left-10 sm:h-24 sm:w-24" />
 
-        <div className="relative flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-black bg-white text-2xl font-black text-black dark:border-[#7d8fc4] dark:bg-[#10182d] dark:text-[#edf2ff]">
+        <div className="relative flex items-center gap-3 sm:gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-black bg-white text-xl font-black text-black dark:border-[#7d8fc4] dark:bg-[#10182d] dark:text-[#edf2ff] sm:h-16 sm:w-16 sm:text-2xl">
             {(user.name || user.email || 'U').charAt(0).toUpperCase()}
           </div>
-          <div>
-            <h1 className="text-3xl font-black uppercase tracking-wide text-black dark:text-[#edf2ff]">
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-black uppercase tracking-wide text-black dark:text-[#edf2ff] sm:text-3xl">
               {user.name || 'Developer'}
             </h1>
-            <p className="text-sm font-semibold text-black/70 dark:text-[#d8e2ff]/82">@{username}</p>
+            <p className="truncate text-xs font-semibold text-black/70 dark:text-[#d8e2ff]/82 sm:text-sm">@{username}</p>
           </div>
         </div>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-        <aside className="space-y-4">
-          <div className="neo-card p-5">
-            <h2 className="text-sm font-black uppercase tracking-wide text-black dark:text-[#edf2ff]">
+      <div className="grid min-w-0 items-start gap-4 sm:gap-6 lg:grid-cols-[320px_1fr]">
+        <aside className="min-w-0 space-y-3 sm:space-y-4">
+          <div className="neo-card w-full min-w-0 p-4 sm:p-5">
+            <h2 className="text-[11px] font-black uppercase tracking-wide text-black dark:text-[#edf2ff] sm:text-sm">
               Profile
             </h2>
 
-            <div className="mt-4 space-y-3 text-sm font-semibold text-black/80 dark:text-[#d8e2ff]/84">
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                <span className="truncate">{user.email}</span>
+            <div className="mt-3 space-y-2.5 text-xs font-semibold text-black/80 dark:text-[#d8e2ff]/84 sm:mt-4 sm:space-y-3 sm:text-sm">
+              <div className="flex min-w-0 items-center gap-2">
+                <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="min-w-0 break-all">{user.email}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
+                <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span>Joined {joinedLabel}</span>
               </div>
               <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
+                <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span>{user.location || 'Earth'}</span>
               </div>
             </div>
 
-            <p className="mt-4 text-sm font-medium text-black/75 dark:text-[#d8e2ff]/82">
+            <p className="mt-3 wrap-break-word text-xs font-medium text-black/75 dark:text-[#d8e2ff]/82 sm:mt-4 sm:text-sm">
               {user.bio || 'Focused on daily DSA drills, clean implementations, and consistent rating growth.'}
             </p>
           </div>
 
-          <div className="neo-card p-5">
-            <h3 className="text-sm font-black uppercase tracking-wide text-black dark:text-[#edf2ff]">
+          <div className="neo-card w-full min-w-0 p-4 sm:p-5">
+            <h3 className="text-[11px] font-black uppercase tracking-wide text-black dark:text-[#edf2ff] sm:text-sm">
               Quick Numbers
             </h3>
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-lg border border-black/20 bg-white p-3 dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
-                <div className="text-xs font-black uppercase text-black/60 dark:text-[#9baed8]">Rating</div>
-                <div className="mt-1 text-xl font-black text-black dark:text-[#edf2ff]">
+            <div className="mt-3 grid grid-cols-1 gap-2.5 sm:mt-4 sm:grid-cols-2 sm:gap-3">
+              <div className="rounded-lg border border-black/20 bg-white p-2.5 dark:border-[#7d8fc4]/35 dark:bg-[#10182d] sm:p-3">
+                <div className="text-[10px] font-black uppercase text-black/60 dark:text-[#9baed8] sm:text-xs">Rating</div>
+                <div className="mt-1 text-lg font-black text-black dark:text-[#edf2ff] sm:text-xl">
                   {user.rating || 1200}
                 </div>
               </div>
 
-              <div className="rounded-lg border border-black/20 bg-white p-3 dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
-                <div className="text-xs font-black uppercase text-black/60 dark:text-[#9baed8]">Streak</div>
-                <div className="mt-1 flex items-center gap-1 text-xl font-black text-black dark:text-[#edf2ff]">
+              <div className="rounded-lg border border-black/20 bg-white p-2.5 dark:border-[#7d8fc4]/35 dark:bg-[#10182d] sm:p-3">
+                <div className="text-[10px] font-black uppercase text-black/60 dark:text-[#9baed8] sm:text-xs">Streak</div>
+                <div className="mt-1 flex items-center gap-1 text-lg font-black text-black dark:text-[#edf2ff] sm:text-xl">
                   {user.streakCount || user.streak || 0}
-                  <Flame className="h-4 w-4" />
+                  <Flame className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </div>
               </div>
 
-              <div className="rounded-lg border border-black/20 bg-white p-3 dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
-                <div className="text-xs font-black uppercase text-black/60 dark:text-[#9baed8]">Attempts</div>
-                <div className="mt-1 text-xl font-black text-black dark:text-[#edf2ff]">
+              <div className="rounded-lg border border-black/20 bg-white p-2.5 dark:border-[#7d8fc4]/35 dark:bg-[#10182d] sm:p-3">
+                <div className="text-[10px] font-black uppercase text-black/60 dark:text-[#9baed8] sm:text-xs">Attempts</div>
+                <div className="mt-1 text-lg font-black text-black dark:text-[#edf2ff] sm:text-xl">
                   {profileStats.totalSubmissions}
                 </div>
               </div>
 
-              <div className="rounded-lg border border-black/20 bg-white p-3 dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
-                <div className="text-xs font-black uppercase text-black/60 dark:text-[#9baed8]">Accepted</div>
-                <div className="mt-1 text-xl font-black text-black dark:text-[#edf2ff]">
+              <div className="rounded-lg border border-black/20 bg-white p-2.5 dark:border-[#7d8fc4]/35 dark:bg-[#10182d] sm:p-3">
+                <div className="text-[10px] font-black uppercase text-black/60 dark:text-[#9baed8] sm:text-xs">Accepted</div>
+                <div className="mt-1 text-lg font-black text-black dark:text-[#edf2ff] sm:text-xl">
                   {profileStats.acceptedSubmissions}
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="neo-card p-5">
-            <h3 className="text-sm font-black uppercase tracking-wide text-black dark:text-[#edf2ff]">
+          <div className="neo-card w-full min-w-0 p-4 sm:p-5">
+            <h3 className="text-[11px] font-black uppercase tracking-wide text-black dark:text-[#edf2ff] sm:text-sm">
               Top Languages
             </h3>
             {profileStats.topLanguages.length > 0 ? (
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-1.5 sm:gap-2">
                 {profileStats.topLanguages.map(([language, count]) => (
                   <span
                     key={language}
-                    className="rounded-full border border-black/30 bg-white px-3 py-1 text-xs font-black uppercase tracking-wide text-black dark:border-[#7d8fc4]/35 dark:bg-[#10182d] dark:text-[#edf2ff]"
+                    className="rounded-full border border-black/30 bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-black dark:border-[#7d8fc4]/35 dark:bg-[#10182d] dark:text-[#edf2ff] sm:px-3 sm:text-xs"
                   >
                     {language} ({count})
                   </span>
                 ))}
               </div>
             ) : (
-              <p className="mt-3 text-sm font-semibold text-black/70 dark:text-[#d8e2ff]/76">
+              <p className="mt-3 text-xs font-semibold text-black/70 dark:text-[#d8e2ff]/76 sm:text-sm">
                 No language data yet.
               </p>
             )}
           </div>
 
-          <div className="neo-card p-5">
-            <h3 className="text-sm font-black uppercase tracking-wide text-black dark:text-[#edf2ff]">
+          <div className="neo-card w-full min-w-0 p-4 sm:p-5">
+            <h3 className="text-[11px] font-black uppercase tracking-wide text-black dark:text-[#edf2ff] sm:text-sm">
               Profile Menu
             </h3>
             <div className="mt-3 grid gap-2">
               <Link
                 href="/badges"
-                className="inline-flex items-center gap-2 rounded-lg border border-black/30 bg-white px-3 py-2 text-xs font-black uppercase tracking-wide text-black transition-colors hover:bg-[#44d07d] dark:border-[#7d8fc4]/35 dark:bg-[#10182d] dark:text-[#edf2ff] dark:hover:bg-[#2b406b]"
+                className="inline-flex items-center gap-2 rounded-lg border border-black/30 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-wide text-black transition-colors hover:bg-[#44d07d] dark:border-[#7d8fc4]/35 dark:bg-[#10182d] dark:text-[#edf2ff] dark:hover:bg-[#2b406b] sm:text-xs"
               >
                 <Medal className="h-3.5 w-3.5" />
                 Achievements
               </Link>
               <Link
                 href="/settings"
-                className="inline-flex items-center gap-2 rounded-lg border border-black/30 bg-white px-3 py-2 text-xs font-black uppercase tracking-wide text-black transition-colors hover:bg-[#44d07d] dark:border-[#7d8fc4]/35 dark:bg-[#10182d] dark:text-[#edf2ff] dark:hover:bg-[#2b406b]"
+                className="inline-flex items-center gap-2 rounded-lg border border-black/30 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-wide text-black transition-colors hover:bg-[#44d07d] dark:border-[#7d8fc4]/35 dark:bg-[#10182d] dark:text-[#edf2ff] dark:hover:bg-[#2b406b] sm:text-xs"
               >
                 <Settings className="h-3.5 w-3.5" />
                 Settings
               </Link>
               <Link
                 href="/contests"
-                className="inline-flex items-center gap-2 rounded-lg border border-black/30 bg-white px-3 py-2 text-xs font-black uppercase tracking-wide text-black transition-colors hover:bg-[#44d07d] dark:border-[#7d8fc4]/35 dark:bg-[#10182d] dark:text-[#edf2ff] dark:hover:bg-[#2b406b]"
+                className="inline-flex items-center gap-2 rounded-lg border border-black/30 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-wide text-black transition-colors hover:bg-[#44d07d] dark:border-[#7d8fc4]/35 dark:bg-[#10182d] dark:text-[#edf2ff] dark:hover:bg-[#2b406b] sm:text-xs"
               >
                 <Compass className="h-3.5 w-3.5" />
                 Contests
@@ -374,25 +375,25 @@ export default function ProfilePage() {
           </div>
         </aside>
 
-        <div className="space-y-6">
-          <div className="neo-card p-5">
+        <div className="min-w-0 space-y-4 sm:space-y-6">
+          <div className="neo-card w-full min-w-0 p-4 sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-black uppercase text-black dark:text-[#edf2ff]">
+                <h2 className="text-base font-black uppercase text-black dark:text-[#edf2ff] sm:text-lg">
                   Solved Problems
                 </h2>
-                <p className="mt-1 text-sm font-semibold text-black/70 dark:text-[#d8e2ff]/76">
+                <p className="mt-1 text-xs font-semibold text-black/70 dark:text-[#d8e2ff]/76 sm:text-sm">
                   LeetCode-style difficulty split based on accepted submissions.
                 </p>
               </div>
 
-              <div className="inline-flex items-center gap-2 rounded-full bg-[#0f92ff] px-4 py-1.5 text-sm font-black uppercase text-black dark:bg-[#56d5ff]">
-                <Trophy className="h-4 w-4" />
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-[#0f92ff] px-3 py-1 text-xs font-black uppercase text-black dark:bg-[#56d5ff] sm:gap-2 sm:px-4 sm:py-1.5 sm:text-sm">
+                <Trophy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 {profileStats.solvedTotal} solved
               </div>
             </div>
 
-            <div className="mt-5 space-y-4">
+            <div className="mt-4 space-y-3 sm:mt-5 sm:space-y-4">
               {solvedBars.map((bar) => {
                 const style = getDifficultyBarClasses(bar.label);
                 const width = Math.round((bar.value / solvedTotal) * 100);
@@ -400,8 +401,8 @@ export default function ProfilePage() {
                 return (
                   <div key={bar.label}>
                     <div className="mb-1 flex items-center justify-between">
-                      <span className={`text-sm font-black uppercase ${style.label}`}>{bar.label}</span>
-                      <span className="text-sm font-black text-black dark:text-[#edf2ff]">{bar.value}</span>
+                      <span className={`text-xs font-black uppercase sm:text-sm ${style.label}`}>{bar.label}</span>
+                      <span className="text-xs font-black text-black dark:text-[#edf2ff] sm:text-sm">{bar.value}</span>
                     </div>
                     <div className="h-2.5 overflow-hidden rounded-full border border-black/20 bg-white dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
                       <div
@@ -414,7 +415,7 @@ export default function ProfilePage() {
               })}
             </div>
 
-            <div className="mt-4 flex items-center gap-4 text-xs font-semibold text-black/70 dark:text-[#d8e2ff]/76">
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-[11px] font-semibold text-black/70 dark:text-[#d8e2ff]/76 sm:gap-4 sm:text-xs">
               <span className="inline-flex items-center gap-1">
                 <Target className="h-3.5 w-3.5" />
                 Acceptance: {profileStats.acceptanceRate}%
@@ -428,14 +429,14 @@ export default function ProfilePage() {
 
           <ActivityHeatmap token={token} />
 
-          <div className="neo-card overflow-hidden">
-            <div className="flex items-center justify-between border-b border-black/20 bg-white px-5 py-3 dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
-              <h3 className="text-sm font-black uppercase tracking-wide text-black dark:text-[#edf2ff]">
+          <div className="neo-card w-full min-w-0 overflow-hidden">
+            <div className="flex items-center justify-between border-b border-black/20 bg-white px-4 py-2.5 dark:border-[#7d8fc4]/35 dark:bg-[#10182d] sm:px-5 sm:py-3">
+              <h3 className="text-[11px] font-black uppercase tracking-wide text-black dark:text-[#edf2ff] sm:text-sm">
                 Recent Submissions
               </h3>
               <Link
                 href="/submissions"
-                className="text-xs font-black uppercase tracking-wide text-black underline dark:text-[#8edbff]"
+                className="text-[10px] font-black uppercase tracking-wide text-black underline dark:text-[#8edbff] sm:text-xs"
               >
                 View All
               </Link>
@@ -450,56 +451,23 @@ export default function ProfilePage() {
             ) : (
               <div className="divide-y divide-black/10 dark:divide-[#7d8fc4]/25">
                 {profileStats.recentSubmissions.map((submission) => (
-                  <div key={submission.id} className="grid gap-3 px-5 py-3 md:grid-cols-[minmax(0,2fr)_130px_120px_150px] md:items-center">
-                    <div className="min-w-0">
-                      {submission.slug ? (
-                        <Link
-                          href={`/problems/${submission.slug}`}
-                          className="truncate text-sm font-black uppercase text-black hover:underline dark:text-[#edf2ff]"
-                        >
-                          {submission.title}
-                        </Link>
-                      ) : (
-                        <div className="truncate text-sm font-black uppercase text-black dark:text-[#edf2ff]">
-                          {submission.title}
-                        </div>
-                      )}
-
-                      <div className="mt-1 flex items-center gap-2 text-xs font-semibold text-black/65 dark:text-[#d8e2ff]/76">
-                        <span>{new Date(submission.timestamp).toLocaleDateString()}</span>
-                        <span>•</span>
-                        <span className="capitalize">{submission.language}</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-black uppercase ${getVerdictStyles(submission.verdict)}`}>
-                        {submission.verdict}
+                  <Link
+                    key={submission.id}
+                    href={`/submissions/${encodeURIComponent(String(submission.id))}`}
+                    className="group block border-b border-black/5 px-4 py-3.5 transition-colors last:border-0 hover:bg-[#fff4a3] dark:border-[#7d8fc4]/15 dark:hover:bg-[#25304a] sm:px-5"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="truncate text-xs font-black uppercase tracking-wide text-black dark:text-[#edf2ff] sm:text-sm">
+                        {submission.title || submission.problemTitle || submission.problemSlug || 'Untitled Problem'}
+                      </span>
+                      <span className="inline-flex shrink-0 items-center justify-center rounded bg-black/5 p-1.5 text-black/40 transition-colors group-hover:bg-black group-hover:text-[#fef08a] dark:bg-[#7d8fc4]/10 dark:text-[#d8e2ff]/40 dark:group-hover:bg-[#eef3ff] dark:group-hover:text-[#10182d]">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                          <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
                       </span>
                     </div>
-
-                    <div className="text-xs font-semibold text-black/70 dark:text-[#d8e2ff]/76">
-                      {submission.executionTime > 0 ? (
-                        <span className="inline-flex items-center gap-1">
-                          <Clock3 className="h-3.5 w-3.5" />
-                          {submission.executionTime} ms
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1">
-                          {submission.verdict === 'Accepted' ? (
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                          ) : (
-                            <XCircle className="h-3.5 w-3.5" />
-                          )}
-                          Recorded
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="text-xs font-semibold text-black/70 dark:text-[#d8e2ff]/76">
-                      {submission.memoryUsage > 0 ? `${submission.memoryUsage} KB` : '—'}
-                    </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
