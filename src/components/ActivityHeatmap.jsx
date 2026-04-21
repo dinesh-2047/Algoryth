@@ -173,16 +173,26 @@ export default function ActivityHeatmap({ token }) {
   const CELL = 13;
   const GAP  = 2;
   const STEP = CELL + GAP;
+  const TOOLTIP_SIDE_PADDING = 64;
+  const TOOLTIP_TOP_CLEARANCE = 40;
 
-  function handleMouseEnter(e, dateStr, count) {
+  function handleCellInteract(e, dateStr, count) {
     if (!containerRef.current) return;
     const containerRect = containerRef.current.getBoundingClientRect();
     const cellRect      = e.currentTarget.getBoundingClientRect();
+
+    const rawX = cellRect.left - containerRect.left + CELL / 2;
+    const minX = TOOLTIP_SIDE_PADDING;
+    const maxX = Math.max(TOOLTIP_SIDE_PADDING, containerRect.width - TOOLTIP_SIDE_PADDING);
+    const clampedX = Math.min(Math.max(rawX, minX), maxX);
+    const y = cellRect.top - containerRect.top;
+
     setTooltip({
       dateStr,
       count,
-      x: cellRect.left - containerRect.left + CELL / 2,
-      y: cellRect.top  - containerRect.top,
+      x: clampedX,
+      y,
+      showBelow: y < TOOLTIP_TOP_CLEARANCE,
     });
   }
 
@@ -193,14 +203,14 @@ export default function ActivityHeatmap({ token }) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="neo-card p-6"
+      className="neo-card p-4 sm:p-6"
     >
       {/* Header */}
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-base font-black uppercase tracking-wide text-black dark:text-[#eef3ff]">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 sm:mb-5">
+        <h3 className="text-sm font-black uppercase tracking-wide text-black dark:text-[#eef3ff] sm:text-base">
           Submission Activity
         </h3>
-        <div className="flex gap-4 text-sm font-semibold text-black/70 dark:text-[#d4deff]/75">
+        <div className="flex gap-3 text-xs font-semibold text-black/70 dark:text-[#d4deff]/75 sm:gap-4 sm:text-sm">
           <span>
             <span className="font-black text-black dark:text-[#eef3ff]">
               {totalSubmissions}
@@ -214,9 +224,10 @@ export default function ActivityHeatmap({ token }) {
         </div>
       </div>
 
-      {/* Scrollable heatmap */}
-      <div className="overflow-x-auto pb-1">
-        <div ref={containerRef} className="relative inline-block select-none">
+      {/* Scrollable heatmap + unclipped tooltip layer */}
+      <div ref={containerRef} className="relative">
+        <div className="overflow-x-auto pb-2 sm:pb-1">
+          <div className="inline-block select-none">
 
           {/* Month labels */}
           <div className="mb-1 flex" style={{ paddingLeft: 32 }}>
@@ -266,7 +277,8 @@ export default function ActivityHeatmap({ token }) {
                                ${getColorClass(count)}`
                           }`}
                         style={{ width: CELL, height: CELL }}
-                        onMouseEnter={isFuture ? undefined : (e) => handleMouseEnter(e, dateStr, count)}
+                        onMouseEnter={isFuture ? undefined : (e) => handleCellInteract(e, dateStr, count)}
+                        onClick={isFuture ? undefined : (e) => handleCellInteract(e, dateStr, count)}
                         onMouseLeave={() => setTooltip(null)}
                       />
                     );
@@ -275,32 +287,38 @@ export default function ActivityHeatmap({ token }) {
               ))}
             </div>
           </div>
-
-          {/* Tooltip */}
-          {tooltip && (
-            <div
-              className="pointer-events-none absolute z-50 -translate-x-1/2 -translate-y-full
-                         rounded-lg bg-gray-900 px-2.5 py-1.5 text-xs text-white shadow-xl
-                         dark:bg-black"
-              style={{ left: tooltip.x, top: tooltip.y - 8 }}
-            >
-              <div className="font-semibold">{tooltip.dateStr}</div>
-              <div className="text-gray-300">
-                {tooltip.count === 0
-                  ? 'No submissions'
-                  : `${tooltip.count} submission${tooltip.count !== 1 ? 's' : ''}`}
-              </div>
-              <div className="absolute left-1/2 top-full -translate-x-1/2
-                             border-4 border-transparent border-t-gray-900
-                             dark:border-t-black" />
-            </div>
-          )}
         </div>
+
+        {/* Tooltip */}
+        {tooltip && (
+          <div
+            className={`pointer-events-none absolute z-50 -translate-x-1/2 rounded-lg bg-gray-900 px-2.5 py-1.5 text-xs text-white shadow-xl dark:bg-black ${
+              tooltip.showBelow ? '' : '-translate-y-full'
+            }`}
+            style={{
+              left: tooltip.x,
+              top: tooltip.showBelow ? tooltip.y + CELL + 8 : tooltip.y - 8,
+            }}
+          >
+            <div className="font-semibold">{tooltip.dateStr}</div>
+            <div className="text-gray-300">
+              {tooltip.count === 0
+                ? 'No submissions'
+                : `${tooltip.count} submission${tooltip.count !== 1 ? 's' : ''}`}
+            </div>
+            {tooltip.showBelow ? (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-900 dark:border-b-black" />
+            ) : (
+              <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-black" />
+            )}
+          </div>
+        )}
+      </div>
       </div>
 
       {/* Legend */}
-      <div className="mt-4 flex items-center justify-end gap-1.5">
-        <span className="text-xs font-semibold text-black/55 dark:text-[#9baed8]">Less</span>
+      <div className="mt-3 flex items-center justify-end gap-1.5 sm:mt-4">
+        <span className="text-[11px] font-semibold text-black/55 dark:text-[#9baed8] sm:text-xs">Less</span>
         {[0, 1, 2, 4, 7].map((n) => (
           <div
             key={n}
@@ -308,7 +326,7 @@ export default function ActivityHeatmap({ token }) {
             style={{ width: CELL, height: CELL }}
           />
         ))}
-        <span className="text-xs font-semibold text-black/55 dark:text-[#9baed8]">More</span>
+        <span className="text-[11px] font-semibold text-black/55 dark:text-[#9baed8] sm:text-xs">More</span>
       </div>
     </motion.div>
   );

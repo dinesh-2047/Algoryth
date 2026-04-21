@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,6 +16,11 @@ import {
   ChevronDown,
   ChevronUp,
   Trash2,
+  Clock3,
+  HardDrive,
+  Code2,
+  Copy,
+  Check,
 } from "lucide-react";
 import CodeEditor from "./CodeEditor";
 import SplitPane from "./SplitPane";
@@ -22,6 +28,8 @@ import ProblemTimer from "./ProblemTimer";
 import Spinner from "./Spinner";
 import BadgeNotification from "./BadgeNotification";
 import { useAuth } from "../context/AuthContext";
+
+const Monaco = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
 const RUN_MEMORY_LIMIT_KB = 512 * 1024;
 
@@ -143,6 +151,28 @@ function getVerdictIcon(verdict) {
   return XCircle;
 }
 
+function toMonacoLanguage(language) {
+  const normalized = String(language || "").toLowerCase();
+
+  if (normalized === "javascript" || normalized === "js") return "javascript";
+  if (normalized === "typescript" || normalized === "ts") return "typescript";
+  if (normalized === "python" || normalized === "py") return "python";
+  if (normalized === "java") return "java";
+  if (
+    normalized === "cpp" ||
+    normalized === "c++" ||
+    normalized === "c" ||
+    normalized === "cc" ||
+    normalized === "cxx"
+  ) {
+    return "cpp";
+  }
+  if (normalized === "go") return "go";
+  if (normalized === "rust") return "rust";
+
+  return "plaintext";
+}
+
 export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug }) {
   const router = useRouter();
   const { user, token, loading: authLoading, refreshUser } = useAuth();
@@ -171,6 +201,8 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
   const [activeTab, setActiveTab] = useState("Description");
   const [submissions, setSubmissions] = useState([]);
   const [selectedSubmissionIndex, setSelectedSubmissionIndex] = useState(null);
+  const [submissionViewerTheme, setSubmissionViewerTheme] = useState("vs");
+  const [copiedSubmissionKey, setCopiedSubmissionKey] = useState("");
   const [editorial, setEditorial] = useState(() => problem.editorial || {});
   const [editorialLoading, setEditorialLoading] = useState(false);
   const [editorialError, setEditorialError] = useState("");
@@ -201,6 +233,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     setActiveCaseIndex(0);
     setRemovedCustomCase(null);
     setSelectedSubmissionIndex(null);
+    setCopiedSubmissionKey("");
     setEditorial(problem.editorial || {});
     setEditorialLoading(false);
     setEditorialError("");
@@ -372,6 +405,35 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     updateLayout();
     window.addEventListener("resize", updateLayout);
     return () => window.removeEventListener("resize", updateLayout);
+  }, []);
+
+  useEffect(() => {
+    const updateTheme = () => {
+      const isDark = document.documentElement.classList.contains("dark");
+      setSubmissionViewerTheme(isDark ? "vs-dark" : "vs");
+    };
+
+    updateTheme();
+
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    const mediaQuery = window.matchMedia?.("(prefers-color-scheme: dark)");
+    const handleSystemThemeChange = () => {
+      if (!localStorage.getItem("theme")) {
+        updateTheme();
+      }
+    };
+
+    mediaQuery?.addEventListener?.("change", handleSystemThemeChange);
+
+    return () => {
+      observer.disconnect();
+      mediaQuery?.removeEventListener?.("change", handleSystemThemeChange);
+    };
   }, []);
 
   // On mobile, when the result panel is minimized/restored, the code editor
@@ -768,6 +830,20 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
 
   const toggleTags = () => {
     setIsTagsOpen((prevOpen) => !prevOpen);
+  };
+
+  const copySubmissionCode = async (submission, index) => {
+    const codeToCopy = String(submission?.code || "");
+    if (!codeToCopy) return;
+
+    try {
+      await navigator.clipboard.writeText(codeToCopy);
+      const key = String(submission?.id || `${submission?.timestamp || "submission"}-${index}`);
+      setCopiedSubmissionKey(key);
+      setTimeout(() => setCopiedSubmissionKey(""), 1400);
+    } catch (error) {
+      console.error("Failed to copy submission code:", error);
+    }
   };
 
   const handlePostSolution = async () => {
@@ -1175,7 +1251,18 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
           </div>
         );
 
-      case "Submissions":
+      case "Submissions": {
+        const selectedSubmission =
+          selectedSubmissionIndex !== null ? submissions[selectedSubmissionIndex] : null;
+        const selectedVerdict =
+          selectedSubmission?.status || selectedSubmission?.verdict || "Error";
+        const selectedKey = selectedSubmission
+          ? String(
+              selectedSubmission.id ||
+                `${selectedSubmission.timestamp || "submission"}-${selectedSubmissionIndex}`
+            )
+          : "";
+
         return (
           <div className="space-y-4">
             <h3 className="font-semibold text-[#2b2116] dark:text-[#f6ede0]">Your Submissions</h3>
@@ -1191,78 +1278,199 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
                 </button>
               </div>
             ) : (
-              <div className="space-y-2">
-                {submissions.map((submission, index) => {
-                  const verdict = submission.status || submission.verdict || "Error";
-                  const isSelected = selectedSubmissionIndex === index;
-                  const VerdictIcon = getVerdictIcon(verdict);
+              <>
+                <div className="space-y-2">
+                  {submissions.map((submission, index) => {
+                    const verdict = submission.status || submission.verdict || "Error";
+                    const isSelected = selectedSubmissionIndex === index;
+                    const VerdictIcon = getVerdictIcon(verdict);
 
-                  return (
-                    <div
-                      key={submission.id || `${submission.timestamp}-${index}`}
-                      className="rounded-lg border border-[#e0d5c2] bg-white p-3 text-sm dark:border-[#3c3347] dark:bg-[#211d27]"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex min-w-0 items-center gap-3">
-                          <VerdictIcon className="h-5 w-5 text-black dark:text-[#fef08a]" />
-                          <div>
-                            <div
-                              className={`inline-flex rounded-full px-2 py-0.5 text-xs font-black uppercase tracking-wide ${getVerdictClasses(
-                                verdict
-                              )}`}
-                            >
-                              {verdict}
-                            </div>
-                            <div className="mt-1 text-xs text-[#8a7a67] dark:text-[#b5a59c]">
-                              {new Date(submission.timestamp).toLocaleString()}  {submission.language}
-                            </div>
-                            <div className="mt-1 text-xs text-[#5d5245] dark:text-[#d7ccbe]">
-                              Passed {submission.testsPassed || 0}/{submission.totalTests || 0} tests
-                              {submission.executionTime ? `  ${submission.executionTime} ms` : ""}
-                              {submission.memoryUsage ? `  ${submission.memoryUsage} KB` : ""}
-                            </div>
-                            {submission.failedTestName && (
-                              <div className="mt-1 text-xs font-semibold text-[#5d5245] dark:text-[#f6ede0]">
-                                Failed on test case
-                                {submission.failedTestIndex ? ` #${submission.failedTestIndex}` : ""}: {submission.failedTestName}
+                    return (
+                      <div
+                        key={submission.id || `${submission.timestamp}-${index}`}
+                        className="rounded-lg border border-[#e0d5c2] bg-white p-3 text-sm dark:border-[#3c3347] dark:bg-[#211d27]"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <VerdictIcon className="h-5 w-5 text-black dark:text-[#fef08a]" />
+                            <div>
+                              <div
+                                className={`inline-flex rounded-full px-2 py-0.5 text-xs font-black uppercase tracking-wide ${getVerdictClasses(
+                                  verdict
+                                )}`}
+                              >
+                                {verdict}
                               </div>
-                            )}
+                              <div className="mt-1 text-xs text-[#8a7a67] dark:text-[#b5a59c]">
+                                {new Date(submission.timestamp).toLocaleString()} {"  "}
+                                {submission.language}
+                              </div>
+                              <div className="mt-1 text-xs text-[#5d5245] dark:text-[#d7ccbe]">
+                                Passed {submission.testsPassed || 0}/
+                                {submission.totalTests || 0} tests
+                                {submission.executionTime
+                                  ? `  ${submission.executionTime} ms`
+                                  : ""}
+                                {submission.memoryUsage ? `  ${submission.memoryUsage} KB` : ""}
+                              </div>
+                            </div>
                           </div>
-                        </div>
 
-                        <button
-                          onClick={() =>
-                            setSelectedSubmissionIndex(isSelected ? null : index)
-                          }
-                          className="inline-flex items-center gap-1 rounded-lg bg-[#0f92ff] px-3 py-1.5 text-xs font-black uppercase tracking-wide text-black dark:bg-[#fef08a]"
+                          <button
+                            onClick={() =>
+                              setSelectedSubmissionIndex((prevIndex) =>
+                                prevIndex === index ? null : index
+                              )
+                            }
+                            aria-label="View submission details"
+                            title="View submission details"
+                            className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border border-black/20 transition-colors dark:border-[#7d8fc4]/35 ${
+                              isSelected
+                                ? "bg-[#0f92ff] text-black dark:bg-[#fef08a]"
+                                : "bg-white text-black hover:bg-[#44d07d] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2d3f62]"
+                            }`}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {selectedSubmission ? (
+                  <div className="rounded-lg border-2 border-black bg-[#fff9d0] p-3 dark:border-[#fef08a] dark:bg-[#151525] sm:p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <div
+                          className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wide ${getVerdictClasses(
+                            selectedVerdict
+                          )}`}
                         >
-                          <Eye className="h-3.5 w-3.5" />
-                          {isSelected ? "Hide Code" : "View Code"}
-                        </button>
+                          {selectedVerdict}
+                        </div>
+                        <div className="mt-1 text-xs text-[#8a7a67] dark:text-[#b5a59c]">
+                          {new Date(selectedSubmission.timestamp).toLocaleString()} {" • "}
+                          {selectedSubmission.language}
+                        </div>
                       </div>
 
-                      {isSelected && (
-                        <div className="mt-3 rounded-lg border-2 border-black bg-[#fff9d0] p-3 dark:border-[#fef08a] dark:bg-[#151525]">
-                          {submission.errorMessage && (
-                            <div className="mb-2 rounded bg-[#ffddd3] px-2 py-1 text-xs font-semibold text-black dark:bg-[#3f2320] dark:text-[#fff9f0]">
-                              {submission.errorMessage}
-                            </div>
-                          )}
-                          <div className="mb-2 text-xs font-black uppercase tracking-wide text-black dark:text-[#fef08a]">
-                            Submitted Code ({submission.language})
-                          </div>
-                          <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded bg-white p-3 text-xs text-black dark:bg-[#202037] dark:text-[#fff9f0]">
-                            {submission.code || "Code not available for this submission."}
-                          </pre>
-                        </div>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          copySubmissionCode(selectedSubmission, selectedSubmissionIndex)
+                        }
+                        aria-label="Copy submitted code"
+                        title="Copy code"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-black/20 bg-white text-black transition-colors hover:bg-[#fff4a3] dark:border-[#7d8fc4]/35 dark:bg-[#10182d] dark:text-[#eef3ff] dark:hover:bg-[#2f4064]"
+                      >
+                        {copiedSubmissionKey === selectedKey ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </button>
                     </div>
-                  );
-                })}
-              </div>
+
+                    <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                      <div className="rounded-lg border border-black/20 bg-white p-2.5 dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
+                        <div className="text-[10px] font-black uppercase text-black/60 dark:text-[#9baed8]">
+                          Runtime
+                        </div>
+                        <div className="mt-1 inline-flex items-center gap-1 text-xs font-black text-black dark:text-[#eef3ff]">
+                          <Clock3 className="h-3.5 w-3.5" />
+                          {selectedSubmission.executionTime > 0
+                            ? `${selectedSubmission.executionTime} ms`
+                            : "Recorded"}
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg border border-black/20 bg-white p-2.5 dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
+                        <div className="text-[10px] font-black uppercase text-black/60 dark:text-[#9baed8]">
+                          Memory
+                        </div>
+                        <div className="mt-1 inline-flex items-center gap-1 text-xs font-black text-black dark:text-[#eef3ff]">
+                          <HardDrive className="h-3.5 w-3.5" />
+                          {selectedSubmission.memoryUsage > 0
+                            ? `${selectedSubmission.memoryUsage} KB`
+                            : "-"}
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg border border-black/20 bg-white p-2.5 dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
+                        <div className="text-[10px] font-black uppercase text-black/60 dark:text-[#9baed8]">
+                          Tests
+                        </div>
+                        <div className="mt-1 inline-flex items-center gap-1 text-xs font-black text-black dark:text-[#eef3ff]">
+                          <Code2 className="h-3.5 w-3.5" />
+                          {selectedSubmission.testsPassed || 0}/
+                          {selectedSubmission.totalTests || 0}
+                        </div>
+                      </div>
+                    </div>
+
+                    {selectedSubmission.errorMessage && (
+                      <div className="mt-3 rounded bg-[#ffddd3] px-2.5 py-2 text-xs font-semibold text-black dark:bg-[#3f2320] dark:text-[#fff9f0]">
+                        {selectedSubmission.errorMessage}
+                      </div>
+                    )}
+
+                    {(selectedSubmission.failedTestName ||
+                      selectedSubmission.failedTestIndex !== null) && (
+                      <div className="mt-3 rounded border border-black/20 bg-white px-2.5 py-2 text-xs font-semibold text-[#5d5245] dark:border-[#7d8fc4]/35 dark:bg-[#10182d] dark:text-[#d7ccbe]">
+                        Failed testcase
+                        {selectedSubmission.failedTestIndex !== null &&
+                        selectedSubmission.failedTestIndex !== undefined
+                          ? ` #${selectedSubmission.failedTestIndex}`
+                          : ""}
+                        {selectedSubmission.failedTestName
+                          ? `: ${selectedSubmission.failedTestName}`
+                          : ""}
+                      </div>
+                    )}
+
+                    <div className="mt-3 rounded-lg border border-black/20 bg-white p-2.5 dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
+                      <div className="mb-2 text-xs font-black uppercase tracking-wide text-black dark:text-[#fef08a]">
+                        Submitted Code ({selectedSubmission.language})
+                      </div>
+                      <div className="h-72 min-h-64 overflow-hidden rounded-md border border-black/15 dark:border-[#7d8fc4]/30">
+                        <Monaco
+                          height="100%"
+                          theme={submissionViewerTheme}
+                          language={toMonacoLanguage(selectedSubmission.language)}
+                          value={
+                            selectedSubmission.code ||
+                            "// Code not available for this submission."
+                          }
+                          options={{
+                            readOnly: true,
+                            domReadOnly: true,
+                            minimap: { enabled: false },
+                            fontSize: 13,
+                            fontFamily:
+                              "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+                            scrollBeyondLastLine: false,
+                            wordWrap: "on",
+                            lineNumbers: "on",
+                            smoothScrolling: true,
+                            renderLineHighlight: "line",
+                            automaticLayout: true,
+                            padding: { top: 10, bottom: 10 },
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-[#e0d5c2] bg-white p-4 text-xs text-[#5d5245] dark:border-[#3c3347] dark:bg-[#211d27] dark:text-[#d7ccbe]">
+                    Select a submission using the eye icon to view full details here.
+                  </div>
+                )}
+              </>
             )}
           </div>
         );
+      }
 
       default:
         return null;
