@@ -64,6 +64,18 @@ const submissionSchema = new mongoose.Schema({
     type: Number,
     default: null,
   },
+  failedTestInput: {
+    type: String,
+    default: '',
+  },
+  failedExpectedOutput: {
+    type: String,
+    default: '',
+  },
+  failedActualOutput: {
+    type: String,
+    default: '',
+  },
   errorMessage: {
     type: String,
     default: '',

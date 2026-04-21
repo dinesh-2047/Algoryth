@@ -267,6 +267,9 @@ export async function POST(request) {
           failedCase = {
             index: index + 1,
             name: testCase.name,
+            input: testCase.input,
+            expectedOutput: testCase.expectedOutput,
+            actualOutput: "",
             reason: error.message,
           };
           break;
@@ -286,6 +289,7 @@ export async function POST(request) {
         failedCase = {
           index: index + 1,
           name: testCase.name,
+          input: testCase.input,
           expectedOutput: testCase.expectedOutput,
           actualOutput: runResult.output,
           reason: compilerVerdict,
@@ -309,9 +313,12 @@ export async function POST(request) {
           verdict = "Wrong Answer";
         }
 
+        errorMessage = verdict;
+
         failedCase = {
           index: index + 1,
           name: testCase.name,
+          input: testCase.input,
           expectedOutput: testCase.expectedOutput,
           actualOutput: runResult.output,
           reason: verdict,
@@ -348,6 +355,9 @@ export async function POST(request) {
         queueWaitMs,
         failedTestName: failedCase?.name,
         failedTestIndex: failedCase?.index ?? null,
+        failedTestInput: String(failedCase?.input || ""),
+        failedExpectedOutput: String(failedCase?.expectedOutput || ""),
+        failedActualOutput: String(failedCase?.actualOutput || ""),
         errorMessage,
         submittedAt: new Date(),
       });

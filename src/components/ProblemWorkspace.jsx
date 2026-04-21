@@ -281,6 +281,9 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
                   submission.failedTestIndex === null || submission.failedTestIndex === undefined
                     ? null
                     : Number(submission.failedTestIndex),
+                failedTestInput: String(submission.failedTestInput || ""),
+                failedExpectedOutput: String(submission.failedExpectedOutput || ""),
+                failedActualOutput: String(submission.failedActualOutput || ""),
                 errorMessage: submission.errorMessage || "",
                 queueWaitMs: Number(submission.queueWaitMs || 0),
               }));
@@ -324,6 +327,15 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
               submission.failedTestIndex === null || submission.failedTestIndex === undefined
                 ? null
                 : Number(submission.failedTestIndex),
+            failedTestInput: String(
+              submission.failedTestInput || submission.failedCaseInput || ""
+            ),
+            failedExpectedOutput: String(
+              submission.failedExpectedOutput || submission.expectedOutput || ""
+            ),
+            failedActualOutput: String(
+              submission.failedActualOutput || submission.actualOutput || ""
+            ),
             errorMessage: submission.errorMessage || "",
             queueWaitMs: Number(submission.queueWaitMs || 0),
           }))
@@ -788,6 +800,9 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
         responsePayload?.failedCase?.index === null
           ? null
           : Number(responsePayload.failedCase.index),
+      failedTestInput: String(responsePayload?.failedCase?.input || ""),
+      failedExpectedOutput: String(responsePayload?.failedCase?.expectedOutput || ""),
+      failedActualOutput: String(responsePayload?.failedCase?.actualOutput || ""),
       errorMessage:
         responsePayload?.details ||
         responsePayload?.failedCase?.reason ||
@@ -844,6 +859,41 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     } catch (error) {
       console.error("Failed to copy submission code:", error);
     }
+  };
+
+  const useFailedSubmissionTestcase = (submission) => {
+    const failedInput = String(submission?.failedTestInput || "");
+    const failedExpected = String(submission?.failedExpectedOutput || "");
+
+    if (!failedInput && !failedExpected) return;
+
+    const nextIndex = exampleCases.length;
+    const uniqueSuffix = Date.now();
+    const failedLabel = submission?.failedTestName
+      ? `From failed testcase: ${submission.failedTestName}`
+      : "From failed submission";
+
+    setExampleCases((prevCases) =>
+      [
+        ...prevCases,
+        {
+          id: `failed-case-${uniqueSuffix}`,
+          label: `Case ${nextIndex + 1}`,
+          input: failedInput,
+          expectedOutput: failedExpected,
+          explanation: failedLabel,
+          isCustom: true,
+        },
+      ].map((testCase, index) => ({
+        ...testCase,
+        label: `Case ${index + 1}`,
+      }))
+    );
+
+    setActiveCaseIndex(nextIndex);
+    setActiveRightTab("testcase");
+    setIsResultPanelMinimized(false);
+    setInputError(null);
   };
 
   const handlePostSolution = async () => {
@@ -1340,7 +1390,22 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
 
                 {selectedSubmission ? (
                   <div className="rounded-lg border-2 border-black bg-[#fff9d0] p-3 dark:border-[#fef08a] dark:bg-[#151525] sm:p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
+                    {(() => {
+                      const hasFailedInput = Boolean(
+                        String(selectedSubmission.failedTestInput || "").trim()
+                      );
+                      const hasFailedExpected = Boolean(
+                        String(selectedSubmission.failedExpectedOutput || "").trim()
+                      );
+                      const hasFailedActual = Boolean(
+                        String(selectedSubmission.failedActualOutput || "").trim()
+                      );
+                      const hasDetailedFailedCase =
+                        hasFailedInput || hasFailedExpected || hasFailedActual;
+
+                      return (
+                        <>
+                    <div className="flex flex-wrap items-start gap-2">
                       <div>
                         <div
                           className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wide ${getVerdictClasses(
@@ -1354,22 +1419,6 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
                           {selectedSubmission.language}
                         </div>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          copySubmissionCode(selectedSubmission, selectedSubmissionIndex)
-                        }
-                        aria-label="Copy submitted code"
-                        title="Copy code"
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-black/20 bg-white text-black transition-colors hover:bg-[#fff4a3] dark:border-[#7d8fc4]/35 dark:bg-[#10182d] dark:text-[#eef3ff] dark:hover:bg-[#2f4064]"
-                      >
-                        {copiedSubmissionKey === selectedKey ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                      </button>
                     </div>
 
                     <div className="mt-3 grid gap-2 sm:grid-cols-3">
@@ -1417,21 +1466,85 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
 
                     {(selectedSubmission.failedTestName ||
                       selectedSubmission.failedTestIndex !== null) && (
-                      <div className="mt-3 rounded border border-black/20 bg-white px-2.5 py-2 text-xs font-semibold text-[#5d5245] dark:border-[#7d8fc4]/35 dark:bg-[#10182d] dark:text-[#d7ccbe]">
-                        Failed testcase
-                        {selectedSubmission.failedTestIndex !== null &&
-                        selectedSubmission.failedTestIndex !== undefined
-                          ? ` #${selectedSubmission.failedTestIndex}`
-                          : ""}
-                        {selectedSubmission.failedTestName
-                          ? `: ${selectedSubmission.failedTestName}`
-                          : ""}
+                      <div className="mt-3 rounded border border-black/20 bg-white p-2.5 text-xs font-semibold text-[#5d5245] dark:border-[#7d8fc4]/35 dark:bg-[#10182d] dark:text-[#d7ccbe]">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            Failed testcase
+                            {selectedSubmission.failedTestIndex !== null &&
+                            selectedSubmission.failedTestIndex !== undefined
+                              ? ` #${selectedSubmission.failedTestIndex}`
+                              : ""}
+                            {selectedSubmission.failedTestName
+                              ? `: ${selectedSubmission.failedTestName}`
+                              : ""}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => useFailedSubmissionTestcase(selectedSubmission)}
+                            disabled={!hasDetailedFailedCase}
+                            className="rounded-md border border-black/20 bg-[#0f92ff] px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-black disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#7d8fc4]/35 dark:bg-[#fef08a]"
+                          >
+                            Use Testcase
+                          </button>
+                        </div>
+
+                        {hasDetailedFailedCase && (
+                          <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                            {hasFailedInput && (
+                              <div className="rounded border border-black/15 bg-[#fff9d0] p-2 dark:border-[#7d8fc4]/30 dark:bg-[#202037]">
+                                <div className="mb-1 text-[10px] font-black uppercase tracking-wide text-black/70 dark:text-[#c7d7ff]">
+                                  Input
+                                </div>
+                                <pre className="max-h-32 overflow-auto whitespace-pre-wrap text-[11px] text-black dark:text-[#eef3ff]">
+                                  {selectedSubmission.failedTestInput}
+                                </pre>
+                              </div>
+                            )}
+                            {hasFailedActual && (
+                              <div className="rounded border border-black/15 bg-[#fff9d0] p-2 dark:border-[#7d8fc4]/30 dark:bg-[#202037]">
+                                <div className="mb-1 text-[10px] font-black uppercase tracking-wide text-black/70 dark:text-[#c7d7ff]">
+                                  Your Output
+                                </div>
+                                <pre className="max-h-32 overflow-auto whitespace-pre-wrap text-[11px] text-black dark:text-[#eef3ff]">
+                                  {selectedSubmission.failedActualOutput}
+                                </pre>
+                              </div>
+                            )}
+                            {hasFailedExpected && (
+                              <div className="rounded border border-black/15 bg-[#fff9d0] p-2 dark:border-[#7d8fc4]/30 dark:bg-[#202037]">
+                                <div className="mb-1 text-[10px] font-black uppercase tracking-wide text-black/70 dark:text-[#c7d7ff]">
+                                  Expected
+                                </div>
+                                <pre className="max-h-32 overflow-auto whitespace-pre-wrap text-[11px] text-black dark:text-[#eef3ff]">
+                                  {selectedSubmission.failedExpectedOutput}
+                                </pre>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
 
                     <div className="mt-3 rounded-lg border border-black/20 bg-white p-2.5 dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
-                      <div className="mb-2 text-xs font-black uppercase tracking-wide text-black dark:text-[#fef08a]">
-                        Submitted Code ({selectedSubmission.language})
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <div className="text-xs font-black uppercase tracking-wide text-black dark:text-[#fef08a]">
+                          Submitted Code ({selectedSubmission.language})
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            copySubmissionCode(selectedSubmission, selectedSubmissionIndex)
+                          }
+                          aria-label="Copy submitted code"
+                          title="Copy code"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-black/20 bg-white text-black transition-colors hover:bg-[#fff4a3] dark:border-[#7d8fc4]/35 dark:bg-[#151525] dark:text-[#eef3ff] dark:hover:bg-[#2f4064]"
+                        >
+                          {copiedSubmissionKey === selectedKey ? (
+                            <Check className="h-4 w-4" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </button>
                       </div>
                       <div className="h-72 min-h-64 overflow-hidden rounded-md border border-black/15 dark:border-[#7d8fc4]/30">
                         <Monaco
@@ -1460,6 +1573,9 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
                         />
                       </div>
                     </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 ) : (
                   <div className="rounded-lg border border-dashed border-[#e0d5c2] bg-white p-4 text-xs text-[#5d5245] dark:border-[#3c3347] dark:bg-[#211d27] dark:text-[#d7ccbe]">
@@ -1477,6 +1593,34 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     }
   };
   const renderResultPanel = () => {
+    if (isRunning) {
+      return (
+        <div className="space-y-3 code-font">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#0f92ff] px-3 py-1 text-xs font-black uppercase tracking-wide text-black dark:bg-[#fef08a]">
+            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-black border-t-transparent dark:border-[#2f2f4a] dark:border-t-transparent" />
+            Running...
+          </div>
+          <div className="rounded border border-[#e0d5c2] bg-white p-3 text-xs text-[#2b2116] dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#f6ede0]">
+            Executing {activeCase?.label || "selected testcase"}. Results will appear here when execution finishes.
+          </div>
+        </div>
+      );
+    }
+
+    if (isSubmitting) {
+      return (
+        <div className="space-y-3 code-font">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#0f92ff] px-3 py-1 text-xs font-black uppercase tracking-wide text-black dark:bg-[#fef08a]">
+            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-black border-t-transparent dark:border-[#2f2f4a] dark:border-t-transparent" />
+            Submitting...
+          </div>
+          <div className="rounded border border-[#e0d5c2] bg-white p-3 text-xs text-[#2b2116] dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#f6ede0]">
+            Running against the full hidden test suite. Detailed result will appear here shortly.
+          </div>
+        </div>
+      );
+    }
+
     if (!resultDetails && !inputError) {
       return (
         <div className="text-[#8a7a67] dark:text-[#b5a59c] italic">
@@ -1505,13 +1649,17 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
 
             {resultDetails.kind === "run" && (
               <>
-                <div className="rounded border border-[#e0d5c2] bg-white p-3 text-xs text-[#2b2116] dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#f6ede0]">
-                  Running {resultDetails.caseLabel} with selected input.
-                  {resultDetails.checkedAgainstExample
-                    ? ` Expected-output check: ${
-                        resultDetails.outputMatchesExample ? "Matched" : "Not matched"
-                      }.`
-                    : " No expected output configured for this case."}
+                <div className="rounded border border-[#e0d5c2] bg-white p-3 text-xs text-black dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#fff9f0]">
+                  <div className="mb-1 font-black uppercase">Input</div>
+                  <pre className="whitespace-pre-wrap">{resultDetails.input || "<empty>"}</pre>
+                  <div className="mt-2 text-[11px] text-[#5d5245] dark:text-[#d7ccbe]">
+                    {resultDetails.caseLabel}
+                    {resultDetails.checkedAgainstExample
+                      ? ` • Expected check: ${
+                          resultDetails.outputMatchesExample ? "Matched" : "Not matched"
+                        }`
+                      : " • No expected output configured"}
+                  </div>
                 </div>
 
                 {resultDetails.error ? (
