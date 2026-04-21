@@ -200,13 +200,6 @@ function ProblemsPageContent() {
     updateURL(urlSearch, value, urlTags, urlSort);
   };
 
-  const handleTag = (tag) => {
-    const newTags = urlTags.includes(tag)
-      ? urlTags.filter((t) => t !== tag)
-      : [...urlTags, tag];
-    updateURL(urlSearch, urlDifficulty, newTags, urlSort);
-  };
-
   const handleSort = (value) => {
     updateURL(urlSearch, urlDifficulty, urlTags, value);
   };
@@ -221,18 +214,6 @@ function ProblemsPageContent() {
       localStorage.setItem("bookmarkedProblems", JSON.stringify(newBookmarks));
     }
   };
-
-  const allTags = [
-    "daily",
-    "arrays",
-    "hash-map",
-    "stack",
-    "dp",
-    "sliding-window",
-    "binary-search",
-    "graphs",
-    "trees",
-  ];
 
 // Base list (only API + sorting, no daily logic)
 const baseProblems = useMemo(() => {
@@ -369,23 +350,6 @@ const displayProblems = useMemo(() => {
         </div>
       </div>
 
-      {/* Tags Quick Filter */}
-      <div className="flex flex-wrap items-center gap-2">
-        {allTags.map((tag) => (
-          <button
-            key={tag}
-            onClick={() => handleTag(tag)}
-            className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-black uppercase tracking-wide transition-all ${
-              urlTags.includes(tag)
-                ? "bg-[#0f92ff] text-black dark:bg-[#fef08a]"
-                : "bg-white text-black hover:bg-[#44d07d] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2a3c2f]"
-            }`}
-          >
-            {tag}
-          </button>
-        ))}
-      </div>
-
       {dailyProblem && (
         <div className="neo-card relative overflow-hidden p-6">
           <div className="absolute -right-8 -top-8 h-28 w-28 rotate-12 border-4 border-black bg-[#ff6b35] dark:border-[#fef08a] dark:bg-[#2f4064]" />
@@ -430,9 +394,6 @@ const displayProblems = useMemo(() => {
             <div className="text-sm font-black uppercase text-black dark:text-[#fff9f0]">
               {dailyProblem.title}
             </div>
-            <p className="mt-1 line-clamp-2 text-xs text-black/75 dark:text-[#fff9f0]/75">
-              {dailyProblem.statement}
-            </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span
                 className={`rounded-full px-3 py-1 text-[10px] font-black uppercase ${getDifficultyClasses(
@@ -463,50 +424,59 @@ const displayProblems = useMemo(() => {
       {/* Problems List */}
       {loading ? (
         <div className="neo-card overflow-hidden">
-          <div className="hidden bg-[#ff6b35] px-4 py-3 text-xs font-black uppercase tracking-wide text-black dark:bg-[#2f2f4a] dark:text-[#fef08a] md:grid md:grid-cols-[56px_minmax(0,2fr)_120px_110px_210px_180px] md:gap-3">
+          <div className="grid grid-cols-[34px_minmax(0,1fr)_72px_72px] gap-2 bg-[#ff6b35] px-3 py-3 text-[10px] font-black uppercase tracking-wide text-black dark:bg-[#2f2f4a] dark:text-[#fef08a] md:grid-cols-[56px_minmax(0,2fr)_120px_110px_180px] md:gap-3 md:px-4 md:text-xs">
             <span>#</span>
             <span>Title</span>
-            <span>Difficulty</span>
-            <span>Acceptance</span>
-            <span>Tags</span>
-            <span className="text-right">Actions</span>
+            <span className="text-center">
+              <span className="md:hidden">Diff</span>
+              <span className="hidden md:inline">Difficulty</span>
+            </span>
+            <span className="hidden text-center md:block">Acceptance</span>
+            <span className="text-right">
+              <span className="md:hidden">Solve</span>
+              <span className="hidden md:inline">Actions</span>
+            </span>
           </div>
           <div className="divide-y-2 divide-black dark:divide-[#fef08a]">
           {[...Array(6)].map((_, i) => (
             <div
               key={i}
-              className="animate-pulse px-4 py-4 md:grid md:grid-cols-[56px_minmax(0,2fr)_120px_110px_210px_180px] md:gap-3"
+              className="grid animate-pulse grid-cols-[34px_minmax(0,1fr)_72px_72px] items-center gap-2 px-3 py-4 md:grid-cols-[56px_minmax(0,2fr)_120px_110px_180px] md:gap-3 md:px-4"
             >
-              <div className="h-6 w-10 rounded bg-[#e7dfc6] dark:bg-[#2f2f4a]" />
-              <div className="mt-2 h-6 w-full rounded bg-[#e7dfc6] dark:bg-[#2f2f4a] md:mt-0" />
-              <div className="mt-2 h-6 w-24 rounded bg-[#e7dfc6] dark:bg-[#2f2f4a] md:mt-0" />
-              <div className="mt-2 h-6 w-20 rounded bg-[#e7dfc6] dark:bg-[#2f2f4a] md:mt-0" />
-              <div className="mt-2 h-6 w-full rounded bg-[#e7dfc6] dark:bg-[#2f2f4a] md:mt-0" />
-              <div className="mt-2 h-6 w-full rounded bg-[#e7dfc6] dark:bg-[#2f2f4a] md:mt-0" />
+              <div className="h-6 w-full rounded bg-[#e7dfc6] dark:bg-[#2f2f4a]" />
+              <div className="h-6 w-full rounded bg-[#e7dfc6] dark:bg-[#2f2f4a]" />
+              <div className="h-6 w-full rounded bg-[#e7dfc6] dark:bg-[#2f2f4a]" />
+              <div className="hidden h-6 w-full rounded bg-[#e7dfc6] dark:bg-[#2f2f4a] md:block" />
+              <div className="h-6 w-full rounded bg-[#e7dfc6] dark:bg-[#2f2f4a]" />
             </div>
           ))}
           </div>
         </div>
       ) : (
         <div className="neo-card overflow-hidden">
-          <div className="hidden bg-[#ff6b35] px-4 py-3 text-xs font-black uppercase tracking-wide text-black dark:bg-[#2f2f4a] dark:text-[#fef08a] md:grid md:grid-cols-[56px_minmax(0,2fr)_120px_110px_210px_180px] md:gap-3">
+          <div className="grid grid-cols-[34px_minmax(0,1fr)_72px_72px] gap-2 bg-[#ff6b35] px-3 py-3 text-[10px] font-black uppercase tracking-wide text-black dark:bg-[#2f2f4a] dark:text-[#fef08a] md:grid-cols-[56px_minmax(0,2fr)_120px_110px_180px] md:gap-3 md:px-4 md:text-xs">
             <span>#</span>
             <span>Title</span>
-            <span>Difficulty</span>
-            <span>Acceptance</span>
-            <span>Tags</span>
-            <span className="text-right">Actions</span>
+            <span className="text-center">
+              <span className="md:hidden">Diff</span>
+              <span className="hidden md:inline">Difficulty</span>
+            </span>
+            <span className="hidden text-center md:block">Acceptance</span>
+            <span className="text-right">
+              <span className="md:hidden">Solve</span>
+              <span className="hidden md:inline">Actions</span>
+            </span>
           </div>
 
           <div className="divide-y-2 divide-black dark:divide-[#fef08a]">
           {displayProblems.map((problem, index) => (
             <div
               key={problem.id}
-              className="bg-[#fff9d0] px-4 py-4 transition-colors hover:bg-[#fff4a3] dark:bg-[#202037] dark:hover:bg-[#262645] md:grid md:grid-cols-[56px_minmax(0,2fr)_120px_110px_210px_180px] md:items-center md:gap-3"
+              className="grid grid-cols-[34px_minmax(0,1fr)_72px_72px] items-center gap-2 bg-[#fff9d0] px-3 py-3 transition-colors hover:bg-[#fff4a3] dark:bg-[#202037] dark:hover:bg-[#262645] md:grid-cols-[56px_minmax(0,2fr)_120px_110px_180px] md:gap-3 md:px-4 md:py-4"
             >
-              <div className="mb-2 flex items-center gap-2 md:mb-0">
+              <div className="flex items-center gap-1.5">
                 <span
-                  className={`inline-flex h-6 w-6 items-center justify-center rounded-full border-2 border-black text-[11px] font-black dark:border-[#fef08a] ${
+                  className={`inline-flex h-5 w-5 items-center justify-center rounded-full border-2 border-black text-[10px] font-black md:h-6 md:w-6 md:text-[11px] dark:border-[#fef08a] ${
                     isSolved(problem)
                       ? "bg-[#44d07d] text-black dark:bg-[#1f5a3a] dark:text-[#d5ffd6]"
                       : "bg-white text-black dark:bg-[#151525] dark:text-[#fff9f0]"
@@ -515,7 +485,7 @@ const displayProblems = useMemo(() => {
                 >
                   {isSolved(problem) ? "✓" : "•"}
                 </span>
-                <span className="text-xs font-black text-black/70 dark:text-[#fff9f0]/70">
+                <span className="text-[11px] font-black text-black/70 md:text-xs dark:text-[#fff9f0]/70">
                   {index + 1}
                 </span>
               </div>
@@ -523,18 +493,15 @@ const displayProblems = useMemo(() => {
               <div className="min-w-0">
                 <Link
                   href={`/problems/${problem.slug}`}
-                  className="text-sm font-black uppercase text-black hover:underline dark:text-[#fff9f0]"
+                  className="block truncate text-[11px] font-black uppercase text-black hover:underline md:text-sm dark:text-[#fff9f0]"
                 >
                   {problem.title}
                 </Link>
-                <p className="mt-1 line-clamp-2 text-xs text-black/70 dark:text-[#fff9f0]/70">
-                  {problem.statement}
-                </p>
               </div>
 
-              <div className="mt-3 md:mt-0">
+              <div className="flex justify-center">
                 <span
-                  className={`inline-flex rounded-full px-3 py-1 text-[10px] font-black uppercase ${getDifficultyClasses(
+                  className={`inline-flex rounded-full px-2 py-1 text-[8px] font-black uppercase md:px-3 md:text-[10px] ${getDifficultyClasses(
                     problem.difficulty ||
                       (problem.rating < 1300
                         ? "Easy"
@@ -552,41 +519,37 @@ const displayProblems = useMemo(() => {
                 </span>
               </div>
 
-              <div className="mt-3 text-xs font-black text-black dark:text-[#fff9f0] md:mt-0">
+              <div className="hidden text-center text-[10px] font-black text-black md:block md:text-xs dark:text-[#fff9f0]">
                 {problem.acceptanceRate || 0}%
               </div>
 
-              <div className="mt-3 flex flex-wrap gap-1.5 md:mt-0">
-                {(problem.tags || []).slice(0, 3).map((tag) => (
-                  <span
-                    key={`${problem.id}-${tag}`}
-                    className="rounded-full border-2 border-black bg-white px-2 py-0.5 text-[10px] font-black uppercase text-black dark:border-[#fef08a] dark:bg-[#151525] dark:text-[#fff9f0]"
-                  >
-                    {tag}
-                  </span>
-                ))}
-                {(problem.tags || []).length > 3 && (
-                  <span className="rounded-full border-2 border-black bg-[#fff0c8] px-2 py-0.5 text-[10px] font-black uppercase text-black dark:border-[#fef08a] dark:bg-[#2d2d44] dark:text-[#fff9f0]">
-                    +{problem.tags.length - 3}
-                  </span>
-                )}
-              </div>
-
-              <div className="mt-3 flex items-center gap-2 md:mt-0 md:justify-end">
+              <div className="flex items-center justify-end gap-1.5 md:gap-2">
                 <button
                   onClick={() => handleBookmark(problem.id)}
-                  className={`rounded-lg px-3 py-1.5 text-[10px] font-black uppercase tracking-wide ${
+                  aria-label={bookmarkedProblems.includes(problem.id) ? "Unsave problem" : "Save problem"}
+                  className={`hidden h-8 w-8 items-center justify-center rounded-lg md:inline-flex ${
                     bookmarkedProblems.includes(problem.id)
                       ? "bg-[#ff6b35] text-black dark:bg-[#fef08a]"
                       : "bg-white text-black dark:bg-[#151525] dark:text-[#fff9f0]"
                   }`}
                 >
-                  {bookmarkedProblems.includes(problem.id) ? "Saved" : "Save"}
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill={bookmarkedProblems.includes(problem.id) ? "currentColor" : "none"}
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                  </svg>
                 </button>
 
                 <Link
                   href={`/problems/${problem.slug}`}
-                  className="rounded-lg bg-[#0f92ff] px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-black dark:bg-[#fef08a]"
+                  className="rounded-lg bg-[#0f92ff] px-2 py-1 text-[9px] font-black uppercase tracking-wide text-black md:px-3 md:py-1.5 md:text-[10px] dark:bg-[#fef08a]"
                 >
                   Solve
                 </Link>

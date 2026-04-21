@@ -154,6 +154,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
   const [resultDetails, setResultDetails] = useState(null);
   const [timerRunning, setTimerRunning] = useState(true);
   const [inputError, setInputError] = useState(null);
+  const [isTagsOpen, setIsTagsOpen] = useState(false);
   const [openHints, setOpenHints] = useState([]);
   const [newBadges, setNewBadges] = useState([]);
   const [activeRightTab, setActiveRightTab] = useState("testcase");
@@ -191,6 +192,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     setLanguage("javascript");
     setTimerRunning(true);
     setActiveTab("Description");
+    setIsTagsOpen(false);
     setOpenHints([]);
     setNewBadges([]);
     setActiveRightTab("testcase");
@@ -764,6 +766,10 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     );
   };
 
+  const toggleTags = () => {
+    setIsTagsOpen((prevOpen) => !prevOpen);
+  };
+
   const handlePostSolution = async () => {
     if (authLoading) return;
 
@@ -923,6 +929,36 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
                 </div>
               ))}
             </div>
+
+            {Array.isArray(problem.tags) && problem.tags.length > 0 && (
+              <>
+                <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+                  Tags
+                </h3>
+                <div className="mt-2 grid gap-2">
+                  <div
+                    className="cursor-pointer rounded border border-[#e0d5c2] p-2 text-sm transition-colors hover:bg-[#fff8ed] dark:border-[#3c3347] dark:hover:bg-[#2d2535]"
+                    onClick={toggleTags}
+                  >
+                    <div className="flex items-center gap-2 font-medium text-[#2b2116] dark:text-[#f6ede0]">
+                      <span>Tags</span>
+                    </div>
+                    {isTagsOpen && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {problem.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-full border border-[#e0d5c2] bg-white px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black dark:border-[#3c3347] dark:bg-[#151525] dark:text-[#fff9f0]"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
 
             {Array.isArray(problem.hints) && problem.hints.length > 0 && (
               <>
