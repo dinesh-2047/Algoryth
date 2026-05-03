@@ -21,10 +21,10 @@ import {
   Code2,
   Copy,
   Check,
+  User as UserIcon,
 } from "lucide-react";
 import CodeEditor from "./CodeEditor";
 import SplitPane from "./SplitPane";
-import ProblemTimer from "./ProblemTimer";
 import Spinner from "./Spinner";
 import BadgeNotification from "./BadgeNotification";
 import { useAuth } from "../context/AuthContext";
@@ -173,8 +173,29 @@ function toMonacoLanguage(language) {
   return "plaintext";
 }
 
+function formatDuration(ms) {
+  if (ms <= 0) return "00:00:00";
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600)
+    .toString()
+    .padStart(2, "0");
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = Math.floor(totalSeconds % 60)
+    .toString()
+    .padStart(2, "0");
+  return `${hours}:${minutes}:${seconds}`;
+}
+
+function formatPenaltyMinutes(value) {
+  const totalMinutes = Math.max(0, Math.floor(Number(value || 0)));
+  return `${totalMinutes}m`;
+}
+
 export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug }) {
   const router = useRouter();
+  const isContestMode = Boolean(contestSlug);
   const { user, token, loading: authLoading, refreshUser } = useAuth();
   const [isWideLayout, setIsWideLayout] = useState(true);
   const [code, setCode] = useState("");
@@ -182,7 +203,6 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resultDetails, setResultDetails] = useState(null);
-  const [timerRunning, setTimerRunning] = useState(true);
   const [inputError, setInputError] = useState(null);
   const [isTagsOpen, setIsTagsOpen] = useState(false);
   const [openHints, setOpenHints] = useState([]);
@@ -196,6 +216,143 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
   const [removedCustomCase, setRemovedCustomCase] = useState(null);
 
   const handleDismissBadges = useCallback(() => setNewBadges([]), []);
+
+  const contestStart = contestMeta?.startTime || null;
+  const contestEnd = contestMeta?.endTime || null;
+
+  const getContestSubmissionRange = useCallback(() => {
+    if (!isContestMode || !contestStart || !contestEnd) return null;
+    const from = new Date(contestStart);
+    const to = new Date(contestEnd);
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return null;
+    return { from: from.toISOString(), to: to.toISOString() };
+  }, [contestEnd, contestStart, isContestMode]);
+
+  const loadSubmissions = useCallback(async () => {
+    try {
+      const range = getContestSubmissionRange();
+      if (isContestMode && !range) {
+        setSubmissions([]);
+        return;
+      }
+
+      const token = localStorage.getItem("algoryth_token");
+      if (token) {
+        const params = new URLSearchParams({
+          problemSlug: problem.slug,
+          limit: "20",
+        });
+
+        if (range) {
+          params.set("dateFrom", range.from);
+          params.set("dateTo", range.to);
+        }
+
+        const response = await fetch(`/api/submissions/history?${params.toString()}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.submissions) {
+            const normalized = data.submissions.map((submission) => ({
+              id: submission._id || `${submission.submittedAt}-${submission.problemSlug}`,
+              problemId: submission.problemId || problem.id,
+              slug: submission.problemSlug || problem.slug,
+              problemTitle: submission.problemTitle || problem.title,
+              status: submission.verdict,
+              verdict: submission.verdict,
+              language: submission.language,
+              code: submission.code || "",
+              timestamp: submission.submittedAt || new Date().toISOString(),
+              executionTime: Number(submission.executionTime || 0),
+              memoryUsage: Number(submission.memoryUsage || 0),
+              testsPassed: Number(submission.testsPassed || 0),
+              totalTests: Number(submission.totalTests || 0),
+              failedTestName: submission.failedTestName || null,
+              failedTestIndex:
+                submission.failedTestIndex === null || submission.failedTestIndex === undefined
+                  ? null
+                  : Number(submission.failedTestIndex),
+              failedTestInput: String(submission.failedTestInput || ""),
+              failedExpectedOutput: String(submission.failedExpectedOutput || ""),
+              failedActualOutput: String(submission.failedActualOutput || ""),
+              errorMessage: submission.errorMessage || "",
+              queueWaitMs: Number(submission.queueWaitMs || 0),
+            }));
+
+            setSubmissions(normalized);
+            return;
+          }
+        }
+      }
+
+      const allSubmissions = JSON.parse(
+        localStorage.getItem("algoryth_submissions") || "[]"
+      );
+
+      const fromMs = range ? new Date(range.from).getTime() : null;
+      const toMs = range ? new Date(range.to).getTime() : null;
+
+      const validSubmissions = allSubmissions.filter((submission) => {
+        const isSameProblem =
+          submission.problemId === problem.id || submission.slug === problem.slug;
+        if (!isSameProblem) return false;
+
+        if (!range) return true;
+
+        const rawTime = submission.timestamp || submission.submittedAt || submission.createdAt;
+        const submittedAt = new Date(rawTime || 0).getTime();
+        if (Number.isNaN(submittedAt)) return false;
+        if (fromMs !== null && submittedAt < fromMs) return false;
+        if (toMs !== null && submittedAt > toMs) return false;
+        return true;
+      });
+
+      const normalizedFallback = validSubmissions
+        .map((submission) => ({
+          id:
+            submission.id ||
+            `${submission.timestamp || submission.submittedAt || Date.now()}-${
+              submission.slug || problem.slug
+            }`,
+          problemId: submission.problemId || problem.id,
+          slug: submission.slug || problem.slug,
+          problemTitle: submission.problemTitle || problem.title,
+          status: submission.status || submission.verdict || "Error",
+          verdict: submission.verdict || submission.status || "Error",
+          language: submission.language || "javascript",
+          code: submission.code || "",
+          timestamp:
+            submission.timestamp || submission.submittedAt || new Date().toISOString(),
+          executionTime: Number(submission.executionTime || 0),
+          memoryUsage: Number(submission.memoryUsage || 0),
+          testsPassed: Number(submission.testsPassed || 0),
+          totalTests: Number(submission.totalTests || 0),
+          failedTestName: submission.failedTestName || null,
+          failedTestIndex:
+            submission.failedTestIndex === null || submission.failedTestIndex === undefined
+              ? null
+              : Number(submission.failedTestIndex),
+          failedTestInput: String(
+            submission.failedTestInput || submission.failedCaseInput || ""
+          ),
+          failedExpectedOutput: String(
+            submission.failedExpectedOutput || submission.expectedOutput || ""
+          ),
+          failedActualOutput: String(
+            submission.failedActualOutput || submission.actualOutput || ""
+          ),
+          errorMessage: submission.errorMessage || "",
+          queueWaitMs: Number(submission.queueWaitMs || 0),
+        }))
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+      setSubmissions(normalizedFallback);
+    } catch (error) {
+      console.error("Failed to load submissions", error);
+    }
+  }, [getContestSubmissionRange, isContestMode, problem]);
 
   // Left tabs state
   const [activeTab, setActiveTab] = useState("Description");
@@ -216,13 +373,19 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     code: "",
     language: "javascript",
   });
+  const [contestMeta, setContestMeta] = useState(null);
+  const [contestLeaderboard, setContestLeaderboard] = useState([]);
+  const [contestLoading, setContestLoading] = useState(false);
+  const [contestError, setContestError] = useState("");
+  const [contestRemainingMs, setContestRemainingMs] = useState(0);
+  const [contestDrawerOpen, setContestDrawerOpen] = useState(false);
+  const [contestDrawerTab, setContestDrawerTab] = useState("problems");
 
   useEffect(() => {
     setResultDetails(null);
     setInputError(null);
     setCode("");
     setLanguage("javascript");
-    setTimerRunning(true);
     setActiveTab("Description");
     setIsTagsOpen(false);
     setOpenHints([]);
@@ -247,105 +410,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
       code: "",
       language: "javascript",
     });
-
-    const loadSubmissions = async () => {
-      try {
-        const token = localStorage.getItem("algoryth_token");
-        if (token) {
-          const response = await fetch(
-            `/api/submissions/history?problemSlug=${problem.slug}&limit=20`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-
-          if (response.ok) {
-            const data = await response.json();
-            if (data.submissions) {
-              const normalized = data.submissions.map((submission) => ({
-                id: submission._id || `${submission.submittedAt}-${submission.problemSlug}`,
-                problemId: submission.problemId || problem.id,
-                slug: submission.problemSlug || problem.slug,
-                problemTitle: submission.problemTitle || problem.title,
-                status: submission.verdict,
-                verdict: submission.verdict,
-                language: submission.language,
-                code: submission.code || "",
-                timestamp: submission.submittedAt || new Date().toISOString(),
-                executionTime: Number(submission.executionTime || 0),
-                memoryUsage: Number(submission.memoryUsage || 0),
-                testsPassed: Number(submission.testsPassed || 0),
-                totalTests: Number(submission.totalTests || 0),
-                failedTestName: submission.failedTestName || null,
-                failedTestIndex:
-                  submission.failedTestIndex === null || submission.failedTestIndex === undefined
-                    ? null
-                    : Number(submission.failedTestIndex),
-                failedTestInput: String(submission.failedTestInput || ""),
-                failedExpectedOutput: String(submission.failedExpectedOutput || ""),
-                failedActualOutput: String(submission.failedActualOutput || ""),
-                errorMessage: submission.errorMessage || "",
-                queueWaitMs: Number(submission.queueWaitMs || 0),
-              }));
-
-              setSubmissions(normalized);
-              return;
-            }
-          }
-        }
-
-        const allSubmissions = JSON.parse(
-          localStorage.getItem("algoryth_submissions") || "[]"
-        );
-        const validSubmissions = allSubmissions.filter(
-          (submission) =>
-            submission.problemId === problem.id || submission.slug === problem.slug
-        );
-
-        const normalizedFallback = validSubmissions
-          .map((submission) => ({
-            id:
-              submission.id ||
-              `${submission.timestamp || submission.submittedAt || Date.now()}-${
-                submission.slug || problem.slug
-              }`,
-            problemId: submission.problemId || problem.id,
-            slug: submission.slug || problem.slug,
-            problemTitle: submission.problemTitle || problem.title,
-            status: submission.status || submission.verdict || "Error",
-            verdict: submission.verdict || submission.status || "Error",
-            language: submission.language || "javascript",
-            code: submission.code || "",
-            timestamp:
-              submission.timestamp || submission.submittedAt || new Date().toISOString(),
-            executionTime: Number(submission.executionTime || 0),
-            memoryUsage: Number(submission.memoryUsage || 0),
-            testsPassed: Number(submission.testsPassed || 0),
-            totalTests: Number(submission.totalTests || 0),
-            failedTestName: submission.failedTestName || null,
-            failedTestIndex:
-              submission.failedTestIndex === null || submission.failedTestIndex === undefined
-                ? null
-                : Number(submission.failedTestIndex),
-            failedTestInput: String(
-              submission.failedTestInput || submission.failedCaseInput || ""
-            ),
-            failedExpectedOutput: String(
-              submission.failedExpectedOutput || submission.expectedOutput || ""
-            ),
-            failedActualOutput: String(
-              submission.failedActualOutput || submission.actualOutput || ""
-            ),
-            errorMessage: submission.errorMessage || "",
-            queueWaitMs: Number(submission.queueWaitMs || 0),
-          }))
-          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-        setSubmissions(normalizedFallback);
-      } catch (error) {
-        console.error("Failed to load submissions", error);
-      }
-    };
+    setContestDrawerOpen(false);
 
     const authHeaders = () => {
       const headers = {};
@@ -404,10 +469,15 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
       }
     };
 
+    if (!isContestMode) {
+      loadEditorial();
+      loadSolutions();
+    }
+  }, [problem, isContestMode]);
+
+  useEffect(() => {
     loadSubmissions();
-    loadEditorial();
-    loadSolutions();
-  }, [problem]);
+  }, [loadSubmissions]);
 
   useEffect(() => {
     const updateLayout = () => {
@@ -448,6 +518,82 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     };
   }, []);
 
+  const fetchContest = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!contestSlug) return;
+
+      try {
+        if (!silent) {
+          setContestLoading(true);
+          setContestError("");
+        }
+
+        const response = await fetch(`/api/contests/${contestSlug}`, { cache: "no-store" });
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload.error || "Failed to load contest");
+        }
+
+        setContestMeta(payload.contest || null);
+        setContestLeaderboard(Array.isArray(payload.leaderboard) ? payload.leaderboard : []);
+      } catch (error) {
+        if (!silent) {
+          setContestError(error.message || "Failed to load contest");
+        }
+      } finally {
+        if (!silent) {
+          setContestLoading(false);
+        }
+      }
+    },
+    [contestSlug]
+  );
+
+  useEffect(() => {
+    if (!isContestMode) {
+      setContestMeta(null);
+      setContestLeaderboard([]);
+      setContestError("");
+      setContestLoading(false);
+      return;
+    }
+
+    fetchContest();
+  }, [fetchContest, isContestMode]);
+
+  useEffect(() => {
+    if (!contestMeta || contestMeta.status !== "live") return undefined;
+
+    const timer = window.setInterval(() => {
+      fetchContest({ silent: true });
+    }, 10000);
+
+    return () => window.clearInterval(timer);
+  }, [contestMeta, fetchContest]);
+
+  useEffect(() => {
+    if (!contestMeta) return undefined;
+
+    const updateCountdown = () => {
+      const now = Date.now();
+      const start = new Date(contestMeta.startTime).getTime();
+      const end = new Date(contestMeta.endTime).getTime();
+
+      if (contestMeta.status === "upcoming") {
+        setContestRemainingMs(Math.max(0, start - now));
+      } else if (contestMeta.status === "live") {
+        setContestRemainingMs(Math.max(0, end - now));
+      } else {
+        setContestRemainingMs(0);
+      }
+    };
+
+    updateCountdown();
+    const timer = window.setInterval(updateCountdown, 1000);
+    return () => window.clearInterval(timer);
+  }, [contestMeta]);
+
   // On mobile, when the result panel is minimized/restored, the code editor
   // container switches between a SplitPane (fixed height) and a flex layout.
   // Monaco doesn't detect this container resize on its own, so we dispatch a
@@ -466,6 +612,45 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
       `// ${problem.title}\n\n// Write your solution and print the output.\n`,
     [problem, language]
   );
+
+  const contestCountdownLabel = useMemo(() => {
+    if (!contestMeta) return "";
+    if (contestMeta.status === "upcoming") {
+      return `Starts in ${formatDuration(contestRemainingMs)}`;
+    }
+    if (contestMeta.status === "live") {
+      return `Ends in ${formatDuration(contestRemainingMs)}`;
+    }
+    return "Contest ended";
+  }, [contestMeta, contestRemainingMs]);
+
+  const contestProblemsLocked =
+    Boolean(contestMeta?.problemsLocked) || contestMeta?.status === "upcoming";
+
+  const contestProblemList = useMemo(() => {
+    if (!contestMeta) return [];
+    if (Array.isArray(contestMeta.problems) && contestMeta.problems.length > 0) {
+      return contestMeta.problems;
+    }
+
+    const count = Number(contestMeta.problemCount || 0);
+    if (!count) return [];
+
+    return Array.from({ length: count }, (_, index) => ({
+      problemSlug: `locked-${index + 1}`,
+      title: `Problem ${index + 1}`,
+      points: null,
+      locked: true,
+    }));
+  }, [contestMeta]);
+
+  const contestTotalPoints = useMemo(() => {
+    if (!contestMeta) return 0;
+    if (Number.isFinite(Number(contestMeta.totalPoints))) {
+      return Number(contestMeta.totalPoints);
+    }
+    return contestProblemList.reduce((sum, item) => sum + Number(item.points || 0), 0);
+  }, [contestMeta, contestProblemList]);
 
   const isCodeEmpty =
     !code || code.trim().length === 0 || code.trim() === starterCode.trim();
@@ -694,7 +879,6 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
       return;
     }
 
-    setTimerRunning(false);
     setIsSubmitting(true);
     setResultDetails(null);
     setInputError(null);
@@ -978,12 +1162,23 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     }
   };
 
-  const tabs = [
-    { id: "Description", icon: FileText, label: "Description", shortLabel: "Desc" },
-    { id: "Editorial", icon: BookOpen, label: "Editorial", shortLabel: "Edit" },
-    { id: "Solutions", icon: List, label: "Solutions", shortLabel: "Sol" },
-    { id: "Submissions", icon: History, label: "Submissions", shortLabel: "Subs" },
-  ];
+  const tabs = useMemo(() => {
+    const baseTabs = [
+      { id: "Description", icon: FileText, label: "Description", shortLabel: "Desc" },
+      { id: "Submissions", icon: History, label: "Submissions", shortLabel: "Subs" },
+    ];
+
+    if (isContestMode) {
+      return baseTabs;
+    }
+
+    return [
+      { id: "Description", icon: FileText, label: "Description", shortLabel: "Desc" },
+      { id: "Editorial", icon: BookOpen, label: "Editorial", shortLabel: "Edit" },
+      { id: "Solutions", icon: List, label: "Solutions", shortLabel: "Sol" },
+      { id: "Submissions", icon: History, label: "Submissions", shortLabel: "Subs" },
+    ];
+  }, [isContestMode]);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -2003,14 +2198,32 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     <section className="flex min-h-0 flex-1 flex-col gap-3 md:h-full">
       <BadgeNotification badges={newBadges} onDismiss={handleDismissBadges} />
 
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border-2 border-black bg-[#fff9d0] px-4 py-2.5 shadow-[2px_2px_0_0_#000] dark:border-[#fef08a] dark:bg-[#202037] dark:shadow-[2px_2px_0_0_#a9b9db]">
+      <div className="relative flex flex-wrap items-center justify-between gap-2 rounded-2xl border-2 border-black bg-[#fff9d0] px-4 py-2.5 shadow-[2px_2px_0_0_#000] dark:border-[#fef08a] dark:bg-[#202037] dark:shadow-[2px_2px_0_0_#a9b9db]">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <Link
-            href="/problems"
-            className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-black uppercase tracking-wide text-black hover:bg-[#44d07d] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2a3c2f]"
-          >
-            ← All Problems
-          </Link>
+            {isContestMode ? (
+              <Link
+                href={`/contests/${contestSlug}`}
+                className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-black uppercase tracking-wide text-black hover:bg-[#44d07d] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2a3c2f]"
+              >
+                ← Contest Lobby
+              </Link>
+            ) : (
+              <Link
+                href="/problems"
+                className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-black uppercase tracking-wide text-black hover:bg-[#44d07d] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2a3c2f]"
+              >
+                ← All Problems
+              </Link>
+            )}
+            {isContestMode && (
+              <button
+                type="button"
+                onClick={() => setContestDrawerOpen(true)}
+                className="flex items-center gap-2 rounded-lg bg-[#0f92ff] px-3 py-1.5 text-sm font-black uppercase tracking-wide text-black hover:bg-[#077ad8] dark:bg-[#fef08a] dark:text-black dark:hover:bg-[#e9db63]"
+              >
+                Contest Panel
+              </button>
+            )}
           <div className="h-4 w-px bg-black dark:bg-[#fef08a]" />
           <div className="flex gap-1">
             <button
@@ -2031,8 +2244,25 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
             </button>
           </div>
           <div className="h-4 w-px bg-black dark:bg-[#fef08a]" />
-          <ProblemTimer running={timerRunning} />
+          {isContestMode && contestMeta && (
+            <span className="rounded-full border border-black/20 bg-white px-3 py-1 text-xs font-black uppercase tracking-wide text-black dark:border-[#7d8fc4]/35 dark:bg-[#151525] dark:text-[#fff9f0]">
+              {contestMeta.title}
+            </span>
+          )}
+          {isContestMode && !contestMeta && contestError && (
+            <span className="rounded-full border border-black/20 bg-[#ffb4a2] px-3 py-1 text-xs font-black uppercase tracking-wide text-black dark:border-[#7d8fc4]/35 dark:bg-[#3f2320] dark:text-[#ffd7cc]">
+              Contest unavailable
+            </span>
+          )}
         </div>
+
+        {isContestMode && contestMeta && (
+          <div className="flex w-full justify-center md:hidden">
+            <span className="rounded-full border border-black/20 bg-[#0f92ff] px-3 py-1 text-xs font-black uppercase tracking-wide text-black dark:border-[#7d8fc4]/35 dark:bg-[#fef08a]">
+              {contestCountdownLabel}
+            </span>
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-2">
           <button
@@ -2051,7 +2281,32 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
             {isSubmitting && <Spinner className="h-4 w-4" />}
             {isSubmitting ? "Submitting..." : user && token ? "Submit" : "Login to Submit"}
           </button>
+          <Link
+            href={user ? "/profile" : "/auth"}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-black bg-white text-xs font-black uppercase text-black hover:bg-[#44d07d] dark:border-[#fef08a] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2a3c2f]"
+            aria-label="Open profile"
+            title={user?.name || user?.email || "Profile"}
+          >
+            {user ? (
+              <span>
+                {String(user.name || user.email || "U")
+                  .trim()
+                  .charAt(0)
+                  .toUpperCase()}
+              </span>
+            ) : (
+              <UserIcon className="h-4 w-4" />
+            )}
+          </Link>
         </div>
+
+        {isContestMode && contestMeta && (
+          <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:block">
+            <span className="rounded-full border border-black/20 bg-[#0f92ff] px-4 py-1.5 text-xs font-black uppercase tracking-wide text-black dark:border-[#7d8fc4]/35 dark:bg-[#fef08a]">
+              {contestCountdownLabel}
+            </span>
+          </div>
+        )}
       </div>
 
       {isWideLayout ? (
@@ -2076,6 +2331,159 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
           primary={leftPanel}
           secondary={rightPanel}
         />
+      )}
+
+      {isContestMode && contestDrawerOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]">
+          <div className="absolute left-4 top-4 flex h-[calc(100%-2rem)] w-full max-w-sm flex-col overflow-hidden rounded-2xl border-2 border-black bg-[#fff9d0] text-black shadow-[4px_4px_0_0_#000] dark:border-[#fef08a] dark:bg-[#202037] dark:text-[#fff9f0] dark:shadow-[4px_4px_0_0_#a9b9db] md:max-w-md">
+            <div className="flex items-center justify-between border-b-2 border-black bg-[#ff6b35] px-4 py-3 dark:border-[#fef08a] dark:bg-[#2f2f4a]">
+              <div>
+                <div className="text-xs font-black uppercase tracking-wide text-black/70 dark:text-[#fef08a]">
+                  Contest Panel
+                </div>
+                <div className="text-sm font-black uppercase text-black dark:text-[#fff9f0]">
+                  {contestMeta?.title || "Contest"}
+                </div>
+                {contestMeta && (
+                  <div className="mt-1 text-[11px] text-black/70 dark:text-[#fef08a]">
+                    {contestCountdownLabel}
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setContestDrawerOpen(false)}
+                className="rounded-lg border-2 border-black bg-white px-2.5 py-1 text-xs font-black uppercase tracking-wide text-black hover:bg-[#44d07d] dark:border-[#fef08a] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2a3c2f]"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 border-b-2 border-black bg-[#fff3b0] px-4 py-3 dark:border-[#fef08a] dark:bg-[#1a2033]">
+              <button
+                type="button"
+                onClick={() => setContestDrawerTab("problems")}
+                className={`rounded-full border-2 border-black px-3 py-1 text-[11px] font-black uppercase tracking-wide transition-colors dark:border-[#fef08a] ${
+                  contestDrawerTab === "problems"
+                    ? "bg-[#f4b35f] text-black"
+                    : "bg-white text-black hover:bg-[#44d07d] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2a3c2f]"
+                }`}
+              >
+                Problem List
+              </button>
+              <button
+                type="button"
+                onClick={() => setContestDrawerTab("ranking")}
+                className={`rounded-full border-2 border-black px-3 py-1 text-[11px] font-black uppercase tracking-wide transition-colors dark:border-[#fef08a] ${
+                  contestDrawerTab === "ranking"
+                    ? "bg-[#44d07d] text-black"
+                    : "bg-white text-black hover:bg-[#44d07d] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2a3c2f]"
+                }`}
+              >
+                Ranking
+              </button>
+            </div>
+
+            <div className="custom-scrollbar flex-1 overflow-auto px-4 py-4">
+              {contestDrawerTab === "problems" ? (
+                <div className="space-y-3">
+                  {contestLoading && !contestMeta ? (
+                    <div className="flex items-center gap-2 text-xs text-black/70 dark:text-[#d4deff]/80">
+                      <Spinner className="h-4 w-4" /> Loading contest...
+                    </div>
+                  ) : contestError ? (
+                    <div className="rounded-lg border-2 border-black bg-[#fff0ea] p-3 text-xs text-[#743021] dark:border-[#fef08a] dark:bg-[#3b2423] dark:text-[#ffd7cc]">
+                      {contestError}
+                    </div>
+                  ) : contestProblemList.length === 0 ? (
+                    <div className="rounded-lg border-2 border-black bg-white p-3 text-xs text-black/70 dark:border-[#fef08a] dark:bg-[#151525] dark:text-[#d4deff]/80">
+                      No problems available yet.
+                    </div>
+                  ) : (
+                    contestProblemList.map((problemItem, index) => (
+                      <div
+                        key={problemItem.problemSlug}
+                        className="rounded-xl border-2 border-black bg-white p-3 dark:border-[#fef08a] dark:bg-[#151525]"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-black text-black dark:text-[#fff9f0]">
+                              Q{index + 1}. {problemItem.title}
+                            </div>
+                            <div className="mt-1 text-[11px] text-black/60 dark:text-[#d4deff]/70">
+                              {problemItem.locked || contestProblemsLocked
+                                ? "Locked"
+                                : problemItem.problemSlug}
+                              {problemItem.points ? `  ${problemItem.points} pts` : ""}
+                              {problemItem.difficulty ? `  ${problemItem.difficulty}` : ""}
+                            </div>
+                          </div>
+                          {contestProblemsLocked || problemItem.locked ? (
+                            <div className="rounded-full border-2 border-black bg-[#cbd5f5] px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-black dark:border-[#fef08a] dark:bg-[#252f47] dark:text-[#d8e4ff]">
+                              Locked
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setContestDrawerOpen(false);
+                                router.push(
+                                  `/problems/${problemItem.problemSlug}?contest=${contestSlug}`
+                                );
+                              }}
+                              className="rounded-full border-2 border-black bg-[#0f92ff] px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black hover:bg-[#077ad8] dark:border-[#fef08a] dark:bg-[#fef08a] dark:text-black dark:hover:bg-[#e9db63]"
+                            >
+                              Open
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+
+                  {contestMeta && (
+                    <div className="rounded-lg border-2 border-black bg-white p-3 text-xs text-black/70 dark:border-[#fef08a] dark:bg-[#151525] dark:text-[#d4deff]/80">
+                      Problems: {contestMeta.problemCount || contestProblemList.length}  Total Points: {contestTotalPoints}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {contestLoading && contestLeaderboard.length === 0 ? (
+                    <div className="flex items-center gap-2 text-xs text-black/70 dark:text-[#d4deff]/80">
+                      <Spinner className="h-4 w-4" /> Loading ranking...
+                    </div>
+                  ) : contestLeaderboard.length === 0 ? (
+                    <div className="rounded-lg border-2 border-black bg-white p-3 text-xs text-black/70 dark:border-[#fef08a] dark:bg-[#151525] dark:text-[#d4deff]/80">
+                      No rankings yet.
+                    </div>
+                  ) : (
+                    contestLeaderboard.slice(0, 20).map((row) => (
+                      <div
+                        key={row.userId}
+                        className="flex items-center justify-between rounded-xl border-2 border-black bg-white px-3 py-2 dark:border-[#fef08a] dark:bg-[#151525]"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="text-xs font-black text-black dark:text-[#fff9f0]">#{row.rank}</div>
+                          <div>
+                            <div className="text-xs font-bold text-black dark:text-[#fff9f0]">{row.name}</div>
+                            <div className="text-[10px] text-black/60 dark:text-[#d4deff]/70">Solved {row.solved}</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs font-black text-black dark:text-[#fff9f0]">{row.score} pts</div>
+                          <div className="text-[10px] text-black/60 dark:text-[#d4deff]/70">
+                            {formatPenaltyMinutes(row.penalty)}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );
