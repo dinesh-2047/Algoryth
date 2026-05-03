@@ -17,15 +17,25 @@ export async function GET(_request, { params }) {
       return NextResponse.json({ error: "Contest not found" }, { status: 404 });
     }
 
-    const problemSlugs = (contest.problems || []).map((item) => item.problemSlug);
+    const status = getContestStatus(contest);
+    const problemRefs = contest.problems || [];
+    const problemSlugs = problemRefs.map((item) => item.problemSlug);
+    const problemCount = problemRefs.length;
+    const totalPoints = problemRefs.reduce(
+      (sum, item) => sum + Number(item.points || 0),
+      0
+    );
 
-    const problems = await Problem.find({ slug: { $in: problemSlugs } })
-      .select({ slug: 1, title: 1, difficulty: 1, rating: 1 })
-      .lean();
-    const problemBySlug = problems.reduce((acc, item) => {
-      acc[item.slug] = item;
-      return acc;
-    }, {});
+    let problemBySlug = {};
+    if (status !== "upcoming" && problemSlugs.length > 0) {
+      const problems = await Problem.find({ slug: { $in: problemSlugs } })
+        .select({ slug: 1, title: 1, difficulty: 1, rating: 1 })
+        .lean();
+      problemBySlug = problems.reduce((acc, item) => {
+        acc[item.slug] = item;
+        return acc;
+      }, {});
+    }
 
     const contestSubmissions = await Submission.find({
       problemSlug: { $in: problemSlugs },
@@ -57,14 +67,20 @@ export async function GET(_request, { params }) {
         endTime: contest.endTime,
         durationMinutes: contest.durationMinutes,
         isRated: contest.isRated !== false,
-        status: getContestStatus(contest),
-        problems: (contest.problems || []).map((item) => ({
-          problemSlug: item.problemSlug,
-          points: Number(item.points || 1),
-          title: problemBySlug[item.problemSlug]?.title || item.problemSlug,
-          difficulty: problemBySlug[item.problemSlug]?.difficulty || null,
-          rating: problemBySlug[item.problemSlug]?.rating || null,
-        })),
+        status,
+        problemCount,
+        totalPoints,
+        problemsLocked: status === "upcoming",
+        problems:
+          status === "upcoming"
+            ? []
+            : problemRefs.map((item) => ({
+                problemSlug: item.problemSlug,
+                points: Number(item.points || 1),
+                title: problemBySlug[item.problemSlug]?.title || item.problemSlug,
+                difficulty: problemBySlug[item.problemSlug]?.difficulty || null,
+                rating: problemBySlug[item.problemSlug]?.rating || null,
+              })),
         ratingProcessedAt: contest.ratingProcessedAt || null,
         ratingChanges: contest.ratingChanges || [],
       },

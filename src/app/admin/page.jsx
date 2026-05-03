@@ -71,6 +71,11 @@ function splitLines(value) {
     .filter(Boolean);
 }
 
+function defaultContestPoints(problem) {
+  if (!problem) return 100;
+  return 100;
+}
+
 export default function AdminPage() {
   const { user, token, loading, login } = useAuth();
 
@@ -99,13 +104,26 @@ export default function AdminPage() {
     durationMinutes: 90,
     isPublic: true,
     isRated: true,
-    problemsText: '',
   });
+  const [contestProblems, setContestProblems] = useState([]);
+  const [contestProblemSearch, setContestProblemSearch] = useState('');
 
   const privateProblems = useMemo(
     () => problems.filter((problem) => problem.isPublic === false),
     [problems]
   );
+
+  const filteredPrivateProblems = useMemo(() => {
+    const search = contestProblemSearch.trim().toLowerCase();
+    const selected = new Set(contestProblems.map((item) => item.problemSlug));
+
+    return privateProblems.filter((problem) => {
+      if (selected.has(problem.slug)) return false;
+      if (!search) return true;
+      const haystack = `${problem.title} ${problem.slug}`.toLowerCase();
+      return haystack.includes(search);
+    });
+  }, [privateProblems, contestProblemSearch, contestProblems]);
 
   const adminHeaders = useMemo(() => {
     if (!token) return {};
@@ -375,10 +393,16 @@ export default function AdminPage() {
       setError('');
       setStatus('Creating contest...');
 
-      const problemsPayload = splitLines(contestForm.problemsText).map((line) => {
-        const [slug, pointsRaw] = line.split(':').map((part) => part.trim());
-        return { problemSlug: slug, points: Number(pointsRaw || 1) };
-      });
+      if (contestProblems.length === 0) {
+        setStatus('');
+        setError('Select at least one private problem for the contest.');
+        return;
+      }
+
+      const problemsPayload = contestProblems.map((problem) => ({
+        problemSlug: problem.problemSlug,
+        points: Number(problem.points || 1),
+      }));
 
       const response = await fetch('/api/admin/contests', {
         method: 'POST',
@@ -406,13 +430,46 @@ export default function AdminPage() {
         durationMinutes: 90,
         isPublic: true,
         isRated: true,
-        problemsText: '',
       });
+      setContestProblems([]);
+      setContestProblemSearch('');
       await fetchContests();
     } catch (contestError) {
       setError(contestError.message || 'Failed to create contest');
       setStatus('');
     }
+  };
+
+  const addContestProblem = (problem) => {
+    if (!problem?.slug) return;
+
+    setContestProblems((prev) => {
+      if (prev.some((item) => item.problemSlug === problem.slug)) return prev;
+      return [
+        ...prev,
+        {
+          problemSlug: problem.slug,
+          title: problem.title,
+          difficulty: problem.difficulty,
+          rating: problem.rating,
+          points: defaultContestPoints(problem),
+        },
+      ];
+    });
+  };
+
+  const updateContestProblemPoints = (slug, nextPoints) => {
+    setContestProblems((prev) =>
+      prev.map((item) =>
+        item.problemSlug === slug
+          ? { ...item, points: Math.max(1, Number(nextPoints || 1)) }
+          : item
+      )
+    );
+  };
+
+  const removeContestProblem = (slug) => {
+    setContestProblems((prev) => prev.filter((item) => item.problemSlug !== slug));
   };
 
   const finalizeContest = async (slug) => {
@@ -837,15 +894,93 @@ export default function AdminPage() {
               />
               Rated contest
             </label>
-            <textarea
-              placeholder="Problems (one per line): slug or slug:points"
-              value={contestForm.problemsText}
-              onChange={(event) => setContestForm((prev) => ({ ...prev, problemsText: event.target.value }))}
-              className="h-28 w-full rounded-lg bg-white px-3 py-2 text-sm dark:bg-[#151525]"
-            />
-            <p className="text-xs text-black/70 dark:text-[#d4deff]/80">
-              Available private problems: {privateProblems.map((problem) => problem.slug).join(', ') || 'none'}
-            </p>
+            <div className="rounded-lg border border-black/10 bg-white p-3 dark:border-[#7d8fc4]/35 dark:bg-[#151525]">
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-black uppercase text-black dark:text-[#eef3ff]">Selected Problems</div>
+                <div className="text-xs font-semibold text-black/70 dark:text-[#d4deff]/80">
+                  {contestProblems.length} selected
+                </div>
+              </div>
+              {contestProblems.length === 0 ? (
+                <div className="mt-3 text-xs text-black/60 dark:text-[#d4deff]/70">
+                  No problems selected yet.
+                </div>
+              ) : (
+                <div className="mt-3 space-y-2">
+                  {contestProblems.map((problem) => (
+                    <div key={problem.problemSlug} className="rounded-lg border border-black/10 bg-white p-3 dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-black text-black dark:text-[#eef3ff]">
+                            {problem.title || problem.problemSlug}
+                          </div>
+                          <div className="text-xs text-black/70 dark:text-[#d4deff]/80">
+                            {problem.problemSlug}
+                            {problem.difficulty ? ` • ${problem.difficulty}` : ''}
+                            {problem.rating ? ` • ${problem.rating}` : ''}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min={1}
+                            value={Number(problem.points || 1)}
+                            onChange={(event) => updateContestProblemPoints(problem.problemSlug, event.target.value)}
+                            className="w-24 rounded-lg bg-[#fff9d0] px-2 py-1 text-xs font-bold text-black dark:bg-[#202037] dark:text-[#fff9f0]"
+                          />
+                          <button
+                            onClick={() => removeContestProblem(problem.problemSlug)}
+                            className="rounded-lg bg-[#ff6b35] px-2 py-1 text-[11px] font-black uppercase text-black"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-black/10 bg-white p-3 dark:border-[#7d8fc4]/35 dark:bg-[#151525]">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="text-xs font-black uppercase text-black dark:text-[#eef3ff]">Private Problem Library</div>
+                <input
+                  value={contestProblemSearch}
+                  onChange={(event) => setContestProblemSearch(event.target.value)}
+                  placeholder="Search private problems"
+                  className="w-full rounded-lg bg-white px-3 py-1.5 text-xs dark:bg-[#10182d] sm:w-48"
+                />
+              </div>
+              <div className="mt-3 max-h-56 space-y-2 overflow-auto pr-1">
+                {privateProblems.length === 0 ? (
+                  <div className="text-xs text-black/60 dark:text-[#d4deff]/70">
+                    No private problems yet. Mark problems as private to use them in contests.
+                  </div>
+                ) : filteredPrivateProblems.length === 0 ? (
+                  <div className="text-xs text-black/60 dark:text-[#d4deff]/70">
+                    No matches available.
+                  </div>
+                ) : (
+                  filteredPrivateProblems.map((problem) => (
+                    <div key={problem.slug} className="flex items-center justify-between gap-3 rounded-lg border border-black/10 bg-white p-2 dark:border-[#7d8fc4]/35 dark:bg-[#10182d]">
+                      <div>
+                        <div className="text-xs font-black text-black dark:text-[#eef3ff]">{problem.title}</div>
+                        <div className="text-[11px] text-black/70 dark:text-[#d4deff]/80">
+                          {problem.slug} • {problem.difficulty} • {problem.rating}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => addContestProblem(problem)}
+                        className="rounded-lg bg-[#44d07d] px-2 py-1 text-[11px] font-black uppercase text-black"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
             <button
               onClick={createContest}
               className="rounded-lg bg-[#0f92ff] px-4 py-2 text-xs font-black uppercase tracking-wide text-black dark:bg-[#fef08a]"

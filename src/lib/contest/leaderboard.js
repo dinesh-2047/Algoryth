@@ -1,3 +1,5 @@
+const WRONG_ATTEMPT_PENALTY_MINUTES = 5;
+
 function toMinutes(ms) {
   return Math.max(0, Math.floor(ms / 60000));
 }
@@ -27,20 +29,6 @@ export function buildContestLeaderboard(contest, submissions, usersById = {}) {
     contestSubmissions.map((item) => String(item.userId))
   );
 
-  const acceptedSorted = contestSubmissions
-    .filter((item) => item?.verdict === "Accepted" && validProblemSlugs.has(item.problemSlug))
-    .sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime());
-
-  const firstAcceptedByUserProblem = new Map();
-
-  acceptedSorted.forEach((submission) => {
-    const userId = String(submission.userId);
-    const key = `${userId}::${submission.problemSlug}`;
-    if (!firstAcceptedByUserProblem.has(key)) {
-      firstAcceptedByUserProblem.set(key, submission);
-    }
-  });
-
   const rowsByUser = new Map();
 
   participantUserIds.forEach((userId) => {
@@ -58,28 +46,56 @@ export function buildContestLeaderboard(contest, submissions, usersById = {}) {
     });
   });
 
-  firstAcceptedByUserProblem.forEach((submission) => {
-    const userId = String(submission.userId);
-    const solvedAt = new Date(submission.submittedAt).getTime();
-    const penalty = toMinutes(solvedAt - startMs);
-    const points = problemPoints.get(submission.problemSlug) || 1;
+  const submissionsByUserProblem = new Map();
 
+  contestSubmissions.forEach((submission) => {
+    const userId = String(submission.userId);
+    const key = `${userId}::${submission.problemSlug}`;
+    if (!submissionsByUserProblem.has(key)) {
+      submissionsByUserProblem.set(key, []);
+    }
+    submissionsByUserProblem.get(key).push(submission);
+  });
+
+  submissionsByUserProblem.forEach((items, key) => {
+    if (!items || items.length === 0) return;
+
+    const [userId, problemSlug] = key.split("::");
     if (!rowsByUser.has(userId)) return;
+
+    const sorted = items
+      .slice()
+      .sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime());
+
+    const acceptedIndex = sorted.findIndex((entry) => entry?.verdict === "Accepted");
+    if (acceptedIndex < 0) return;
+
+    const acceptedSubmission = sorted[acceptedIndex];
+    const wrongAttempts = sorted
+      .slice(0, acceptedIndex)
+      .filter((entry) => entry?.verdict !== "Accepted").length;
+
+    const solvedAt = new Date(acceptedSubmission.submittedAt).getTime();
+    const solvedTimeMinutes = toMinutes(solvedAt - startMs);
+    const penalty = wrongAttempts * WRONG_ATTEMPT_PENALTY_MINUTES;
+    const points = problemPoints.get(problemSlug) || 1;
 
     const row = rowsByUser.get(userId);
     row.solved += 1;
     row.score += points;
     row.penalty += penalty;
     row.solvedProblems.push({
-      problemSlug: submission.problemSlug,
+      problemSlug,
       points,
-      solvedAt: submission.submittedAt,
+      solvedAt: acceptedSubmission.submittedAt,
+      solvedTimeMinutes,
       penalty,
+      wrongAttempts,
     });
 
     const previousLast = row.lastSolvedAt ? new Date(row.lastSolvedAt).getTime() : 0;
     if (solvedAt > previousLast) {
-      row.lastSolvedAt = submission.submittedAt;
+      row.lastSolvedAt = acceptedSubmission.submittedAt;
     }
   });
 
@@ -109,18 +125,53 @@ export function buildContestLeaderboard(contest, submissions, usersById = {}) {
 
 export function computeRatingChanges(leaderboard) {
   const total = leaderboard.length;
-  if (total === 0) return [];
+  if (total <= 1) {
+    return leaderboard.map((row) => ({
+      userId: row.userId,
+      rank: row.rank,
+      solved: row.solved,
+      penalty: row.penalty,
+      oldRating: Number(row.rating || 1200),
+      newRating: Number(row.rating || 1200),
+      delta: 0,
+    }));
+  }
+
+  // Calculate actual scores (number of people beaten + half of ties)
+  // rank is 1-based.
+  const actualScores = leaderboard.map((row) => {
+    let wins = 0;
+    let ties = 0;
+    for (const other of leaderboard) {
+      if (other.userId === row.userId) continue;
+      if (row.rank < other.rank) wins++;
+      else if (row.rank === other.rank) ties++;
+    }
+    return wins + ties * 0.5;
+  });
+
+  const K = 300; // Rating volatility constant (max rating change per contest heavily scaling)
 
   return leaderboard.map((row, index) => {
-    const n = Math.max(1, total - 1);
-    const percentile = total === 1 ? 0.5 : 1 - index / n;
-
-    const performanceComponent = (percentile - 0.5) * 2;
-    const solvedBoost = Math.min(0.35, row.solved * 0.08);
-    const baseDelta = (performanceComponent + solvedBoost) * 70;
-
-    const delta = Math.round(baseDelta);
     const oldRating = Number(row.rating || 1200);
+
+    // Calculate expected score against all other players using Elo probability
+    let expectedScore = 0;
+    for (const other of leaderboard) {
+      if (other.userId === row.userId) continue;
+      const otherRating = Number(other.rating || 1200);
+      expectedScore += 1 / (1 + Math.pow(10, (otherRating - oldRating) / 400));
+    }
+
+    const actualScore = actualScores[index];
+
+    // Normalize delta by the number of matches (N-1)
+    const baseDelta = (K * (actualScore - expectedScore)) / (total - 1);
+    
+    // Give a very small bonus for actually solving things to combat deflation over time
+    const solvedBonus = row.solved > 0 ? row.solved * 2 : 0;
+    
+    const delta = Math.round(baseDelta + solvedBonus);
     const newRating = Math.max(800, oldRating + delta);
 
     return {
