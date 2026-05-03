@@ -20,18 +20,6 @@ jobs:
             const author = pr.user.login;
             const prNumber = pr.number;
 
-            // Add label ECWoC26 if missing
-            try {
-              await github.rest.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                labels: ["ECWoC26"],
-              });
-            } catch (err) {
-              core.warning(`Labeling failed: ${err.message}`);
-            }
-
             // Assign PR to author if they are a collaborator or assignment is permitted
             try {
               await github.rest.issues.addAssignees({
