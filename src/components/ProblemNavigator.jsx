@@ -9,6 +9,7 @@ export default function ProblemNavigator({
   initialProblem,
   problemList = [],
   contestSlug,
+  roomCode,
 }) {
   const initialIndex = useMemo(
     () =>
@@ -44,7 +45,9 @@ export default function ProblemNavigator({
       try {
         const querySuffix = contestSlug
           ? `?contest=${encodeURIComponent(contestSlug)}`
-          : "";
+          : roomCode
+            ? `?room=${encodeURIComponent(roomCode)}`
+            : "";
 
         const response = await fetch(`/api/problems/${currentSlug}${querySuffix}`, {
           cache: "no-store",
@@ -75,7 +78,7 @@ export default function ProblemNavigator({
     return () => {
       cancelled = true;
     };
-  }, [contestSlug, currentSlug, problemCache]);
+  }, [contestSlug, roomCode, currentSlug, problemCache]);
 
   const canGoPrev = currentPId > 0;
   const canGoNext = currentPId < problemList.length - 1;
@@ -108,6 +111,7 @@ export default function ProblemNavigator({
       key={currentProblem.slug}
       problem={currentProblem}
       contestSlug={contestSlug}
+      roomCode={roomCode}
       onNext={canGoNext ? handleNext : undefined}
       onPrev={canGoPrev ? handlePrev : undefined}
     />

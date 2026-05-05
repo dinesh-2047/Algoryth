@@ -8,6 +8,8 @@ import { getProblemBySlug, recordProblemSubmission } from "../../../lib/problem-
 import { enqueueExecution } from "../../../lib/execution/executionQueue";
 import { OnlineCompilerError, runCodeSync } from "../../../lib/execution/onlineCompiler";
 import Contest from "../../../lib/db/models/Contest";
+import DuelRoom from "../../../lib/db/models/DuelRoom";
+import { getDuelStatus } from "../../../lib/duels/leaderboard";
 
 function getAuthenticatedUserId(request) {
   const authHeader = request.headers.get("authorization");
@@ -166,7 +168,7 @@ export async function POST(request) {
   const startedAt = Date.now();
 
   try {
-    const { slug, code, language = "javascript", contestSlug } = await request.json();
+    const { slug, code, language = "javascript", contestSlug, roomCode } = await request.json();
     const userId = getAuthenticatedUserId(request);
 
     if (!userId) {
@@ -194,6 +196,7 @@ export async function POST(request) {
     }
 
     let includePrivate = false;
+    let activeRoomCode = null;
     if (contestSlug && process.env.MONGODB_URI) {
       try {
         await connectToDatabase();
@@ -214,6 +217,55 @@ export async function POST(request) {
         }
       } catch (contestError) {
         console.error("Contest access validation failed for submission:", contestError);
+      }
+    }
+
+    if (roomCode && process.env.MONGODB_URI) {
+      try {
+        await connectToDatabase();
+        const room = await DuelRoom.findOne({ roomCode: String(roomCode).trim() })
+          .select({ hostUserId: 1, guestUserId: 1, problems: 1, startedAt: 1, endedAt: 1, durationMinutes: 1 })
+          .lean();
+
+        if (!room) {
+          return NextResponse.json(
+            { verdict: "Error", message: "Room not found" },
+            { status: 404 }
+          );
+        }
+
+        const status = getDuelStatus(room);
+        if (status !== "live") {
+          return NextResponse.json(
+            { verdict: "Error", message: "Room has not started or already ended" },
+            { status: 403 }
+          );
+        }
+
+        const userIdString = String(userId);
+        const hostId = String(room.hostUserId || "");
+        const guestId = String(room.guestUserId || "");
+        if (userIdString !== hostId && userIdString !== guestId) {
+          return NextResponse.json(
+            { verdict: "Error", message: "You are not a participant in this room" },
+            { status: 403 }
+          );
+        }
+
+        const includesProblem = (room.problems || []).some(
+          (item) => item.problemSlug === slug
+        );
+
+        if (!includesProblem) {
+          return NextResponse.json(
+            { verdict: "Error", message: "Problem is not part of this room" },
+            { status: 400 }
+          );
+        }
+
+        activeRoomCode = String(roomCode).trim();
+      } catch (roomError) {
+        console.error("Room access validation failed for submission:", roomError);
       }
     }
 
@@ -342,6 +394,7 @@ export async function POST(request) {
       const submission = new Submission({
         userId,
         problemSlug: slug,
+        roomCode: activeRoomCode,
         problemId: problem.id,
         problemTitle: problem.title,
         code,
@@ -363,6 +416,44 @@ export async function POST(request) {
       });
 
       await submission.save();
+
+      if (activeRoomCode && verdict === "Accepted") {
+        const room = await DuelRoom.findOne({ roomCode: activeRoomCode })
+          .select({ status: 1, problems: 1, winnerUserId: 1, endedAt: 1 })
+          .lean();
+
+        if (room && room.status === "live") {
+          const allProblems = new Set((room.problems || []).map((item) => item.problemSlug));
+
+          if (allProblems.size > 0) {
+            const solvedDocs = await Submission.find({
+              roomCode: activeRoomCode,
+              userId,
+              verdict: "Accepted",
+              problemSlug: { $in: [...allProblems] },
+            })
+              .select({ problemSlug: 1 })
+              .lean();
+
+            const solvedProblems = new Set(solvedDocs.map((item) => item.problemSlug));
+
+            if (solvedProblems.size >= allProblems.size) {
+              await DuelRoom.updateOne(
+                { roomCode: activeRoomCode, status: "live" },
+                {
+                  $set: {
+                    status: "ended",
+                    endReason: "all_solved",
+                    winnerUserId: userId,
+                    endedByUserId: userId,
+                    endedAt: new Date(),
+                  },
+                }
+              );
+            }
+          }
+        }
+      }
 
       await updateUserStatsOnSubmission({
         userId,

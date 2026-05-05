@@ -43,6 +43,7 @@ export async function GET(request) {
     const problemSlug = url.searchParams.get('problemSlug');
     const verdict = url.searchParams.get('verdict');
     const language = url.searchParams.get('language');
+    const roomCode = url.searchParams.get('roomCode');
     const dateFrom = url.searchParams.get('dateFrom');
     const dateTo = url.searchParams.get('dateTo');
 
@@ -59,6 +60,10 @@ export async function GET(request) {
 
     if (language) {
       filter.language = language;
+    }
+
+    if (roomCode) {
+      filter.roomCode = roomCode;
     }
 
     if (dateFrom || dateTo) {

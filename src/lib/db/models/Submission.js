@@ -12,6 +12,11 @@ const submissionSchema = new mongoose.Schema({
     required: true,
     index: true,
   },
+  roomCode: {
+    type: String,
+    default: null,
+    index: true,
+  },
   problemId: {
     type: String,
     required: false,
@@ -108,6 +113,7 @@ const submissionSchema = new mongoose.Schema({
 submissionSchema.index({ userId: 1, submittedAt: -1 });
 submissionSchema.index({ userId: 1, verdict: 1 });
 submissionSchema.index({ problemSlug: 1, verdict: 1 });
+submissionSchema.index({ roomCode: 1, submittedAt: -1 });
 
 // Pre-save middleware to update timestamp
 submissionSchema.pre('save', function(next) {
