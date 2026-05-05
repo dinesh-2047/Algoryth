@@ -13,6 +13,7 @@ const baseNavLinks = [
   { href: '/', label: 'Home' },
   { href: '/problems', label: 'Problems' },
   { href: '/contests', label: 'Contests' },
+  { href: '/duels', label: '1v1' },
   { href: '/about', label: 'About' },
 ];
 

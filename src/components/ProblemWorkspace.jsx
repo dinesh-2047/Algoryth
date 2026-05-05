@@ -193,9 +193,10 @@ function formatPenaltyMinutes(value) {
   return `${totalMinutes}m`;
 }
 
-export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug }) {
+export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug, roomCode }) {
   const router = useRouter();
   const isContestMode = Boolean(contestSlug);
+  const isRoomMode = Boolean(roomCode);
   const { user, token, loading: authLoading, refreshUser } = useAuth();
   const [isWideLayout, setIsWideLayout] = useState(true);
   const [code, setCode] = useState("");
@@ -214,11 +215,27 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
   );
   const [activeCaseIndex, setActiveCaseIndex] = useState(0);
   const [removedCustomCase, setRemovedCustomCase] = useState(null);
+  const [contestMeta, setContestMeta] = useState(null);
+  const [contestLeaderboard, setContestLeaderboard] = useState([]);
+  const [contestLoading, setContestLoading] = useState(false);
+  const [contestError, setContestError] = useState("");
+  const [contestRemainingMs, setContestRemainingMs] = useState(0);
+  const [contestDrawerOpen, setContestDrawerOpen] = useState(false);
+  const [contestDrawerTab, setContestDrawerTab] = useState("problems");
+  const [roomMeta, setRoomMeta] = useState(null);
+  const [roomLeaderboard, setRoomLeaderboard] = useState([]);
+  const [roomLoading, setRoomLoading] = useState(false);
+  const [roomError, setRoomError] = useState("");
+  const [roomRemainingMs, setRoomRemainingMs] = useState(0);
+  const [roomDrawerOpen, setRoomDrawerOpen] = useState(false);
+  const [roomDrawerTab, setRoomDrawerTab] = useState("problems");
 
   const handleDismissBadges = useCallback(() => setNewBadges([]), []);
 
   const contestStart = contestMeta?.startTime || null;
   const contestEnd = contestMeta?.endTime || null;
+  const roomStart = roomMeta?.startTime || null;
+  const roomEnd = roomMeta?.endTime || null;
 
   const getContestSubmissionRange = useCallback(() => {
     if (!isContestMode || !contestStart || !contestEnd) return null;
@@ -228,10 +245,26 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     return { from: from.toISOString(), to: to.toISOString() };
   }, [contestEnd, contestStart, isContestMode]);
 
+  const getRoomSubmissionRange = useCallback(() => {
+    if (!isRoomMode || !roomStart || !roomEnd) return null;
+    const from = new Date(roomStart);
+    const to = new Date(roomEnd);
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return null;
+    return { from: from.toISOString(), to: to.toISOString() };
+  }, [isRoomMode, roomEnd, roomStart]);
+
   const loadSubmissions = useCallback(async () => {
     try {
-      const range = getContestSubmissionRange();
-      if (isContestMode && !range) {
+      const contestRange = getContestSubmissionRange();
+      const roomRange = getRoomSubmissionRange();
+      const range = roomRange || contestRange;
+
+      if (isRoomMode && !roomRange) {
+        setSubmissions([]);
+        return;
+      }
+
+      if (isContestMode && !contestRange) {
         setSubmissions([]);
         return;
       }
@@ -246,6 +279,10 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
         if (range) {
           params.set("dateFrom", range.from);
           params.set("dateTo", range.to);
+        }
+
+        if (isRoomMode && roomCode) {
+          params.set("roomCode", roomCode);
         }
 
         const response = await fetch(`/api/submissions/history?${params.toString()}`, {
@@ -298,6 +335,10 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
         const isSameProblem =
           submission.problemId === problem.id || submission.slug === problem.slug;
         if (!isSameProblem) return false;
+
+        const isSameRoom =
+          !isRoomMode || !roomCode || submission.roomCode === roomCode;
+        if (!isSameRoom) return false;
 
         if (!range) return true;
 
@@ -352,7 +393,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     } catch (error) {
       console.error("Failed to load submissions", error);
     }
-  }, [getContestSubmissionRange, isContestMode, problem]);
+  }, [getContestSubmissionRange, getRoomSubmissionRange, isContestMode, isRoomMode, problem, roomCode]);
 
   // Left tabs state
   const [activeTab, setActiveTab] = useState("Description");
@@ -373,13 +414,6 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     code: "",
     language: "javascript",
   });
-  const [contestMeta, setContestMeta] = useState(null);
-  const [contestLeaderboard, setContestLeaderboard] = useState([]);
-  const [contestLoading, setContestLoading] = useState(false);
-  const [contestError, setContestError] = useState("");
-  const [contestRemainingMs, setContestRemainingMs] = useState(0);
-  const [contestDrawerOpen, setContestDrawerOpen] = useState(false);
-  const [contestDrawerTab, setContestDrawerTab] = useState("problems");
 
   useEffect(() => {
     setResultDetails(null);
@@ -469,11 +503,11 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
       }
     };
 
-    if (!isContestMode) {
+    if (!isContestMode && !isRoomMode) {
       loadEditorial();
       loadSolutions();
     }
-  }, [problem, isContestMode]);
+  }, [problem, isContestMode, isRoomMode]);
 
   useEffect(() => {
     loadSubmissions();
@@ -550,6 +584,38 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     [contestSlug]
   );
 
+  const fetchRoom = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!roomCode) return;
+
+      try {
+        if (!silent) {
+          setRoomLoading(true);
+          setRoomError("");
+        }
+
+        const response = await fetch(`/api/duels/${roomCode}`, { cache: "no-store" });
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload.error || "Failed to load room");
+        }
+
+        setRoomMeta(payload.room || null);
+        setRoomLeaderboard(Array.isArray(payload.leaderboard) ? payload.leaderboard : []);
+      } catch (error) {
+        if (!silent) {
+          setRoomError(error.message || "Failed to load room");
+        }
+      } finally {
+        if (!silent) {
+          setRoomLoading(false);
+        }
+      }
+    },
+    [roomCode]
+  );
+
   useEffect(() => {
     if (!isContestMode) {
       setContestMeta(null);
@@ -563,6 +629,18 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
   }, [fetchContest, isContestMode]);
 
   useEffect(() => {
+    if (!isRoomMode) {
+      setRoomMeta(null);
+      setRoomLeaderboard([]);
+      setRoomError("");
+      setRoomLoading(false);
+      return;
+    }
+
+    fetchRoom();
+  }, [fetchRoom, isRoomMode]);
+
+  useEffect(() => {
     if (!contestMeta || contestMeta.status !== "live") return undefined;
 
     const timer = window.setInterval(() => {
@@ -571,6 +649,16 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
 
     return () => window.clearInterval(timer);
   }, [contestMeta, fetchContest]);
+
+  useEffect(() => {
+    if (!roomMeta || roomMeta.status !== "live") return undefined;
+
+    const timer = window.setInterval(() => {
+      fetchRoom({ silent: true });
+    }, 10000);
+
+    return () => window.clearInterval(timer);
+  }, [fetchRoom, roomMeta]);
 
   useEffect(() => {
     if (!contestMeta) return undefined;
@@ -593,6 +681,32 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     const timer = window.setInterval(updateCountdown, 1000);
     return () => window.clearInterval(timer);
   }, [contestMeta]);
+
+  useEffect(() => {
+    if (!roomMeta) return undefined;
+
+    const updateCountdown = () => {
+      const now = Date.now();
+      const start = roomMeta.startedAt ? new Date(roomMeta.startedAt).getTime() : null;
+      const end = roomMeta.endedAt ? new Date(roomMeta.endedAt).getTime() : null;
+
+      if (roomMeta.status === "waiting") {
+        if (start) {
+          setRoomRemainingMs(Math.max(0, start - now));
+        } else {
+          setRoomRemainingMs(0);
+        }
+      } else if (roomMeta.status === "live") {
+        setRoomRemainingMs(Math.max(0, end ? end - now : 0));
+      } else {
+        setRoomRemainingMs(0);
+      }
+    };
+
+    updateCountdown();
+    const timer = window.setInterval(updateCountdown, 1000);
+    return () => window.clearInterval(timer);
+  }, [roomMeta]);
 
   // On mobile, when the result panel is minimized/restored, the code editor
   // container switches between a SplitPane (fixed height) and a flex layout.
@@ -624,8 +738,25 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     return "Contest ended";
   }, [contestMeta, contestRemainingMs]);
 
+  const roomCountdownLabel = useMemo(() => {
+    if (!roomMeta) return "";
+    if (roomMeta.status === "waiting") {
+      if (roomRemainingMs > 0) {
+        return `Starts in ${formatDuration(roomRemainingMs)}`;
+      }
+      return "Waiting to start";
+    }
+    if (roomMeta.status === "live") {
+      return `Ends in ${formatDuration(roomRemainingMs)}`;
+    }
+    return "Match ended";
+  }, [roomMeta, roomRemainingMs]);
+
   const contestProblemsLocked =
     Boolean(contestMeta?.problemsLocked) || contestMeta?.status === "upcoming";
+
+  const roomProblemsLocked =
+    Boolean(roomMeta?.problemsLocked) || roomMeta?.status === "waiting";
 
   const contestProblemList = useMemo(() => {
     if (!contestMeta) return [];
@@ -644,6 +775,23 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     }));
   }, [contestMeta]);
 
+  const roomProblemList = useMemo(() => {
+    if (!roomMeta) return [];
+    if (Array.isArray(roomMeta.problems) && roomMeta.problems.length > 0) {
+      return roomMeta.problems;
+    }
+
+    const count = Number(roomMeta.problemCount || 0);
+    if (!count) return [];
+
+    return Array.from({ length: count }, (_, index) => ({
+      problemSlug: `locked-${index + 1}`,
+      title: `Problem ${index + 1}`,
+      points: null,
+      locked: true,
+    }));
+  }, [roomMeta]);
+
   const contestTotalPoints = useMemo(() => {
     if (!contestMeta) return 0;
     if (Number.isFinite(Number(contestMeta.totalPoints))) {
@@ -651,6 +799,14 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     }
     return contestProblemList.reduce((sum, item) => sum + Number(item.points || 0), 0);
   }, [contestMeta, contestProblemList]);
+
+  const roomTotalPoints = useMemo(() => {
+    if (!roomMeta) return 0;
+    if (Number.isFinite(Number(roomMeta.totalPoints))) {
+      return Number(roomMeta.totalPoints);
+    }
+    return roomProblemList.reduce((sum, item) => sum + Number(item.points || 0), 0);
+  }, [roomMeta, roomProblemList]);
 
   const isCodeEmpty =
     !code || code.trim().length === 0 || code.trim() === starterCode.trim();
@@ -861,6 +1017,12 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
 
     if (authLoading) return;
 
+    const redirectTarget = isContestMode
+      ? `/problems/${problem.slug}?contest=${contestSlug}`
+      : isRoomMode
+        ? `/problems/${problem.slug}?room=${roomCode}`
+        : `/problems/${problem.slug}`;
+
     if (!user || !token) {
       setResultDetails({
         kind: "submit",
@@ -875,7 +1037,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
       });
       setActiveRightTab("result");
       setIsResultPanelMinimized(false);
-      router.push(`/auth?redirect=${encodeURIComponent(`/problems/${problem.slug}`)}`);
+      router.push(`/auth?redirect=${encodeURIComponent(redirectTarget)}`);
       return;
     }
 
@@ -890,18 +1052,24 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
     let responsePayload = null;
 
     try {
+      const submissionPayload = {
+        slug: problem.slug,
+        code,
+        language,
+        contestSlug,
+      };
+
+      if (isRoomMode && roomCode) {
+        submissionPayload.roomCode = roomCode;
+      }
+
       const response = await fetch("/api/submissions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          slug: problem.slug,
-          code,
-          language,
-          contestSlug,
-        }),
+        body: JSON.stringify(submissionPayload),
       });
 
       responsePayload = await response.json();
@@ -969,6 +1137,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
       problemId: problem.id,
       slug: problem.slug,
       problemTitle: problem.title,
+      roomCode: roomCode || null,
       status: verdict,
       verdict,
       language,
@@ -1168,7 +1337,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
       { id: "Submissions", icon: History, label: "Submissions", shortLabel: "Subs" },
     ];
 
-    if (isContestMode) {
+    if (isContestMode || isRoomMode) {
       return baseTabs;
     }
 
@@ -1178,7 +1347,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
       { id: "Solutions", icon: List, label: "Solutions", shortLabel: "Sol" },
       { id: "Submissions", icon: History, label: "Submissions", shortLabel: "Subs" },
     ];
-  }, [isContestMode]);
+  }, [isContestMode, isRoomMode]);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -2207,6 +2376,13 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
               >
                 ← Contest Lobby
               </Link>
+            ) : isRoomMode ? (
+              <Link
+                href={`/duels/${roomCode}`}
+                className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-black uppercase tracking-wide text-black hover:bg-[#44d07d] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2a3c2f]"
+              >
+                ← Room Lobby
+              </Link>
             ) : (
               <Link
                 href="/problems"
@@ -2222,6 +2398,15 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
                 className="flex items-center gap-2 rounded-lg bg-[#0f92ff] px-3 py-1.5 text-sm font-black uppercase tracking-wide text-black hover:bg-[#077ad8] dark:bg-[#fef08a] dark:text-black dark:hover:bg-[#e9db63]"
               >
                 Contest Panel
+              </button>
+            )}
+            {isRoomMode && (
+              <button
+                type="button"
+                onClick={() => setRoomDrawerOpen(true)}
+                className="flex items-center gap-2 rounded-lg bg-[#0f92ff] px-3 py-1.5 text-sm font-black uppercase tracking-wide text-black hover:bg-[#077ad8] dark:bg-[#fef08a] dark:text-black dark:hover:bg-[#e9db63]"
+              >
+                Room Panel
               </button>
             )}
           <div className="h-4 w-px bg-black dark:bg-[#fef08a]" />
@@ -2249,9 +2434,19 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
               {contestMeta.title}
             </span>
           )}
+          {isRoomMode && roomMeta && (
+            <span className="rounded-full border border-black/20 bg-white px-3 py-1 text-xs font-black uppercase tracking-wide text-black dark:border-[#7d8fc4]/35 dark:bg-[#151525] dark:text-[#fff9f0]">
+              {roomMeta.title || `Room ${roomMeta.roomCode || roomCode}`}
+            </span>
+          )}
           {isContestMode && !contestMeta && contestError && (
             <span className="rounded-full border border-black/20 bg-[#ffb4a2] px-3 py-1 text-xs font-black uppercase tracking-wide text-black dark:border-[#7d8fc4]/35 dark:bg-[#3f2320] dark:text-[#ffd7cc]">
               Contest unavailable
+            </span>
+          )}
+          {isRoomMode && !roomMeta && roomError && (
+            <span className="rounded-full border border-black/20 bg-[#ffb4a2] px-3 py-1 text-xs font-black uppercase tracking-wide text-black dark:border-[#7d8fc4]/35 dark:bg-[#3f2320] dark:text-[#ffd7cc]">
+              Room unavailable
             </span>
           )}
         </div>
@@ -2260,6 +2455,13 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
           <div className="flex w-full justify-center md:hidden">
             <span className="rounded-full border border-black/20 bg-[#0f92ff] px-3 py-1 text-xs font-black uppercase tracking-wide text-black dark:border-[#7d8fc4]/35 dark:bg-[#fef08a]">
               {contestCountdownLabel}
+            </span>
+          </div>
+        )}
+        {isRoomMode && roomMeta && (
+          <div className="flex w-full justify-center md:hidden">
+            <span className="rounded-full border border-black/20 bg-[#0f92ff] px-3 py-1 text-xs font-black uppercase tracking-wide text-black dark:border-[#7d8fc4]/35 dark:bg-[#fef08a]">
+              {roomCountdownLabel}
             </span>
           </div>
         )}
@@ -2304,6 +2506,13 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
           <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:block">
             <span className="rounded-full border border-black/20 bg-[#0f92ff] px-4 py-1.5 text-xs font-black uppercase tracking-wide text-black dark:border-[#7d8fc4]/35 dark:bg-[#fef08a]">
               {contestCountdownLabel}
+            </span>
+          </div>
+        )}
+        {isRoomMode && roomMeta && (
+          <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:block">
+            <span className="rounded-full border border-black/20 bg-[#0f92ff] px-4 py-1.5 text-xs font-black uppercase tracking-wide text-black dark:border-[#7d8fc4]/35 dark:bg-[#fef08a]">
+              {roomCountdownLabel}
             </span>
           </div>
         )}
@@ -2459,6 +2668,159 @@ export default function ProblemWorkspace({ problem, onNext, onPrev, contestSlug 
                     </div>
                   ) : (
                     contestLeaderboard.slice(0, 20).map((row) => (
+                      <div
+                        key={row.userId}
+                        className="flex items-center justify-between rounded-xl border-2 border-black bg-white px-3 py-2 dark:border-[#fef08a] dark:bg-[#151525]"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="text-xs font-black text-black dark:text-[#fff9f0]">#{row.rank}</div>
+                          <div>
+                            <div className="text-xs font-bold text-black dark:text-[#fff9f0]">{row.name}</div>
+                            <div className="text-[10px] text-black/60 dark:text-[#d4deff]/70">Solved {row.solved}</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs font-black text-black dark:text-[#fff9f0]">{row.score} pts</div>
+                          <div className="text-[10px] text-black/60 dark:text-[#d4deff]/70">
+                            {formatPenaltyMinutes(row.penalty)}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isRoomMode && roomDrawerOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]">
+          <div className="absolute left-4 top-4 flex h-[calc(100%-2rem)] w-full max-w-sm flex-col overflow-hidden rounded-2xl border-2 border-black bg-[#fff9d0] text-black shadow-[4px_4px_0_0_#000] dark:border-[#fef08a] dark:bg-[#202037] dark:text-[#fff9f0] dark:shadow-[4px_4px_0_0_#a9b9db] md:max-w-md">
+            <div className="flex items-center justify-between border-b-2 border-black bg-[#ff6b35] px-4 py-3 dark:border-[#fef08a] dark:bg-[#2f2f4a]">
+              <div>
+                <div className="text-xs font-black uppercase tracking-wide text-black/70 dark:text-[#fef08a]">
+                  Room Panel
+                </div>
+                <div className="text-sm font-black uppercase text-black dark:text-[#fff9f0]">
+                  {roomMeta?.title || `Room ${roomMeta?.roomCode || roomCode}`}
+                </div>
+                {roomMeta && (
+                  <div className="mt-1 text-[11px] text-black/70 dark:text-[#fef08a]">
+                    {roomCountdownLabel}
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setRoomDrawerOpen(false)}
+                className="rounded-lg border-2 border-black bg-white px-2.5 py-1 text-xs font-black uppercase tracking-wide text-black hover:bg-[#44d07d] dark:border-[#fef08a] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2a3c2f]"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 border-b-2 border-black bg-[#fff3b0] px-4 py-3 dark:border-[#fef08a] dark:bg-[#1a2033]">
+              <button
+                type="button"
+                onClick={() => setRoomDrawerTab("problems")}
+                className={`rounded-full border-2 border-black px-3 py-1 text-[11px] font-black uppercase tracking-wide transition-colors dark:border-[#fef08a] ${
+                  roomDrawerTab === "problems"
+                    ? "bg-[#f4b35f] text-black"
+                    : "bg-white text-black hover:bg-[#44d07d] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2a3c2f]"
+                }`}
+              >
+                Problem List
+              </button>
+              <button
+                type="button"
+                onClick={() => setRoomDrawerTab("ranking")}
+                className={`rounded-full border-2 border-black px-3 py-1 text-[11px] font-black uppercase tracking-wide transition-colors dark:border-[#fef08a] ${
+                  roomDrawerTab === "ranking"
+                    ? "bg-[#44d07d] text-black"
+                    : "bg-white text-black hover:bg-[#44d07d] dark:bg-[#151525] dark:text-[#fff9f0] dark:hover:bg-[#2a3c2f]"
+                }`}
+              >
+                Ranking
+              </button>
+            </div>
+
+            <div className="custom-scrollbar flex-1 overflow-auto px-4 py-4">
+              {roomDrawerTab === "problems" ? (
+                <div className="space-y-3">
+                  {roomLoading && !roomMeta ? (
+                    <div className="flex items-center gap-2 text-xs text-black/70 dark:text-[#d4deff]/80">
+                      <Spinner className="h-4 w-4" /> Loading room...
+                    </div>
+                  ) : roomError ? (
+                    <div className="rounded-lg border-2 border-black bg-[#fff0ea] p-3 text-xs text-[#743021] dark:border-[#fef08a] dark:bg-[#3b2423] dark:text-[#ffd7cc]">
+                      {roomError}
+                    </div>
+                  ) : roomProblemList.length === 0 ? (
+                    <div className="rounded-lg border-2 border-black bg-white p-3 text-xs text-black/70 dark:border-[#fef08a] dark:bg-[#151525] dark:text-[#d4deff]/80">
+                      No problems available yet.
+                    </div>
+                  ) : (
+                    roomProblemList.map((problemItem, index) => (
+                      <div
+                        key={problemItem.problemSlug}
+                        className="rounded-xl border-2 border-black bg-white p-3 dark:border-[#fef08a] dark:bg-[#151525]"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-black text-black dark:text-[#fff9f0]">
+                              Q{index + 1}. {problemItem.title}
+                            </div>
+                            <div className="mt-1 text-[11px] text-black/60 dark:text-[#d4deff]/70">
+                              {problemItem.locked || roomProblemsLocked
+                                ? "Locked"
+                                : problemItem.problemSlug}
+                              {problemItem.points ? `  ${problemItem.points} pts` : ""}
+                              {problemItem.difficulty ? `  ${problemItem.difficulty}` : ""}
+                            </div>
+                          </div>
+                          {roomProblemsLocked || problemItem.locked ? (
+                            <div className="rounded-full border-2 border-black bg-[#cbd5f5] px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-black dark:border-[#fef08a] dark:bg-[#252f47] dark:text-[#d8e4ff]">
+                              Locked
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRoomDrawerOpen(false);
+                                router.push(
+                                  `/problems/${problemItem.problemSlug}?room=${roomCode}`
+                                );
+                              }}
+                              className="rounded-full border-2 border-black bg-[#0f92ff] px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black hover:bg-[#077ad8] dark:border-[#fef08a] dark:bg-[#fef08a] dark:text-black dark:hover:bg-[#e9db63]"
+                            >
+                              Open
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+
+                  {roomMeta && (
+                    <div className="rounded-lg border-2 border-black bg-white p-3 text-xs text-black/70 dark:border-[#fef08a] dark:bg-[#151525] dark:text-[#d4deff]/80">
+                      Problems: {roomMeta.problemCount || roomProblemList.length}  Total Points: {roomTotalPoints}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {roomLoading && roomLeaderboard.length === 0 ? (
+                    <div className="flex items-center gap-2 text-xs text-black/70 dark:text-[#d4deff]/80">
+                      <Spinner className="h-4 w-4" /> Loading ranking...
+                    </div>
+                  ) : roomLeaderboard.length === 0 ? (
+                    <div className="rounded-lg border-2 border-black bg-white p-3 text-xs text-black/70 dark:border-[#fef08a] dark:bg-[#151525] dark:text-[#d4deff]/80">
+                      No rankings yet.
+                    </div>
+                  ) : (
+                    roomLeaderboard.slice(0, 20).map((row) => (
                       <div
                         key={row.userId}
                         className="flex items-center justify-between rounded-xl border-2 border-black bg-white px-3 py-2 dark:border-[#fef08a] dark:bg-[#151525]"

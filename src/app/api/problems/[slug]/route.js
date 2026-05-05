@@ -3,6 +3,8 @@ import { getProblemBySlug } from "../../../../lib/problem-store";
 import { requireAuthenticatedUser } from "../../../../lib/db/requestAuth";
 import { connectToDatabase } from "../../../../lib/db/connect";
 import Contest from "../../../../lib/db/models/Contest";
+import DuelRoom from "../../../../lib/db/models/DuelRoom";
+import { getDuelStatus } from "../../../../lib/duels/leaderboard";
 
 export async function GET(
   req,
@@ -12,14 +14,43 @@ export async function GET(
   const url = new URL(req.url);
   const includePrivateRequested = url.searchParams.get("includePrivate") === "true";
   const contestSlug = String(url.searchParams.get("contest") || "").trim();
+  const roomCode = String(url.searchParams.get("room") || "").trim();
   let includePrivate = false;
+  let roomAccess = false;
 
   if (includePrivateRequested) {
     const auth = await requireAuthenticatedUser(req);
     includePrivate = auth.ok && auth.user.role === "admin";
   }
 
-  if (!includePrivate && contestSlug && process.env.MONGODB_URI) {
+  if (!includePrivate && roomCode && process.env.MONGODB_URI) {
+    try {
+      await connectToDatabase();
+      const room = await DuelRoom.findOne({ roomCode })
+        .select({ startedAt: 1, endedAt: 1, durationMinutes: 1, problems: 1 })
+        .lean();
+
+      if (room) {
+        const status = getDuelStatus(room);
+        const includesProblem = (room.problems || []).some(
+          (item) => item.problemSlug === slug
+        );
+
+        if (includesProblem && status === "live") {
+          includePrivate = true;
+          roomAccess = true;
+        }
+      }
+    } catch (error) {
+      console.error("Duel access validation failed:", error);
+    }
+  }
+
+  if (roomCode && !roomAccess) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  if (!roomCode && !includePrivate && contestSlug && process.env.MONGODB_URI) {
     try {
       await connectToDatabase();
       const contest = await Contest.findOne({ slug: contestSlug, isPublic: true })
